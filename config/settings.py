@@ -162,6 +162,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+# collectstatic 수집 경로. Nginx가 /static/ 을 여기서 직접 서빙한다.
+STATIC_ROOT = env('STATIC_ROOT', default=BASE_DIR / 'staticfiles')
 
 
 # Media (업로드 파일)
