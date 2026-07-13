@@ -58,6 +58,11 @@ INSTALLED_APPS = [
 # 커스텀 User 모델(CLAUDE.md 절대원칙 6). 첫 migrate 전에 반드시 등록.
 AUTH_USER_MODEL = 'accounts.User'
 
+# 인증 리다이렉트
+LOGIN_URL = 'accounts:login'
+LOGIN_REDIRECT_URL = 'menus:dashboard'
+LOGOUT_REDIRECT_URL = 'accounts:login'
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -73,7 +78,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -157,3 +162,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+
+# Media (업로드 파일)
+# 운영에서는 django-storages 백엔드가 담당한다(CLAUDE.md 절대원칙 2).
+# 아래 MEDIA_ROOT는 DEBUG 로컬 개발용 서빙 fallback일 뿐, 앱 코드에 경로를 하드코딩하지 않는다.
+MEDIA_URL = env('MEDIA_URL', default='media/')
+MEDIA_ROOT = env('MEDIA_ROOT', default=BASE_DIR / 'media')
