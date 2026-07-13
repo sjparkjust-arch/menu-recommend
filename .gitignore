@@ -217,3 +217,11 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 .env
+
+# TLS 인증서/키 (자체 서명 포함) — 절대 커밋 금지. 실제 파일은 /etc/ssl 에 둔다.
+*.pem
+*.key
+*.crt
+*.csr
+*.p12
+*.pfx

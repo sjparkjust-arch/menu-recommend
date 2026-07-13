@@ -37,6 +37,14 @@ DEBUG = env('DEBUG')
 
 ALLOWED_HOSTS = env('ALLOWED_HOSTS')
 
+# Nginx(리버스 프록시) 뒤에서 TLS 종료. 원 요청이 https였는지는 Nginx가 넘겨주는
+# X-Forwarded-Proto 헤더로 판별한다. 이게 있어야 request.is_secure() 등이 올바르게 동작.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# DEBUG=False + https 에서 폼 POST(로그인 등) CSRF 검사를 통과하려면 신뢰 오리진(scheme 포함)이 필요.
+# 예: CSRF_TRUSTED_ORIGINS=https://192.168.32.74
+CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[])
+
 
 # Application definition
 
