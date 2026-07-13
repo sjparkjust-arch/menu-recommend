@@ -6,7 +6,7 @@
 
 ## 인프라 구성
 - Server1 (192.168.32.74): Nginx + Gunicorn + Django
-- Server2 (192.168.121.129): MariaDB + Redis
+- Server2 (192.168.32.73): MariaDB + Redis
 
 ## 절대 원칙 (2·3단계를 위해 반드시 지킬 것)
 1. 상태를 앱 프로세스에 저장하지 않는다. 세션은 Redis.
