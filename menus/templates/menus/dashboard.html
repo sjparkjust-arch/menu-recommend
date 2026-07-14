@@ -78,7 +78,7 @@
         <div class="row row-cols-1 row-cols-md-3 g-3">
             {% for menu in recommendations %}
             <div class="col">
-                <div class="card h-100 shadow-sm">
+                <div class="card h-100 shadow-sm position-relative">
                     {% if menu.image %}
                     <img src="{{ menu.image.url }}" class="card-img-top" alt="{{ menu.name }}">
                     {% else %}
@@ -86,7 +86,10 @@
                          style="height:140px;font-size:2.5rem;">🍚</div>
                     {% endif %}
                     <div class="card-body">
-                        <h5 class="card-title mb-1">{{ menu.name }}</h5>
+                        <h5 class="card-title mb-1">
+                            <a href="{% url 'menus:detail' menu.pk %}"
+                               class="text-decoration-none text-body stretched-link">{{ menu.name }}</a>
+                        </h5>
                         <p class="mb-2">
                             <span class="badge text-bg-secondary">{{ menu.cuisine.name }}</span>
                             <span class="badge text-bg-light border">{{ menu.course.name }}</span>

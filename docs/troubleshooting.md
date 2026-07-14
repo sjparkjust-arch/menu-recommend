@@ -185,3 +185,111 @@ redis-cli -a '1234' ping        # PONG 확인
 - 인프라 IP 같은 값은 **어디가 진실의 출처(source of truth)인지** 하나로 정한다. 우리는 `.env`.
 - 문서와 실제가 다르면 **추측하지 말고 실측**(에러 로그의 호스트, `ip a`, 실제 접속)으로 확인한 뒤, 문서를 현실에 맞춘다.
 - 값이 두 군데(문서 + 설정)에 있으면 반드시 언젠가 어긋난다. 발견 즉시 맞춰 둔다.
+
+---
+
+## 5. HTTPS 전환 후 로그인이 깨짐 — CSRF 403 (`Origin checking failed`)
+
+**증상**
+- HTTP일 땐 잘 되던 로그인이, HTTPS(443)로 바꾸고 `DEBUG=False` 상태에서 **로그인 폼 제출 시 403 Forbidden**.
+- 화면/로그 메시지: `Forbidden (403) CSRF verification failed. ... Origin checking failed - https://192.168.32.74 does not match any trusted origins.`
+- GET 페이지(대시보드 등)는 멀쩡한데 **POST(로그인/폼)만** 깨진다.
+
+**시도한 것 (원인 추적 과정)**
+1. GET은 되는데 POST만 403 → 인증/프록시가 아니라 **CSRF** 문제로 좁힘.
+2. 에러 문구가 `Origin checking failed ... does not match any trusted origins` 를 그대로 알려줌 → Django가 https 요청의 `Origin` 헤더를 신뢰 목록과 대조하는데 목록이 비어 있다.
+3. Django 4+ 동작 확인: **https 요청의 POST는 `Origin`/`Referer` 를 `CSRF_TRUSTED_ORIGINS` 와 대조**한다. http일 땐 이 검사가 느슨해 그냥 통과했던 것.
+
+**원인**
+- Django 4.0부터 https 요청의 CSRF 검사는 `CSRF_TRUSTED_ORIGINS`(scheme 포함)에 오리진이 있어야 통과한다.
+- 이 값을 비워둔 채 HTTPS로 올려서, `https://192.168.32.74` 오리진이 신뢰 목록에 없어 전부 거부.
+
+**해결**
+```bash
+# .env (scheme 포함, 콤마 구분)
+CSRF_TRUSTED_ORIGINS=https://192.168.32.74
+```
+```python
+# settings.py
+CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[])
+```
+```bash
+sudo systemctl restart gunicorn   # .env 변경 반영
+```
+- 함께 필요: Nginx가 `proxy_set_header X-Forwarded-Proto $scheme;` 를 넘기고, settings에
+  `SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')` 가 있어야 Django가 요청을 https로 인식한다.
+
+**배운 것**
+- **HTTPS로 바꾸면 `CSRF_TRUSTED_ORIGINS` 를 반드시 채운다**(scheme 포함). 빠뜨리면 모든 폼 POST가 403.
+- CSRF 에러 문구는 원인을 친절히 적어준다 — "trusted origins" 라는 단어가 보이면 이 설정을 의심.
+- `http://`(dev)에서 잘 되던 게 `https://`(prod)에서 깨지는 전형적 함정. dev/prod 스킴 차이를 항상 염두.
+
+---
+
+## 6. 자체 서명 인증서 — 브라우저가 거부 (`ERR_CERT_COMMON_NAME_INVALID`)
+
+**증상**
+- 내부망이라 자체 서명 인증서를 만들어 붙였는데, `https://192.168.32.74` 접속 시 브라우저가 연결 자체를 거부.
+- 단순 "안전하지 않음" 경고(신뢰 예외로 진행 가능)가 아니라 `NET::ERR_CERT_COMMON_NAME_INVALID` 로 **진행 옵션조차 애매**하게 막힘.
+
+**시도한 것 (원인 추적 과정)**
+1. 처음엔 `-subj "/CN=192.168.32.74"` 로만 인증서를 만들었다(CN에 IP).
+2. 그래도 `COMMON_NAME_INVALID` → 요즘 브라우저(Chrome 등)는 **CN을 호스트 검증에 안 쓰고 SAN(subjectAltName)만 본다**는 것을 확인.
+3. 인증서에 SAN이 들어갔는지 검사:
+   ```bash
+   openssl x509 -noout -text -in /etc/ssl/certs/menu-recommend.crt | grep -A1 "Subject Alternative Name"
+   ```
+   → SAN 항목이 아예 없었다.
+
+**원인**
+- 최신 브라우저는 **CN이 아니라 SAN으로 호스트/IP를 매칭**한다. CN에만 IP를 넣고 SAN을 빠뜨리면 매칭 실패 → `COMMON_NAME_INVALID`.
+
+**해결**
+```bash
+# 재발급 시 SAN에 IP를 명시 (openssl 1.1.1+ 는 -addext 로 한 줄에 가능)
+sudo openssl req -x509 -nodes -newkey rsa:2048 -days 825 \
+  -keyout /etc/ssl/private/menu-recommend.key \
+  -out    /etc/ssl/certs/menu-recommend.crt \
+  -subj   "/C=KR/ST=Seoul/L=Seoul/O=MenuRecommend/CN=192.168.32.74" \
+  -addext "subjectAltName=IP:192.168.32.74"
+```
+- 도메인이면 `subjectAltName=DNS:example.internal`, IP면 `IP:...`. 여러 개면 콤마로.
+- 발급 후 SAN 재확인: 위 `openssl x509 ... grep "Subject Alternative Name"`.
+- 그래도 남는 `ERR_CERT_AUTHORITY_INVALID` 경고는 **자체 서명이라 정상** — 신뢰 예외로 진행하거나
+  각 클라이언트에 `.crt` 를 신뢰 루트로 설치하면 사라진다. (CN_INVALID 와는 다른 문제)
+
+**배운 것**
+- 자체 서명 인증서는 **SAN이 필수**. CN만으로는 최신 브라우저를 통과 못 한다. IP 접속이면 `IP:`, 도메인이면 `DNS:`.
+- 인증서 문제는 두 종류를 구분: **CN/SAN 불일치(ERR_CERT_COMMON_NAME_INVALID → 재발급 필요)** vs **신뢰 체인 없음(ERR_CERT_AUTHORITY_INVALID → 자체 서명이라 당연, 예외 처리)**.
+- **IP가 바뀌면 인증서도 다시 만들어야** 한다(SAN이 특정 IP에 묶여 있으므로).
+
+---
+
+## 7. HTTPS인데 무한 리다이렉트 (`ERR_TOO_MANY_REDIRECTS`) — 프록시 뒤 스킴 인식 실패
+
+**증상**
+- 80→443 리다이렉트를 걸었더니, https로 접속해도 **계속 리다이렉트가 돌며** `ERR_TOO_MANY_REDIRECTS`.
+
+**시도한 것 (원인 추적 과정)**
+1. Nginx는 443을 정상 수신하는데 왜 또 리다이렉트? → **Django가 요청을 여전히 http로 인식**하고 다시 https로 보내는 루프를 의심.
+2. Nginx가 실제 스킴을 앱에 알려주는지 확인 → `proxy_set_header X-Forwarded-Proto $scheme;` 존재 여부.
+3. Django가 그 헤더를 신뢰하도록 `SECURE_PROXY_SSL_HEADER` 가 설정됐는지 확인.
+
+**원인**
+- TLS는 **Nginx에서 종료**되고 Django에는 소켓으로 평문이 전달된다. 그래서 Django의 `request.is_secure()` 는 기본적으로 False.
+- `SECURE_PROXY_SSL_HEADER` 없이 앱단에서 https 강제 리다이렉트(예: `SECURE_SSL_REDIRECT`)를 켜면, 앱이 매번 "http네? → https로" 리다이렉트를 반복 → 루프.
+
+**해결**
+```python
+# settings.py — Nginx가 넘기는 X-Forwarded-Proto 로 원 스킴을 판별
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+```
+```nginx
+# nginx.conf — 반드시 함께
+proxy_set_header X-Forwarded-Proto $scheme;
+```
+- 우리 구성은 리다이렉트를 **Nginx(80 server 블록)에서** 처리하므로 앱단 `SECURE_SSL_REDIRECT` 는 켜지 않는다(중복이면 루프 위험).
+
+**배운 것**
+- 리버스 프록시 뒤에서 TLS를 종료하면 **앱은 스킴을 모른다.** `X-Forwarded-Proto` + `SECURE_PROXY_SSL_HEADER` 짝이 반드시 필요.
+- https 리다이렉트는 **한 곳에서만**(우리는 Nginx). 프록시와 앱 양쪽에서 걸면 무한 루프가 나기 쉽다.
