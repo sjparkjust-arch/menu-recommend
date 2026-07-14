@@ -5,6 +5,7 @@ from django.shortcuts import render
 from menus.models import Course, Cuisine, Menu
 from menus.services import catalog
 from menus.services.recommender import recommend
+from reviews import services as review_services
 
 RECENT_LIMIT = 10
 RECOMMEND_LIMIT = 3
@@ -89,12 +90,15 @@ def menu_list(request):
 
 
 def menu_detail(request, pk):
-    """메뉴 상세. 정보/알러지 재료/평균 평점·후기 수, 후기 목록(자리만)."""
+    """메뉴 상세. 정보/알러지 재료/평균 평점·후기 수 + 그 메뉴의 후기 목록."""
     menu = catalog.get_menu_with_stats(pk)
+    reviews = review_services.reviews_for_menu(menu)
     context = {
         'menu': menu,
         'allergens': menu.allergens.all(),
         'overlap_allergens': catalog.overlapping_allergens(request.user, menu),
+        'reviews': reviews,
+        'liked_ids': review_services.liked_review_ids(request.user, reviews),
     }
     return render(request, 'menus/menu_detail.html', context)
 

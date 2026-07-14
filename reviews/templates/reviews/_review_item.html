@@ -1,0 +1,64 @@
+{# 후기 카드 partial. 필요한 컨텍스트: review(like_count annotate), liked_ids, user.
+   show_menu=True 면 어느 메뉴 후기인지 함께 표시(목록용). #}
+<div class="card mb-3 shadow-sm">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <span class="fw-semibold">{{ review.user.username }}</span>
+                <span class="text-warning ms-1">
+                    {% for n in "12345"|make_list %}{% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}{% endfor %}
+                </span>
+                {% if show_menu %}
+                <span class="text-muted">· <a href="{% url 'menus:detail' review.menu_id %}"
+                    class="text-decoration-none">{{ review.menu.name }}</a></span>
+                {% endif %}
+            </div>
+            <small class="text-muted">{{ review.created_at|date:"Y-m-d H:i" }}</small>
+        </div>
+
+        {% if review.content %}
+        <p class="mt-2 mb-2">{{ review.content|linebreaksbr }}</p>
+        {% endif %}
+        {% if review.image %}
+        <img src="{{ review.image.url }}" class="img-fluid rounded mb-2" style="max-height:220px;"
+             alt="후기 이미지">
+        {% endif %}
+
+        <div class="d-flex align-items-center gap-2">
+            <button type="button"
+                    class="btn btn-sm like-btn {% if review.pk in liked_ids %}btn-danger{% else %}btn-outline-danger{% endif %}"
+                    data-url="{% url 'reviews:like' review.pk %}"
+                    {% if not user.is_authenticated %}data-login-required="1"{% endif %}>
+                ♥ <span class="like-count">{{ review.like_count }}</span>
+            </button>
+
+            {% if review.user == user %}
+            <a href="{% url 'reviews:edit' review.pk %}" class="btn btn-sm btn-outline-secondary">수정</a>
+            <button type="button" class="btn btn-sm btn-outline-secondary"
+                    data-bs-toggle="modal" data-bs-target="#deleteModal{{ review.pk }}">삭제</button>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if review.user == user %}
+    {# 삭제 확인 모달 #}
+    <div class="modal fade" id="deleteModal{{ review.pk }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">후기 삭제</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+                </div>
+                <div class="modal-body">이 후기를 삭제할까요? 되돌릴 수 없습니다.</div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <form method="post" action="{% url 'reviews:delete' review.pk %}" class="m-0">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">삭제</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>

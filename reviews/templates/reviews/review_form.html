@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}후기 {% if form.instance.pk %}수정{% else %}작성{% endif %} · {{ menu.name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <h4 class="mb-3">{{ menu.name }} · 후기 {% if form.instance.pk %}수정{% else %}작성{% endif %}</h4>
+
+        <form method="post" enctype="multipart/form-data" class="card card-body shadow-sm">
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold d-block">평점</label>
+                <div class="star-rating">
+                    {% for v in "54321"|make_list %}
+                    <input type="radio" id="star{{ v }}" name="rating" value="{{ v }}" required
+                        {% with rv=form.rating.value|stringformat:'s' %}{% if rv == v %}checked{% endif %}{% endwith %}>
+                    <label for="star{{ v }}" title="{{ v }}점">★</label>
+                    {% endfor %}
+                </div>
+                {% if form.rating.errors %}
+                <div class="text-danger small">{{ form.rating.errors|striptags }}</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold" for="{{ form.content.id_for_label }}">내용</label>
+                {{ form.content }}
+                {% if form.content.errors %}
+                <div class="text-danger small">{{ form.content.errors|striptags }}</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold" for="{{ form.image.id_for_label }}">이미지 (선택)</label>
+                {{ form.image }}
+                {% if form.image.errors %}
+                <div class="text-danger small">{{ form.image.errors|striptags }}</div>
+                {% endif %}
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    {% if form.instance.pk %}수정{% else %}등록{% endif %}
+                </button>
+                <a href="{% url 'menus:detail' menu.pk %}" class="btn btn-outline-secondary">취소</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .star-rating { display: inline-flex; flex-direction: row-reverse; font-size: 2rem; line-height: 1; }
+    .star-rating input { display: none; }
+    .star-rating label { color: #ddd; cursor: pointer; padding: 0 .05em; }
+    .star-rating input:checked ~ label,
+    .star-rating label:hover,
+    .star-rating label:hover ~ label { color: #ffc107; }
+</style>
+{% endblock %}
