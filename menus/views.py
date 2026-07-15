@@ -1,4 +1,3 @@
-from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.shortcuts import render
 
@@ -12,9 +11,8 @@ RECOMMEND_LIMIT = 3
 PAGE_SIZE = 12
 
 
-@login_required
 def dashboard(request):
-    """메인 대시보드.
+    """메인 대시보드. 비로그인도 열람 가능(알러지 필터·최근 기록은 로그인 사용자에게만).
 
     추천 로직은 recommender.recommend() 에만 있다(CLAUDE.md 코드 스타일).
     이 뷰는 요청 파라미터 파싱 → recommend() 호출 → 화면용 데이터 조회만 한다.
@@ -35,10 +33,12 @@ def dashboard(request):
         limit=RECOMMEND_LIMIT,
     )
 
-    recent_records = (
-        request.user.meal_records
-        .order_by('-created_at')[:RECENT_LIMIT]
-    )
+    if request.user.is_authenticated:
+        recent_records = request.user.meal_records.order_by('-created_at')[:RECENT_LIMIT]
+        allergies = request.user.allergies.all()
+    else:
+        recent_records = None
+        allergies = None
 
     context = {
         'meal_time': meal_time,
@@ -50,7 +50,7 @@ def dashboard(request):
         'selected_cuisines': cuisine_ids,
         'selected_courses': course_ids,
         'recent_records': recent_records,
-        'allergies': request.user.allergies.all(),
+        'allergies': allergies,
     }
     return render(request, 'menus/dashboard.html', context)
 

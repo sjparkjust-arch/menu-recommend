@@ -89,7 +89,7 @@ def login_view(request):
     
 def logout_view(request):
     logout(request)
-    return redirect(reverse('accounts:login'))
+    return redirect(reverse('menus:dashboard'))
 
 #@login_required(login_url='accounts:login')
 def profile(request):

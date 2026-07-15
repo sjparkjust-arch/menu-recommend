@@ -17,6 +17,7 @@ from datetime import timedelta
 from django.utils import timezone
 
 from menus.models import Menu
+from menus.services import catalog
 
 logger = logging.getLogger(__name__)
 
@@ -29,8 +30,11 @@ NEUTRAL_SCORE = 3
 def recommend(user, meal_time, cuisine_ids=None, course_ids=None, limit=3):
     """user에게 메뉴를 추천한다.
 
+    비로그인(AnonymousUser)이면 알러지 필터·최근 제외·선호도 가중치는
+    적용하지 않고 meal_time/cuisine/course 필터만으로 추천한다.
+
     Args:
-        user: 추천 대상 User 인스턴스.
+        user: 추천 대상 User 인스턴스 (AnonymousUser 가능).
         meal_time: 이번 끼니 (Menu.MealTime 값, 예: 'lunch' / 'dinner').
         cuisine_ids: 선택. 이 요리 종류들로만 후보를 좁힌다.
         course_ids: 선택. 이 코스들로만 후보를 좁힌다.
@@ -42,8 +46,8 @@ def recommend(user, meal_time, cuisine_ids=None, course_ids=None, limit=3):
     qs = Menu.objects.all()
     total = qs.count()
 
-    # 1. 알러지 하드 필터 --------------------------------------------------
-    allergy_ids = list(user.allergies.values_list('id', flat=True))
+    # 1. 알러지 하드 필터 (로그인 사용자만 적용 가능) ------------------------
+    allergy_ids = list(catalog.user_allergy_ids(user))
     if allergy_ids:
         qs = qs.exclude(menu_allergies__allergy_id__in=allergy_ids)
     after_allergy = qs.count()
@@ -52,14 +56,16 @@ def recommend(user, meal_time, cuisine_ids=None, course_ids=None, limit=3):
         user.pk, total - after_allergy, len(allergy_ids), after_allergy,
     )
 
-    # 2. 최근 7일 내 먹은 메뉴 제외 ----------------------------------------
+    # 2. 최근 7일 내 먹은 메뉴 제외 (로그인 사용자만) ------------------------
     # records.MealRecord는 menus.Menu를 FK로 참조하지 않고 food_name을 자유
     # 텍스트로 저장한다. 따라서 이름 일치로 근사한다(오타·표기 차이는 놓칠 수 있음).
-    since = timezone.now() - timedelta(days=RECENT_DAYS)
-    recent_food_names = list(
-        user.meal_records.filter(created_at__gte=since)
-        .values_list('food_name', flat=True)
-    )
+    recent_food_names = []
+    if user.is_authenticated:
+        since = timezone.now() - timedelta(days=RECENT_DAYS)
+        recent_food_names = list(
+            user.meal_records.filter(created_at__gte=since)
+            .values_list('food_name', flat=True)
+        )
     if recent_food_names:
         qs = qs.exclude(name__in=recent_food_names)
     after_recent = qs.count()
@@ -98,9 +104,10 @@ def recommend(user, meal_time, cuisine_ids=None, course_ids=None, limit=3):
         )
         return []
 
-    # 5. 선호도 가중 확률 추출 ---------------------------------------------
-    scores = dict(
-        user.preferences.values_list('cuisine_id', 'score')
+    # 5. 선호도 가중 확률 추출 (로그인 사용자만, 비로그인은 전부 중립 가중치) --
+    scores = (
+        dict(user.preferences.values_list('cuisine_id', 'score'))
+        if user.is_authenticated else {}
     )
     weighted = [
         (menu, scores.get(menu.cuisine_id, NEUTRAL_SCORE))

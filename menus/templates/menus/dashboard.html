@@ -12,12 +12,16 @@
         <div class="alert alert-warning d-flex align-items-center" role="alert">
             <span class="me-2">⚠️</span>
             <div>
-                {% if allergies %}
-                    등록하신 알러지
-                    {% for a in allergies %}<span class="badge text-bg-danger">{{ a.name }}</span>{% endfor %}
-                    가 포함된 메뉴는 <strong>자동으로 제외</strong>됩니다.
+                {% if user.is_authenticated %}
+                    {% if allergies %}
+                        등록하신 알러지
+                        {% for a in allergies %}<span class="badge text-bg-danger">{{ a.name }}</span>{% endfor %}
+                        가 포함된 메뉴는 <strong>자동으로 제외</strong>됩니다.
+                    {% else %}
+                        등록된 알러지가 없습니다. 알러지가 있다면 프로필에서 등록하세요.
+                    {% endif %}
                 {% else %}
-                    등록된 알러지가 없습니다. 알러지가 있다면 프로필에서 등록하세요.
+                    <a href="{% url 'accounts:login' %}">로그인</a>하면 알러지 자동 제외, 식사 기록 등 맞춤 추천을 이용할 수 있어요.
                 {% endif %}
             </div>
         </div>
@@ -116,30 +120,39 @@
         <div class="card shadow-sm">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span class="fw-semibold">최근 먹은 음식</span>
+                {% if user.is_authenticated %}
                 <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addRecordModal">
                     + 오늘 뭐 먹었어?
                 </button>
+                {% endif %}
             </div>
-            {% if recent_records %}
-            <ul class="list-group list-group-flush">
-                {% for r in recent_records %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <div>
-                        <div>{{ r.food_name }}</div>
-                        <small class="text-muted">{{ r.created_at }} · {{ r.get_meal_type_display }}</small>
-                    </div>
-                </li>
-                {% endfor %}
-            </ul>
+            {% if user.is_authenticated %}
+                {% if recent_records %}
+                <ul class="list-group list-group-flush">
+                    {% for r in recent_records %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <div>{{ r.food_name }}</div>
+                            <small class="text-muted">{{ r.created_at }} · {{ r.get_meal_type_display }}</small>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="card-body text-muted small">아직 기록된 식사가 없습니다.</div>
+                {% endif %}
             {% else %}
-            <div class="card-body text-muted small">아직 기록된 식사가 없습니다.</div>
+                <div class="card-body text-muted small">
+                    <a href="{% url 'accounts:login' %}">로그인</a>하면 식사 기록을 볼 수 있어요.
+                </div>
             {% endif %}
         </div>
     </div>
 
 </div>
 
-{# ── 기록 추가 모달 (records:create로 POST) ──────────────── #}
+{# ── 기록 추가 모달 (records:create로 POST, 로그인 사용자만) ──── #}
+{% if user.is_authenticated %}
 <div class="modal fade" id="addRecordModal" tabindex="-1" aria-labelledby="addRecordModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <form method="post" action="{% url 'records:create' %}" class="modal-content">
@@ -196,4 +209,5 @@
         </form>
     </div>
 </div>
+{% endif %}
 {% endblock %}
