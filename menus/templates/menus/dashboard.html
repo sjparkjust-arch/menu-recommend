@@ -29,7 +29,7 @@
         {# 필터 + 끼니 토글 (GET 폼) #}
         <form method="get" class="card card-body mb-4 shadow-sm">
             <div class="row">
-                <div class="col-md-6 mb-3 mb-md-0">
+                <div class="col-12">
                     <label class="form-label fw-semibold">국가별</label>
                     <div>
                         {% for c in cuisines %}
@@ -38,19 +38,6 @@
                                    value="{{ c.id }}" id="cuisine{{ c.id }}"
                                    {% if c.id in selected_cuisines %}checked{% endif %}>
                             <label class="form-check-label" for="cuisine{{ c.id }}">{{ c.name }}</label>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">코스별</label>
-                    <div>
-                        {% for co in courses %}
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" name="course"
-                                   value="{{ co.id }}" id="course{{ co.id }}"
-                                   {% if co.id in selected_courses %}checked{% endif %}>
-                            <label class="form-check-label" for="course{{ co.id }}">{{ co.name }}</label>
                         </div>
                         {% endfor %}
                     </div>
@@ -111,6 +98,42 @@
         <div class="alert alert-secondary">
             조건에 맞는 추천 메뉴가 없습니다. 필터를 줄여 보세요.
             (알러지·최근 먹은 메뉴는 항상 제외됩니다.)
+        </div>
+        {% endif %}
+
+        {# 디저트 추천 카드 #}
+        <h4 class="mb-3 mt-4">오늘의 디저트 추천</h4>
+        {% if dessert_recommendations %}
+        <div class="row row-cols-1 row-cols-md-3 g-3">
+            {% for menu in dessert_recommendations %}
+            <div class="col">
+                <div class="card h-100 shadow-sm position-relative">
+                    {% if menu.image %}
+                    <img src="{{ menu.image.url }}" class="card-img-top" alt="{{ menu.name }}">
+                    {% else %}
+                    <div class="bg-light d-flex align-items-center justify-content-center"
+                         style="height:140px;font-size:2.5rem;">🍰</div>
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title mb-1">
+                            <a href="{% url 'menus:detail' menu.pk %}"
+                               class="text-decoration-none text-body stretched-link">{{ menu.name }}</a>
+                        </h5>
+                        <p class="mb-2">
+                            <span class="badge text-bg-secondary">{{ menu.cuisine.name }}</span>
+                            <span class="badge text-bg-light border">{{ menu.course.name }}</span>
+                        </p>
+                        {% if menu.description %}
+                        <p class="card-text small text-muted">{{ menu.description }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-secondary">
+            추천할 디저트가 없습니다. (알러지·최근 먹은 메뉴는 항상 제외됩니다.)
         </div>
         {% endif %}
     </div>

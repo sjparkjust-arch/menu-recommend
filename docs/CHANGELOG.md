@@ -36,3 +36,6 @@
 
 - **네비게이션 인사말을 이름 기반으로 변경**
   `templates/base.html`에서 로그인 시 "{아이디}님" 대신, 성/이름을 둘 다 입력한 경우 "{성}{이름}님"으로 표시. 둘 중 하나라도 비어 있으면 기존처럼 아이디로 표시.
+
+- **대시보드 추천에서 사이드/음료 제외, 디저트는 별도 섹션으로 분리**
+  `menus/services/recommender.py`의 `recommend()`가 이제 '메인' 코스 메뉴만 추천(사이드/음료/디저트 제외). 알러지 필터·최근 제외·meal_time 필터·선호도 가중치 파이프라인을 `_recommend_from_queryset()`으로 공통 추출하고, 같은 파이프라인을 쓰는 `recommend_dessert()`를 새로 추가('디저트' 코스 전용). `menus/views.py`의 `dashboard`가 두 함수를 모두 호출해 `recommendations`/`dessert_recommendations`로 전달. `menus/templates/menus/dashboard.html`에 "오늘의 점심/저녁 추천" 아래 "오늘의 디저트 추천" 섹션 추가, 더 이상 의미 없어진 "코스별" 체크박스 필터는 제거(국가별 필터만 남김). `menus/menu_list`(전체 메뉴 목록 페이지)는 건드리지 않아 그쪽은 여전히 사이드/음료/디저트를 포함한 전체 코스를 필터링해서 볼 수 있음.

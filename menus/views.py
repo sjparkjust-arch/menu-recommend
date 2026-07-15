@@ -3,7 +3,7 @@ from django.shortcuts import render
 
 from menus.models import Course, Cuisine, Menu
 from menus.services import catalog
-from menus.services.recommender import recommend
+from menus.services.recommender import recommend, recommend_dessert
 from reviews import services as review_services
 
 RECENT_LIMIT = 10
@@ -14,7 +14,7 @@ PAGE_SIZE = 12
 def dashboard(request):
     """메인 대시보드. 비로그인도 열람 가능(알러지 필터·최근 기록은 로그인 사용자에게만).
 
-    추천 로직은 recommender.recommend() 에만 있다(CLAUDE.md 코드 스타일).
+    추천 로직은 recommender.recommend() / recommend_dessert() 에만 있다(CLAUDE.md 코드 스타일).
     이 뷰는 요청 파라미터 파싱 → recommend() 호출 → 화면용 데이터 조회만 한다.
     """
     # 점심/저녁 토글. 유효하지 않으면 점심으로.
@@ -23,13 +23,16 @@ def dashboard(request):
         meal_time = Menu.MealTime.LUNCH
 
     cuisine_ids = _as_int_list(request.GET.getlist('cuisine'))
-    course_ids = _as_int_list(request.GET.getlist('course'))
 
     recommendations = recommend(
         request.user,
         meal_time,
         cuisine_ids=cuisine_ids or None,
-        course_ids=course_ids or None,
+        limit=RECOMMEND_LIMIT,
+    )
+    dessert_recommendations = recommend_dessert(
+        request.user,
+        meal_time,
         limit=RECOMMEND_LIMIT,
     )
 
@@ -45,10 +48,9 @@ def dashboard(request):
         'meal_lunch': Menu.MealTime.LUNCH,
         'meal_dinner': Menu.MealTime.DINNER,
         'recommendations': recommendations,
+        'dessert_recommendations': dessert_recommendations,
         'cuisines': Cuisine.objects.all(),
-        'courses': Course.objects.all(),
         'selected_cuisines': cuisine_ids,
-        'selected_courses': course_ids,
         'recent_records': recent_records,
         'allergies': allergies,
     }
