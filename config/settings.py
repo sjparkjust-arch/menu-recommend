@@ -170,6 +170,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+# 프로젝트 공통 정적 파일(커스텀 CSS 등). collectstatic이 여기서도 수집한다.
+STATICFILES_DIRS = [BASE_DIR / 'static']
 # collectstatic 수집 경로. Nginx가 /static/ 을 여기서 직접 서빙한다.
 STATIC_ROOT = env('STATIC_ROOT', default=BASE_DIR / 'staticfiles')
 
