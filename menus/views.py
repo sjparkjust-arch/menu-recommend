@@ -37,8 +37,7 @@ def dashboard(request):
 
     recent_records = (
         request.user.meal_records
-        .select_related('menu')
-        .order_by('-date')[:RECENT_LIMIT]
+        .order_by('-created_at')[:RECENT_LIMIT]
     )
 
     context = {

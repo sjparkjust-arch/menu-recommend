@@ -18,7 +18,6 @@ class CourseAdmin(admin.ModelAdmin):
 class MenuAllergyInline(admin.TabularInline):
     model = MenuAllergy
     extra = 1
-    autocomplete_fields = ['allergy']
 
 
 @admin.register(Menu)
@@ -35,4 +34,4 @@ class MenuAllergyAdmin(admin.ModelAdmin):
     list_display = ['id', 'menu', 'allergy']
     list_filter = ['allergy']
     search_fields = ['menu__name', 'allergy__name']
-    autocomplete_fields = ['menu', 'allergy']
+    autocomplete_fields = ['menu']

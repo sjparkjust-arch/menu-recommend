@@ -353,3 +353,92 @@ proxy_set_header X-Forwarded-Proto $scheme;
 **배운 것**
 - 오래 열어둔 탭은 서버 재시작·토큰 만료 등으로 상태가 어긋날 수 있다. "서버 500"으로 단정하기 전에 **새로고침부터** 해본다.
 - 원문을 확보 못 하면 원인 칸은 비워두고 **증상/해소만** 기록한다(이 항목이 그 사례). 정확한 재현·원문이 나오면 그때 원인을 채운다.
+
+---
+
+## [2026-07-15 | 팀원과 수동 병합 후 500 — `ModuleNotFoundError: accounts.urls`]
+
+**증상**
+- 팀원(accounts, records)과 내(menus, reviews) 코드를 수동으로 병합한 뒤 `https://192.168.32.74/` 접속 시 500.
+
+**시도한 것 (원인 추적 과정)**
+1. `journalctl -u gunicorn`으로 실제 에러 원문 확인:
+   ```
+   ModuleNotFoundError: No module named 'accounts.urls'
+   File "config/urls.py", line 15, in <module>
+       path('accounts/', include('accounts.urls')),
+   ```
+2. 실제 파일명은 `accounts/acurls.py`, `records/reurls.py` (팀원이 관례와 다르게 지음). `config/urls.py`가 옛 이름(`accounts.urls`, `records.urls`)을 그대로 `include`하고 있었다.
+3. 작업 트리엔 이미 `accounts.acurls`로 고친 상태였는데도 재현된 이유: **그 수정이 커밋되지 않고 워킹 트리에만 있었다.** gunicorn은 항상 디스크의 마지막 커밋 상태가 아니라 그 시점 워킹 트리 파일을 읽고 부팅하는데, 그 사이 다른 원인으로 워커가 재시작되며 옛 커밋 시점 파일을 다시 읽은 정황.
+
+**원인**
+- `config/urls.py`의 `include()` 경로가 실제 파일명(`acurls.py`, `reurls.py`)과 다른 이름(`urls.py`)을 참조. 게다가 그 수정본이 커밋되지 않아 배포 상태와 워킹 트리가 어긋나 있었다.
+
+**해결**
+- `config/urls.py`를 `accounts.acurls`, `records.reurls`로 수정 후 커밋.
+
+**배운 것**
+- **앱 URL 모듈명이 관례(`urls.py`)와 다르면 `config/urls.py`의 `include()` 경로부터 의심한다.**
+- **"워킹 트리에서 고쳤다" ≠ "배포됐다".** gunicorn 재시작 전/후, 그리고 커밋 여부를 항상 같이 확인한다. `git status`로 미커밋 수정이 실제 운영 서버가 읽는 파일과 다른지 늘 체크.
+
+---
+
+## [2026-07-15 | 로그인 성공 후 500 — `NoReverseMatch: Reverse for 'index' not found`]
+
+**증상**
+- 로그인 페이지(GET)는 정상 렌더링되는데, 아이디/비밀번호를 넣고 로그인(POST)하면 500.
+
+**시도한 것 (원인 추적 과정)**
+1. DEBUG=False라 gunicorn 로그에 트레이스백이 안 남음(Django 기본 로깅은 `django.request`를 `mail_admins`로만 보냄, 콘솔에 안 찍힘).
+2. `python manage.py shell`에서 `django.test.Client(raise_request_exception=True)`로 실제 요청을 재현해 트레이스백을 직접 확보:
+   ```
+   File "accounts/views.py", line 67, in login_view
+       response = redirect(reverse('accounts:index'))
+   django.urls.exceptions.NoReverseMatch: Reverse for 'index' not found. 'index' is not a valid view function or pattern name.
+   ```
+3. `accounts/acurls.py`를 보니 `path('', views.index, name='index')` 줄이 주석 처리돼 `index` 라우트 자체가 없어져 있었음. `views.index` 함수는 그대로 존재.
+
+**원인**
+- `accounts/acurls.py`에서 `index` 라우트가 (원인 불명, 병합 과정 추정) 주석 처리되어 사라짐. `login_view`는 로그인 성공 시 여전히 그 이름을 `reverse()`로 찾음.
+
+**해결**
+- `path('', views.index, name='index')` 주석 해제로 라우트 복구.
+- DEBUG=False 환경에서 500 원인을 못 볼 때는 `Client(raise_request_exception=True)`로 로컬 재현 → 진짜 트레이스백 확보 후 기록한다(추측 금지 원칙 준수).
+
+**배운 것**
+- **GET이 되는 페이지도 POST/성공 경로까지 실제로 눌러봐야 한다.** 폼이 뜬다고 그 폼의 성공 경로가 동작하는 건 아니다.
+- DEBUG=False 프로덕션에서 500의 실제 원인을 보려면 `manage.py shell` + 테스트 `Client(raise_request_exception=True)`로 같은 요청을 재현하는 게 유일한 방법 중 하나.
+
+---
+
+## [2026-07-15 | 대시보드만 500 — 팀원의 `records` 스키마와 내 코드의 필드 가정이 어긋남]
+
+**증상**
+- `/`(대시보드)만 500, `/menus/`·`/accounts/`·`/reviews/`는 정상.
+
+**시도한 것 (원인 추적 과정)**
+1. `manage.py shell`에서 직접 쿼리 실행해 원문 확보:
+   ```
+   django.core.exceptions.FieldError: Cannot resolve keyword 'date' into field.
+   Choices are: comment, created_at, food_name, id, meal_type, rating, user, user_id
+   ```
+2. `menus/views.py`의 대시보드가 `request.user.meal_records.select_related('menu').order_by('-date')`를 호출하는데, 실제 `records.MealRecord`엔 `menu` FK도 `date` 필드도 없음(`food_name`, `created_at`, `meal_type`로 팀원이 설계).
+3. 필드명만 고쳐서(`-created_at`) 재실행하니 이번엔 DB 레벨 에러:
+   ```
+   django.db.utils.OperationalError: (1054, "Unknown column 'records_mealrecord.food_name' in 'SELECT'")
+   ```
+4. `python manage.py dbshell` → `DESCRIBE records_mealrecord;`로 실제 테이블 컬럼 확인 → `date, meal, menu_id` (구 스키마). `django_migrations` 테이블엔 `records.0001_initial` 적용됨으로 기록돼 있었지만, 그 마이그레이션 **파일 내용은 이미 신 스키마로 교체**돼 있었음. Django는 마이그레이션을 파일 내용이 아니라 이름으로만 추적하므로 재실행되지 않고 계속 어긋난 상태였다.
+5. `menus/services/recommender.py`의 "최근 7일 먹은 메뉴 제외" 로직도 `meal_records.filter(date__gte=...).values_list('menu_id', ...)`를 썼는데, `records`엔 애초에 `menu` FK가 없어(팀원이 자유 텍스트 `food_name`으로 설계) 이름 변경만으론 해결 불가.
+
+**원인**
+- 세 가지가 겹침: (1) 뷰 코드가 옛 필드명(`date`/`menu`)을 가정, (2) 실제 DB 테이블이 옛 스키마로 남아 있는데 마이그레이션 파일은 이름 재사용 없이 새 스키마로 덮어써져 다시 적용되지 않음, (3) 추천 로직이 `records`↔`menus` 간 FK 연결을 전제했으나 팀원 설계엔 그 연결이 없음(자유 텍스트).
+
+**해결**
+- 테이블 데이터 0건 확인 후 `python manage.py migrate records zero` → `python manage.py migrate records`로 테이블을 현재 모델 스키마로 재생성.
+- `menus/views.py`, `menus/templates/menus/dashboard.html`을 `food_name`/`created_at`/`meal_type`에 맞게 수정.
+- `recommender.py`의 "최근 제외" 로직은 `Menu.name == food_name` 이름 매칭으로 근사 대체(정확한 FK가 없으므로).
+
+**배운 것**
+- **Django는 마이그레이션을 파일 이름으로만 추적한다.** 이미 적용된 마이그레이션 파일의 내용을 나중에 바꿔치기하면, 실제 DB는 안 바뀌는데 `makemigrations --check`는 "변경 없음"이라고 속인다. 스키마를 바꾸려면 반드시 새 마이그레이션(또는 `migrate zero` 후 재적용)을 거쳐야 한다.
+- **다른 사람이 만든 앱과 연동하는 코드는 그 앱의 실제 모델 필드를 먼저 확인하고 짠다.** 이름만 그럴듯하게 맞춰 짜면(`menu_id`, `date`) 나중에 실제 스키마와 어긋난다.
+- `manage.py check`/`makemigrations --check`가 통과해도 **실제 DB 컬럼과 일치한다는 보장은 없다** — `dbshell`로 실제 테이블 구조를 직접 봐야 확신할 수 있다.

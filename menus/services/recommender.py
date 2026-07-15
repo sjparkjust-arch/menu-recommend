@@ -53,13 +53,15 @@ def recommend(user, meal_time, cuisine_ids=None, course_ids=None, limit=3):
     )
 
     # 2. 최근 7일 내 먹은 메뉴 제외 ----------------------------------------
-    since = timezone.localdate() - timedelta(days=RECENT_DAYS)
-    recent_menu_ids = list(
-        user.meal_records.filter(date__gte=since)
-        .values_list('menu_id', flat=True)
+    # records.MealRecord는 menus.Menu를 FK로 참조하지 않고 food_name을 자유
+    # 텍스트로 저장한다. 따라서 이름 일치로 근사한다(오타·표기 차이는 놓칠 수 있음).
+    since = timezone.now() - timedelta(days=RECENT_DAYS)
+    recent_food_names = list(
+        user.meal_records.filter(created_at__gte=since)
+        .values_list('food_name', flat=True)
     )
-    if recent_menu_ids:
-        qs = qs.exclude(id__in=recent_menu_ids)
+    if recent_food_names:
+        qs = qs.exclude(name__in=recent_food_names)
     after_recent = qs.count()
     logger.info(
         '[recommend] 최근 %d일 중복 필터: %d개 제외 -> %d개',

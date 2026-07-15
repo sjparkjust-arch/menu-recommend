@@ -114,14 +114,19 @@
     {# ── 우측: 최근 먹은 음식 ────────────────────────────── #}
     <div class="col-lg-4">
         <div class="card shadow-sm">
-            <div class="card-header fw-semibold">최근 먹은 음식</div>
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-semibold">최근 먹은 음식</span>
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addRecordModal">
+                    + 오늘 뭐 먹었어?
+                </button>
+            </div>
             {% if recent_records %}
             <ul class="list-group list-group-flush">
                 {% for r in recent_records %}
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     <div>
-                        <div>{{ r.menu.name }}</div>
-                        <small class="text-muted">{{ r.date }} · {{ r.get_meal_display }}</small>
+                        <div>{{ r.food_name }}</div>
+                        <small class="text-muted">{{ r.created_at }} · {{ r.get_meal_type_display }}</small>
                     </div>
                 </li>
                 {% endfor %}
@@ -132,5 +137,63 @@
         </div>
     </div>
 
+</div>
+
+{# ── 기록 추가 모달 (records:create로 POST) ──────────────── #}
+<div class="modal fade" id="addRecordModal" tabindex="-1" aria-labelledby="addRecordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="post" action="{% url 'records:create' %}" class="modal-content">
+            {% csrf_token %}
+            <div class="modal-header">
+                <h5 class="modal-title" id="addRecordModalLabel">🍚 오늘 먹은 음식 기록하기</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">식사 구분</label>
+                    <div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="meal_type" value="BREAKFAST" id="mealBreakfast">
+                            <label class="form-check-label" for="mealBreakfast">아침</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="meal_type" value="LUNCH" id="mealLunch" checked>
+                            <label class="form-check-label" for="mealLunch">점심</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="meal_type" value="DINNER" id="mealDinner">
+                            <label class="form-check-label" for="mealDinner">저녁</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="meal_type" value="SNACK" id="mealSnack">
+                            <label class="form-check-label" for="mealSnack">간식</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="food_name" class="form-label fw-semibold">음식 이름</label>
+                    <input type="text" id="food_name" name="food_name" class="form-control" placeholder="예: 돈가스, 김치찌개" required autocomplete="off">
+                </div>
+                <div class="mb-3">
+                    <label for="rating" class="form-label fw-semibold">만족도</label>
+                    <select id="rating" name="rating" class="form-select">
+                        <option value="5">⭐⭐⭐⭐⭐ (최고였어요!)</option>
+                        <option value="4">⭐⭐⭐⭐ (맛있어요)</option>
+                        <option value="3">⭐⭐⭐ (무난해요)</option>
+                        <option value="2">⭐⭐ (그냥 그래요)</option>
+                        <option value="1">⭐ (별로예요)</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="comment" class="form-label fw-semibold">한줄평</label>
+                    <textarea id="comment" name="comment" class="form-control" rows="3" placeholder="맛이나 식당 정보 등 가벼운 메모를 남겨보세요."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="submit" class="btn btn-primary">기록 완료</button>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}

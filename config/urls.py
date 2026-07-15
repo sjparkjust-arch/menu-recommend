@@ -12,8 +12,8 @@ urlpatterns = [
 
     # 루트는 menus 앱으로 위임 — 메인 대시보드는 menus/urls.py 의 '' 경로에 둔다.
     path('', include('menus.urls')),
-    path('accounts/', include('accounts.urls')),
-    path('records/', include('records.urls')),
+    path('accounts/', include('accounts.acurls')),
+    path('records/', include('records.reurls')),
     path('reviews/', include('reviews.urls')),
 ]
 

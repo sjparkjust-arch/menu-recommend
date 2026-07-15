@@ -64,7 +64,7 @@ def login_view(request):
         # 로그인 성공: 세션 생성
         auth_login(request, user) # login에서 auth_login으로 변경
 
-        response = redirect(reverse('accounts:index'))
+        response = redirect(reverse('menus:dashboard'))
 
         # 아이디 기억하기 체크 시 쿠키 저장
         if remember_id == 'on':
