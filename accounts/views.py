@@ -125,8 +125,6 @@ def signup_view(request):
         # re.search를 사용해 영어 알파벳(a-z, A-Z)과 숫자(0-9)가 각각 하나라도 있는지 확인합니다.
         elif not (re.search(r'[a-zA-Z]', password1) and re.search(r'[0-9]', password1)):
             errors['password1'] = '비밀번호는 영문과 숫자를 모두 포함해야 합니다.'
-        elif not re.match(r'^[a-zA-Z0-9]+$', password1):
-            errors['password1'] = '비밀번호는 영문(소문자/대문자)과 숫자만 사용할 수 있습니다.'
 
         # 비밀번호 확인 검증
         if not password2:
@@ -157,7 +155,7 @@ def signup_view(request):
             email=email,
         )
 
-        return redirect(reverse('accounts:login'))
+        return render(request, 'accounts/signup.html', {'signup_success': True})
 
     return render(request, 'accounts/signup.html')
 

@@ -17,7 +17,7 @@
             <!-- 첫 번째 그룹: 계정 정보 (아이디, 비밀번호) -->
             <div class="input-group">
                 <!-- placeholder를 아주 심플하게 수정했습니다 -->
-                <input type="text" name="username" value="{{ username|default:'' }}" placeholder="아이디" autocomplete="username" required autofocus>
+                <input type="text" name="username" value="{{ username|default:'' }}" placeholder="아이디" autocomplete="off" required>
                 <input type="password" name="password1" placeholder="비밀번호" autocomplete="off" minlength="8" required>
                 <input type="password" name="password2" placeholder="비밀번호 확인" autocomplete="off" minlength="8" required>
             </div>
@@ -25,7 +25,7 @@
             <!-- 추가된 부분: 입력창 바로 밑에 고정될 안내 문구 -->
             <div class="help-text">
                 * 아이디: 4자 이상 영문(소문자), 숫자, _ 허용<br>
-                * 비밀번호: 8자 이상 영문(대/소문자), 숫자 혼합 필수
+                * 비밀번호: 8자 이상, 영문(대/소문자)과 숫자 혼합 필수 (특수문자 사용 가능)
             </div>
             
             <!-- 기존의 에러 메시지 출력 영역 (그대로 유지) -->
@@ -72,6 +72,16 @@
             이미 계정이 있으신가요? <a href="{% url 'accounts:login' %}">로그인</a>
         </div>
     </div>
+
+    {% if signup_success %}
+    <div class="modal-overlay active">
+        <div class="modal-window">
+            <h2 class="modal-title">🎉 회원가입 완료</h2>
+            <p class="modal-message">가입이 완료됐어요. 확인을 누르면 대시보드로 이동합니다.</p>
+            <a href="{% url 'menus:dashboard' %}" class="modal-confirm-btn">확인</a>
+        </div>
+    </div>
+    {% endif %}
 
 </body>
 </html>
