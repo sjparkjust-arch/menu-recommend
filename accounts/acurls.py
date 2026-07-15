@@ -4,7 +4,6 @@ from . import views
 app_name = 'accounts'
 
 urlpatterns = [
-    path('', views.index, name='index'),                          # 시험용 인덱스 확인용 나중에 주석처리 또는 삭제 예정
     path('login/', views.login_view, name='login'),               # 로그인 화면
     path('signup/', views.signup_view, name='signup'),            # 회원가입 화면
     path('find-id/', views.find_id, name='find_id'),         # 아이디 찾기 화면
