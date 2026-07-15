@@ -1,0 +1,31 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>밥픽 - 회원탈퇴</title>
+    <link rel="stylesheet" href="{% static 'accounts/profile.css' %}">
+</head>
+<body>
+
+    <div class="profile-container text-center">
+        <h1 class="title danger-color">정말 떠나시나요? 😢</h1>
+        
+        <div class="info-card warning-card">
+            <p class="warning-text">
+                탈퇴하시면 <strong>{{ request.user.username }}</strong> 계정 정보와<br>
+                밥픽에서 추천받았던 모든 메뉴 기록이 즉시 삭제되며,<br>
+                이 작업은 되돌릴 수 없습니다.
+            </p>
+        </div>
+
+        <!-- 확인을 누르면 POST 요청으로 실제 탈퇴가 진행됩니다 -->
+        <form method="post" action="{% url 'accounts:delete_account' %}">
+            {% csrf_token %}
+            <button type="submit" class="delete-btn">네, 탈퇴하겠습니다</button>
+            <a href="{% url 'accounts:profile' %}" class="cancel-btn">아니오, 더 쓸래요!</a>
+        </form>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,79 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>밥픽 - 마이페이지</title>
+    <link rel="stylesheet" href="{% static 'accounts/profile.css' %}">
+</head>
+<body>
+
+    <div class="profile-container">
+        <h1 class="title">마이페이지</h1>
+
+        <!-- 1. 내 정보 카드 섹션 -->
+        <div class="info-card">
+            <div class="avatar">🍚</div>
+            <div class="info-details">
+                <!-- 아이디 대신 실제 이름(last_name + first_name)이 들어가도록 수정 -->
+                <div class="user-id">
+                    {{ request.user.last_name|default:"" }}{{ request.user.first_name|default:"사용자" }}님 반가워요!
+            </div>
+            <div class="info-grid">
+                <!-- 성명 자리 대신 아이디(username)를 보여주도록 수정 -->
+                <div class="info-row id-row">
+                    <span class="label">아이디</span>
+                    <span class="value">{{ request.user.username }}</span>
+                </div>
+                <!-- 이메일은 그대로 유지 -->
+                <div class="info-row email-row">
+                    <span class="label">이메일</span>
+                    <span class="value">{{ request.user.email|default:"미입력" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        <!-- 2. 메뉴 추천 및 식사 기록 섹션 -->
+
+        <div class="history-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 class="section-title" style="margin: 0;">🕒 최근 먹은 메뉴 & 추천 내역</h2>
+                <!-- 📌 전체 식사 기록 페이지로 이동하는 링크 추가! -->
+                <a href="{% url 'records:history' %}" style="color: #F37943; font-weight: bold; text-decoration: none; font-size: 14px;">전체보기 &gt;</a>
+            </div>
+                <ul class="record-list">
+                <!-- 실제 데이터가 연결되기 전 보여줄 임시 예시 리스트입니다 -->
+                {% if meal_records %}
+                    {% for record in meal_records %}
+                        <li class="record-item">
+                            <span class="food-name">{{ record.food_name }}</span>
+                            <span class="record-date">{{ record.created_at|date:"Y-m-d" }}</span>
+                        </li>
+                    {% endfor %}
+                {% else %}
+                    <!-- 데이터가 없을 때 뜰 예쁜 예시 안내창 -->
+                    <li class="record-empty">
+                        아직 추천받거나 기록한 메뉴가 없어요.<br>
+                        오늘 첫 메뉴 추천을 받아보세요! 🍙
+                    </li>
+                {% endif %}
+                </ul>
+        </div> 
+
+
+
+        <!-- 3. 계정 관리 하단 버튼 및 회원 탈퇴 링크 -->
+        <div class="account-actions">
+            <a href="{% url 'accounts:index' %}" class="back-btn">메인으로 가기</a>
+            
+            <!-- 회원탈퇴 버튼 클릭 시 확인 페이지(GET)로 이동시킵니다 -->
+            <p class="delete-area">
+                아쉬운 점이 있으신가요? 
+                <a href="{% url 'accounts:delete_confirm' %}" class="delete-link">회원탈퇴</a>
+            </p>
+        </div>
+    </div>
+
+</body>
+</html>

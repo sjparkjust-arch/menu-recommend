@@ -1,0 +1,77 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>밥픽 - 회원가입</title>
+    <link rel="stylesheet" href="{% static 'accounts/signup.css' %}">
+</head>
+<body>
+    <div class="signup-container">
+        <img src="{% static 'accounts/images/logo.png' %}" alt="밥픽 로고" class="logo-img">
+        <h1 class="title">회원가입</h1>
+
+        <form method="post" action="{% url 'accounts:signup' %}">
+            {% csrf_token %}
+
+            <!-- 첫 번째 그룹: 계정 정보 (아이디, 비밀번호) -->
+            <div class="input-group">
+                <!-- placeholder를 아주 심플하게 수정했습니다 -->
+                <input type="text" name="username" value="{{ username|default:'' }}" placeholder="아이디" autocomplete="username" required autofocus>
+                <input type="password" name="password1" placeholder="비밀번호" autocomplete="off" minlength="8" required>
+                <input type="password" name="password2" placeholder="비밀번호 확인" autocomplete="off" minlength="8" required>
+            </div>
+            
+            <!-- 추가된 부분: 입력창 바로 밑에 고정될 안내 문구 -->
+            <div class="help-text">
+                * 아이디: 4자 이상 영문(소문자), 숫자, _ 허용<br>
+                * 비밀번호: 8자 이상 영문(대/소문자), 숫자 혼합 필수
+            </div>
+            
+            <!-- 기존의 에러 메시지 출력 영역 (그대로 유지) -->
+            {% if errors.username %}
+                <div class="error-msg">{{ errors.username }}</div>
+            {% endif %}
+            {% if errors.password1 %}
+                <div class="error-msg">{{ errors.password1 }}</div>
+            {% endif %}
+            {% if errors.password2 %}
+                <div class="error-msg">{{ errors.password2 }}</div>
+            {% endif %}
+            <!-- 계정 정보 관련 에러 메시지 출력 영역 -->
+            {% if errors.username %}
+                <div class="error-msg">{{ errors.username }}</div>
+            {% endif %}
+            {% if errors.password1 %}
+                <div class="error-msg">{{ errors.password1 }}</div>
+            {% endif %}
+            {% if errors.password2 %}
+                <div class="error-msg">{{ errors.password2 }}</div>
+            {% endif %}
+
+            <!-- 두 번째 그룹: 개인 정보 (성, 이름, 이메일) -->
+            <div class="input-group">
+                <!-- 성 -->
+                <input type="text" name="last_name" value="{{ last_name|default:'' }}" placeholder="성(선택)" autocomplete="family-name">
+                
+                <!-- 이름 -->
+                <input type="text" name="first_name" value="{{ first_name|default:'' }}" placeholder="이름(선택)" autocomplete="given-name">
+                
+                <!-- 이메일 -->
+                <input type="email" name="email" value="{{ email|default:'' }}" placeholder="이메일(선택)" autocomplete="email">
+            </div>
+
+            <div class="help-text">
+             📌 이름과 이메일은 추후 계정 찾기에 사용되므로 유의 해주세요.
+            </div>
+
+            <button type="submit" class="submit-btn">가입하기</button>
+        </form>
+
+        <div class="bottom-links">
+            이미 계정이 있으신가요? <a href="{% url 'accounts:login' %}">로그인</a>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,115 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>밥픽 - 식사 히스토리</title>
+    <link rel="stylesheet" href="{% static 'records/history.css' %}">
+</head>
+<body>
+
+    <div class="history-container">
+        <!-- 헤더 영역 -->
+        <div class="history-header">
+            <h1 class="page-title">🕒 식사 히스토리</h1>
+            <div class="header-buttons">
+                <button type="button" class="open-modal-btn" onclick="toggleModal(true)">오늘 뭐 먹었어? 🍚</button>
+                <a href="{% url 'accounts:profile' %}" class="to-profile-btn">마이페이지로</a>
+            </div>
+        </div>
+
+        <!-- 타임라인 리스트 메인 영역 -->
+        <div class="timeline-board">
+            {% if records %}
+                <div class="timeline-line"></div>
+                {% for record in records %}
+                    <div class="timeline-card">
+                        <div class="badge {{ record.meal_type|lower }}">
+                            {{ record.get_meal_type_display }}
+                        </div>
+                        <div class="card-content">
+                            <h3 class="food-title">{{ record.food_name }}</h3>
+                            <div class="rating-stars">
+                                {% if record.rating == 5 %}⭐⭐⭐⭐⭐
+                                {% elif record.rating == 4 %}⭐⭐⭐⭐
+                                {% elif record.rating == 3 %}⭐⭐⭐
+                                {% elif record.rating == 2 %}⭐⭐
+                                {% else %}⭐{% endif %}
+                            </div>
+                            {% if record.comment %}
+                                <p class="food-comment">" {{ record.comment }} "</p>
+                            {% endif %}
+                            <span class="record-time">{{ record.created_at|date:"Y-m-d H:i" }}</span>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-history">
+                    아직 기록된 식사가 없습니다.<br>
+                    위 버튼을 눌러 오늘 먹은 첫 음식을 기록해 보세요! 🍙
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!--1번 기능: 오늘의 식사 등록 팝업 모달창 창포함-->
+    <div id="mealModal" class="modal-overlay">
+        <div class="modal-window">
+            <div class="modal-header">
+                <h2>🍚 오늘 먹은 음식 기록하기</h2>
+                <button class="close-x-btn" onclick="toggleModal(false)">&times;</button>
+            </div>
+            <form method="post" action="{% url 'records:create' %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>식사 구분</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="meal_type" value="BREAKFAST"> 아침</label>
+                        <label><input type="radio" name="meal_type" value="LUNCH" checked> 점심</label>
+                        <label><input type="radio" name="meal_type" value="DINNER"> 저녁</label>
+                        <label><input type="radio" name="meal_type" value="SNACK"> 간식</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="food_name">음식 이름</label>
+                    <input type="text" id="food_name" name="food_name" class="form-control" placeholder="예: 돈가스, 김치찌개" required autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label for="rating">만족도 (별점)</label>
+                    <select id="rating" name="rating" class="form-control-select">
+                        <option value="5">⭐⭐⭐⭐⭐ (최고였어요!)</option>
+                        <option value="4">⭐⭐⭐⭐ (맛있어요)</option>
+                        <option value="3">⭐⭐⭐ (무난해요)</option>
+                        <option value="2">⭐⭐ (그냥 그래요)</option>
+                        <option value="1">⭐ (별로예요)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="comment">한줄평</label>
+                    <textarea id="comment" name="comment" class="form-control-textarea" placeholder="맛이나 식당 정보 등 가벼운 메모를 남겨보세요." rows="3"></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="submit-record-btn">기록 완료</button>
+                    <button type="button" class="cancel-record-btn" onclick="toggleModal(false)">취소</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 팝업 제어용 가벼운 스크립트 -->
+    <script>
+        function toggleModal(show) {
+            const modal = document.getElementById('mealModal');
+            if (show) {
+                modal.classList.add('active');
+            } else {
+                modal.classList.remove('active');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+{# 좋아요 토글 AJAX. .like-btn 들에 위임. 페이지에 like-btn이 있는 곳에서 include. #}
+<script>
+(function () {
+    function getCookie(name) {
+        const m = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+        return m ? m.pop() : '';
+    }
+    document.querySelectorAll('.like-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            if (btn.dataset.loginRequired) {
+                window.location = '{% url "accounts:login" %}';
+                return;
+            }
+            fetch(btn.dataset.url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+            .then(function (data) {
+                btn.querySelector('.like-count').textContent = data.like_count;
+                btn.classList.toggle('btn-danger', data.liked);
+                btn.classList.toggle('btn-outline-danger', !data.liked);
+            })
+            .catch(function () {
+                alert('좋아요 처리에 실패했습니다. 다시 시도해 주세요.');
+            });
+        });
+    });
+})();
+</script>

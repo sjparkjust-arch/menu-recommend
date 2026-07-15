@@ -1,0 +1,22 @@
+[Unit]
+Description=gunicorn daemon for menu-recommend
+After=network.target
+
+[Service]
+User=tester
+Group=www-data
+UMask=007
+WorkingDirectory=/home/tester/apps/menu-recommend
+# /run/gunicorn 을 tester:www-data 로 생성 (systemd가 관리, 재부팅해도 유지)
+RuntimeDirectory=gunicorn
+ExecStart=/home/tester/apps/menu-recommend/venv/bin/gunicorn \
+    --workers 3 \
+    --bind unix:/run/gunicorn/gunicorn.sock \
+    --access-logfile - \
+    --error-logfile - \
+    config.wsgi:application
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,65 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>밥픽 - 아이디 찾기</title>
+    <link rel="stylesheet" href="{% static 'accounts/find_id.css' %}">
+    <!-- 이번에도 코드가 길어지는 것을 방지해 스타일을 합쳐두었습니다. 나중에 find_id.css로 따로 빼시면 됩니다! -->
+</head>
+<body>
+
+    <div class="find-container">
+        <!-- 밥픽 로고 -->
+        <img src="{% static 'accounts/images/logo.png' %}" alt="밥픽 로고" class="logo-img">
+        <h1 class="title">아이디 찾기</h1>
+
+        <!-- 상황 1: 아이디를 성공적으로 찾았을 때 보여줄 화면 -->
+        {% if found_username %}
+            <div class="result-box">
+                회원님의 아이디는<br><br>
+                <strong>{{ found_username }}</strong><br><br>
+                입니다.
+            </div>
+            
+            <a href="{% url 'accounts:login' %}">
+                <button type="button" class="submit-btn">로그인 하러가기</button>
+            </a>
+            
+            <div class="bottom-links">
+                <a href="{% url 'accounts:find_pw' %}">비밀번호 찾기</a>
+            </div>
+
+        <!-- 상황 2: 아직 아이디를 찾기 전일 때 보여줄 입력 폼 -->
+        {% else %}
+            <form method="post" action="{% url 'accounts:find_id' %}">
+                {% csrf_token %}
+                
+                <div class="input-group">
+                    <input type="text" name="last_name" value="{{ last_name|default:'' }}" placeholder="성" required autofocus>
+                    <input type="text" name="first_name" value="{{ first_name|default:'' }}" placeholder="이름" required>
+                    <input type="email" name="email" value="{{ email|default:'' }}" placeholder="가입 시 입력한 이메일" required>
+                </div>
+
+                {% if errors.name %}
+                    <div class="error-msg">{{ errors.name }}</div>
+                {% endif %}
+                {% if errors.email %}
+                    <div class="error-msg">{{ errors.email }}</div>
+                {% endif %}
+                {% if errors.not_found %}
+                    <div class="error-msg">{{ errors.not_found }}</div>
+                {% endif %}
+
+                <button type="submit" class="submit-btn">아이디 찾기</button>
+            </form>
+
+            <div class="bottom-links">
+                <a href="{% url 'accounts:login' %}">로그인</a> | 
+                <a href="{% url 'accounts:find_pw' %}">비밀번호 찾기</a>
+            </div>
+        {% endif %}
+    </div>
+
+</body>
+</html>

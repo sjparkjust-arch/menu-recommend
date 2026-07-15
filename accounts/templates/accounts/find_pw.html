@@ -1,0 +1,90 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>밥픽 - 비밀번호 찾기</title>
+    <!-- 아이디 찾기와 디자인이 완전히 똑같으므로 만들어두신 find_id.css를 그대로 재활용합니다! -->
+    <link rel="stylesheet" href="{% static 'accounts/find_id.css' %}">
+</head>
+<body>
+
+    <div class="find-container">
+        <img src="{% static 'accounts/images/logo.png' %}" alt="밥픽 로고" class="logo-img">
+        <h1 class="title">비밀번호 찾기</h1>
+
+        <!-- 상황 3: 비밀번호 변경이 완벽하게 성공했을 때 -->
+        {% if success %}
+            <div class="result-box">
+                비밀번호가 성공적으로<br><br>
+                <strong>변경되었습니다.</strong><br><br>
+                새로운 비밀번호로 로그인해주세요.
+            </div>
+            <a href="{% url 'accounts:login' %}">
+                <button type="button" class="submit-btn">로그인 하러가기</button>
+            </a>
+
+        <!-- 상황 2: 신원 확인이 통과되어 새 비밀번호를 입력받을 때 -->
+        {% elif reset_mode %}
+            <form method="post" action="{% url 'accounts:find_pw' %}">
+                {% csrf_token %}
+                <!-- 뷰에서 step이 '2'라는 것을 알 수 있도록 숨겨서 보냅니다 -->
+                <input type="hidden" name="step" value="2">
+                <input type="hidden" name="verified_username" value="{{ verified_username }}">
+
+                <div class="input-group">
+                    <input type="password" name="new_password" placeholder="새 비밀번호 (8자 이상 영문/숫자 혼합)" autocomplete="new-password" required autofocus>
+                    <input type="password" name="new_password_confirm" placeholder="새 비밀번호 확인" autocomplete="new-password" required>
+                </div>
+
+                {% if errors.password %}
+                    <div class="error-msg">{{ errors.password }}</div>
+                {% endif %}
+
+                <button type="submit" class="submit-btn">비밀번호 변경하기</button>
+            </form>
+
+        <!-- 상황 1: 처음 화면에 들어와서 신원 확인을 할 때 -->
+        {% else %}
+            <form method="post" action="{% url 'accounts:find_pw' %}">
+                {% csrf_token %}
+                <!-- 뷰에서 step이 '1'이라는 것을 알 수 있도록 숨겨서 보냅니다 -->
+                <input type="hidden" name="step" value="1">
+                
+                <div class="input-group">
+                    <input type="text" name="username" value="{{ username|default:'' }}" placeholder="가입한 아이디" required autofocus>
+                    <input type="text" name="last_name" value="{{ last_name|default:'' }}" placeholder="성" required>
+                    <input type="text" name="first_name" value="{{ first_name|default:'' }}" placeholder="이름" required>
+                    <input type="email" name="email" value="{{ email|default:'' }}" placeholder="가입 시 입력한 이메일" required>
+                </div>
+                
+                <!-- 지난번처럼 핀셋 이모티콘을 사용해 친절한 안내 문구를 추가했습니다 -->
+                <div class="help-text" style="font-size: 12px; color: #8C756A; text-align: left; margin: -15px 5px 25px 5px; word-break: keep-all; line-height: 1.6;">
+                    📌 가입 시 입력하신 아이디, 이름, 이메일이 모두 일치해야 비밀번호를 재설정할 수 있습니다.
+                </div>
+
+                {% if errors.username %}
+                    <div class="error-msg">{{ errors.username }}</div>
+                {% endif %}
+                {% if errors.name %}
+                    <div class="error-msg">{{ errors.name }}</div>
+                {% endif %}
+                {% if errors.email %}
+                    <div class="error-msg">{{ errors.email }}</div>
+                {% endif %}
+                {% if errors.not_found %}
+                    <div class="error-msg">{{ errors.not_found }}</div>
+                {% endif %}
+
+                <button type="submit" class="submit-btn">다음 단계</button>
+            </form>
+            
+            <div class="bottom-links">
+                <a href="{% url 'accounts:login' %}">로그인</a> | 
+                <a href="{% url 'accounts:find_id' %}">아이디 찾기</a>
+            </div>
+        {% endif %}
+    </div>
+
+</body>
+</html>

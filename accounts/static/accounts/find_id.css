@@ -1,0 +1,131 @@
+body {
+    background-color: #FFF9F2; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100 vh;
+    margin: 0;
+    font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+}
+
+/* 아이디 찾기 메인 박스 */
+.find-container {
+    background-color: #ffffff;
+    width: 100%;
+    max-width: 460px;
+    padding: 50px 40px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(242, 133, 70, 0.1);
+    box-sizing: border-box;
+    text-align: center;
+}
+
+/* 밥픽 로고 이미지 */
+.logo-img {
+    width: 180px;
+    margin: 0 auto 20px auto;
+    display: block;
+}
+
+/* 제목 */
+.title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+    margin-top: 0;
+    margin-bottom: 30px;
+}
+
+/* 입력창 그룹 (테두리 묶음) */
+.input-group {
+    margin-bottom: 25px;
+    border: 1px solid #E5D5C5;
+    border-radius: 8px;
+    overflow: hidden;
+    text-align: left;
+}
+
+/* 입력창 내부 공통 스타일 */
+.input-group input {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-bottom: 1px solid #E5D5C5;
+    font-size: 15px;
+    box-sizing: border-box;
+    outline: none;
+    color: #4A3022;
+}
+
+/* 마지막 입력창 아래쪽 선 제거 */
+.input-group input:last-child {
+    border-bottom: none;
+}
+
+/* 입력창 클릭 시 배경색 변화 */
+.input-group input:focus {
+    background-color: #FFFDFB;
+}
+
+/* 확인/제출 버튼 */
+.submit-btn {
+    width: 100%;
+    padding: 16px;
+    background-color: #F37943;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-bottom: 20px;
+}
+
+.submit-btn:hover {
+    background-color: #DE632E;
+}
+
+/* 하단 링크 (로그인, 비밀번호 찾기) */
+.bottom-links {
+    font-size: 14px;
+}
+
+.bottom-links a {
+    color: #8C756A;
+    text-decoration: none;
+    margin: 0 10px;
+}
+
+.bottom-links a:hover {
+    color: #F37943;
+    text-decoration: underline;
+}
+
+/* 에러 메시지 */
+.error-msg {
+    color: #FF5A5A;
+    font-size: 13px;
+    margin: -15px 0 20px 5px;
+    text-align: left;
+}
+
+/* ------------------------------------- */
+/* 아이디 찾기 성공 시 나타날 결과 박스 디자인 */
+/* ------------------------------------- */
+.result-box {
+    background-color: #FFFDFB;
+    border: 2px solid #F37943;
+    border-radius: 8px;
+    padding: 30px 20px;
+    margin-bottom: 30px;
+    font-size: 16px;
+    color: #4A3022;
+    word-break: break-all; /* 아이디가 너무 길 경우 줄바꿈 처리 */
+}
+
+/* 결과 박스 안의 아이디 강조 텍스트 */
+.result-box strong {
+    color: #F37943;
+    font-size: 20px;
+}

@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}대시보드 · 메뉴 추천{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+
+    {# ── 좌측: 추천 + 필터 ───────────────────────────────── #}
+    <div class="col-lg-8">
+
+        {# 알러지 자동 제외 안내 #}
+        <div class="alert alert-warning d-flex align-items-center" role="alert">
+            <span class="me-2">⚠️</span>
+            <div>
+                {% if allergies %}
+                    등록하신 알러지
+                    {% for a in allergies %}<span class="badge text-bg-danger">{{ a.name }}</span>{% endfor %}
+                    가 포함된 메뉴는 <strong>자동으로 제외</strong>됩니다.
+                {% else %}
+                    등록된 알러지가 없습니다. 알러지가 있다면 프로필에서 등록하세요.
+                {% endif %}
+            </div>
+        </div>
+
+        {# 필터 + 끼니 토글 (GET 폼) #}
+        <form method="get" class="card card-body mb-4 shadow-sm">
+            <div class="row">
+                <div class="col-md-6 mb-3 mb-md-0">
+                    <label class="form-label fw-semibold">국가별</label>
+                    <div>
+                        {% for c in cuisines %}
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" name="cuisine"
+                                   value="{{ c.id }}" id="cuisine{{ c.id }}"
+                                   {% if c.id in selected_cuisines %}checked{% endif %}>
+                            <label class="form-check-label" for="cuisine{{ c.id }}">{{ c.name }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">코스별</label>
+                    <div>
+                        {% for co in courses %}
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" name="course"
+                                   value="{{ co.id }}" id="course{{ co.id }}"
+                                   {% if co.id in selected_courses %}checked{% endif %}>
+                            <label class="form-check-label" for="course{{ co.id }}">{{ co.name }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div class="btn-group" role="group" aria-label="끼니 선택">
+                    <button type="submit" name="meal" value="{{ meal_lunch }}"
+                            class="btn {% if meal_time == meal_lunch %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                        ☀️ 점심
+                    </button>
+                    <button type="submit" name="meal" value="{{ meal_dinner }}"
+                            class="btn {% if meal_time == meal_dinner %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                        🌙 저녁
+                    </button>
+                </div>
+                <button type="submit" name="meal" value="{{ meal_time }}" class="btn btn-success">
+                    🔄 다시 추천받기
+                </button>
+            </div>
+        </form>
+
+        {# 추천 카드 #}
+        <h4 class="mb-3">오늘의 {% if meal_time == meal_lunch %}점심{% else %}저녁{% endif %} 추천</h4>
+        {% if recommendations %}
+        <div class="row row-cols-1 row-cols-md-3 g-3">
+            {% for menu in recommendations %}
+            <div class="col">
+                <div class="card h-100 shadow-sm position-relative">
+                    {% if menu.image %}
+                    <img src="{{ menu.image.url }}" class="card-img-top" alt="{{ menu.name }}">
+                    {% else %}
+                    <div class="bg-light d-flex align-items-center justify-content-center"
+                         style="height:140px;font-size:2.5rem;">🍚</div>
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title mb-1">
+                            <a href="{% url 'menus:detail' menu.pk %}"
+                               class="text-decoration-none text-body stretched-link">{{ menu.name }}</a>
+                        </h5>
+                        <p class="mb-2">
+                            <span class="badge text-bg-secondary">{{ menu.cuisine.name }}</span>
+                            <span class="badge text-bg-light border">{{ menu.course.name }}</span>
+                            <span class="badge text-bg-info">{{ menu.get_meal_time_display }}</span>
+                        </p>
+                        {% if menu.description %}
+                        <p class="card-text small text-muted">{{ menu.description }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-secondary">
+            조건에 맞는 추천 메뉴가 없습니다. 필터를 줄여 보세요.
+            (알러지·최근 먹은 메뉴는 항상 제외됩니다.)
+        </div>
+        {% endif %}
+    </div>
+
+    {# ── 우측: 최근 먹은 음식 ────────────────────────────── #}
+    <div class="col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-header fw-semibold">최근 먹은 음식</div>
+            {% if recent_records %}
+            <ul class="list-group list-group-flush">
+                {% for r in recent_records %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <div>{{ r.menu.name }}</div>
+                        <small class="text-muted">{{ r.date }} · {{ r.get_meal_display }}</small>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <div class="card-body text-muted small">아직 기록된 식사가 없습니다.</div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}
