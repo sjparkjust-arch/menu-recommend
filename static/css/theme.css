@@ -1,0 +1,210 @@
+/* ==========================================================================
+   메뉴 추천 서비스 테마 — 따뜻하고 식욕을 돋우는 미식 톤 (프로페셔널)
+   Bootstrap 5.3 위에 얹는 커스텀 레이어. 색은 CSS 변수로 관리.
+   ========================================================================== */
+
+:root {
+    /* 브랜드 팔레트 */
+    --brand: #E8623D;          /* 토마토/테라코타 */
+    --brand-dark: #C64B2A;
+    --brand-soft: #FCEEE7;     /* 아주 옅은 배경 */
+    --accent: #E9A23B;         /* 허니 앰버 */
+    --ink: #2C2118;            /* 따뜻한 다크 브라운 (본문) */
+    --muted: #8C7E72;          /* 웜 그레이 */
+    --cream: #FBF6F0;          /* 배경 크림 */
+    --surface: #FFFFFF;
+    --line: #ECE1D6;           /* 경계선 */
+
+    /* Bootstrap 토큰 리매핑 → utility/badge/bg-primary/link 등에 반영 */
+    --bs-primary: var(--brand);
+    --bs-primary-rgb: 232, 98, 61;
+    --bs-secondary-rgb: 140, 126, 114;
+    --bs-info-rgb: 233, 162, 59;
+    --bs-success-rgb: 91, 140, 90;
+    --bs-body-color: var(--ink);
+    --bs-body-bg: var(--cream);
+    --bs-tertiary-bg: var(--cream);
+    --bs-border-color: var(--line);
+    --bs-link-color: var(--brand-dark);
+    --bs-link-hover-color: var(--brand);
+
+    /* 부드러운 그림자 */
+    --shadow-sm: 0 1px 2px rgba(44, 33, 24, .06), 0 3px 10px rgba(44, 33, 24, .05);
+    --shadow-md: 0 10px 26px rgba(44, 33, 24, .12);
+    --radius: .9rem;
+}
+
+body {
+    font-family: "Pretendard Variable", "Pretendard", system-ui, -apple-system, "Segoe UI", sans-serif;
+    background-color: var(--cream);
+    color: var(--ink);
+    letter-spacing: -0.01em;
+}
+
+main.container {
+    padding-top: 2rem;
+    padding-bottom: 3rem;
+}
+
+h1, h2, h3, h4, h5 {
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+}
+
+/* ===== Navbar ===== */
+.navbar.bg-primary {
+    background: linear-gradient(90deg, var(--brand) 0%, #F0865A 100%) !important;
+    box-shadow: var(--shadow-sm);
+}
+.navbar .navbar-brand { font-weight: 800; letter-spacing: -0.03em; }
+.navbar .nav-link { font-weight: 500; opacity: .92; }
+.navbar .nav-link:hover { opacity: 1; }
+.navbar > .container { flex-wrap: wrap; row-gap: .4rem; column-gap: .5rem; }
+
+/* ===== Cards ===== */
+.card {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+    transition: transform .18s ease, box-shadow .18s ease;
+    overflow: hidden;
+}
+.card.shadow-sm:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+}
+.card-body { padding: 1.15rem 1.2rem; }
+.card-header {
+    background: var(--brand-soft);
+    border-bottom: 1px solid var(--line);
+    font-weight: 700;
+    color: var(--brand-dark);
+}
+
+/* 카드 이미지 & 플레이스홀더 — 비율 통일 */
+.card-img-top {
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    width: 100%;
+}
+.card-img-placeholder,
+.detail-img-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    color: #D69A7B;
+    background:
+        radial-gradient(120% 120% at 28% 18%, #FDF2EA 0%, #F6DECC 68%, #EFCBB4 100%);
+}
+.card-img-placeholder { aspect-ratio: 4 / 3; font-size: 2.6rem; }
+.detail-img-placeholder {
+    aspect-ratio: 16 / 10;
+    font-size: 5rem;
+    border-radius: var(--radius);
+}
+.card-img-placeholder > *,
+.detail-img-placeholder > * { filter: saturate(.85); opacity: .9; }
+
+/* ===== Buttons — 알약형, 통일 ===== */
+.btn {
+    border-radius: 999px;
+    font-weight: 600;
+    padding-inline: 1.15rem;
+    transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease;
+}
+.btn-sm { padding-inline: .85rem; }
+.btn:active { transform: translateY(1px); }
+
+.btn-primary {
+    --bs-btn-bg: var(--brand);
+    --bs-btn-border-color: var(--brand);
+    --bs-btn-hover-bg: var(--brand-dark);
+    --bs-btn-hover-border-color: var(--brand-dark);
+    --bs-btn-active-bg: var(--brand-dark);
+    --bs-btn-active-border-color: var(--brand-dark);
+    --bs-btn-disabled-bg: var(--brand);
+    --bs-btn-disabled-border-color: var(--brand);
+    box-shadow: 0 3px 10px rgba(232, 98, 61, .28);
+}
+.btn-outline-primary {
+    --bs-btn-color: var(--brand-dark);
+    --bs-btn-border-color: var(--brand);
+    --bs-btn-hover-bg: var(--brand);
+    --bs-btn-hover-border-color: var(--brand);
+    --bs-btn-active-bg: var(--brand-dark);
+    --bs-btn-active-border-color: var(--brand-dark);
+}
+.btn-success {
+    --bs-btn-bg: #5B8C5A;
+    --bs-btn-border-color: #5B8C5A;
+    --bs-btn-hover-bg: #4d784c;
+    --bs-btn-hover-border-color: #4d784c;
+    --bs-btn-active-bg: #4d784c;
+}
+
+/* 좋아요 버튼: JS가 btn-danger ↔ btn-outline-danger 를 토글 → 두 상태 모두 스타일 */
+.btn-outline-danger {
+    --bs-btn-color: #D6455D;
+    --bs-btn-border-color: #E7B9C1;
+    --bs-btn-hover-bg: #D6455D;
+    --bs-btn-hover-border-color: #D6455D;
+}
+.btn-danger {
+    --bs-btn-bg: #D6455D;
+    --bs-btn-border-color: #D6455D;
+    --bs-btn-hover-bg: #bf3a50;
+    --bs-btn-hover-border-color: #bf3a50;
+}
+
+/* ===== Badges — 통일 ===== */
+.badge {
+    font-weight: 600;
+    padding: .42em .72em;
+    border-radius: 999px;
+    letter-spacing: -.01em;
+}
+.badge.text-bg-light {
+    color: var(--muted) !important;
+    background: #F4EDE4 !important;
+    border-color: var(--line) !important;
+}
+
+/* ===== Forms ===== */
+.form-control, .form-select {
+    border-radius: .6rem;
+    border-color: var(--line);
+}
+.form-control:focus, .form-select:focus, .form-check-input:focus {
+    border-color: var(--brand);
+    box-shadow: 0 0 0 .2rem rgba(232, 98, 61, .18);
+}
+.form-check-input:checked {
+    background-color: var(--brand);
+    border-color: var(--brand);
+}
+
+/* ===== Pagination ===== */
+.pagination {
+    --bs-pagination-color: var(--brand-dark);
+    --bs-pagination-hover-color: var(--brand-dark);
+    --bs-pagination-hover-bg: var(--brand-soft);
+    --bs-pagination-active-bg: var(--brand);
+    --bs-pagination-active-border-color: var(--brand);
+    --bs-pagination-focus-box-shadow: 0 0 0 .2rem rgba(232, 98, 61, .18);
+    --bs-pagination-border-color: var(--line);
+}
+
+/* ===== Alerts / Breadcrumb ===== */
+.alert { border-radius: var(--radius); }
+.breadcrumb a { color: var(--brand-dark); text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
+
+/* ===== 모바일 미세 조정 ===== */
+@media (max-width: 575.98px) {
+    main.container { padding-top: 1.25rem; }
+    .card-body { padding: 1rem; }
+    .detail-img-placeholder { font-size: 3.4rem; }
+}
