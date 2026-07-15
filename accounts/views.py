@@ -10,6 +10,7 @@ User = get_user_model()
 
 
 # Create your views here.
+
 def login_view(request):
     remembered_username = request.COOKIES.get('remembered_username', '')
     
@@ -154,7 +155,7 @@ def signup_view(request):
             email=email,
         )
 
-        return redirect(reverse('menus:dashboard'))
+        return redirect(reverse('accounts:login'))
 
     return render(request, 'accounts/signup.html')
 
@@ -279,7 +280,7 @@ def delete_account(request):
     if request.method == 'POST':
         user = request.user
         user.delete() # 데이터베이스에서 회원 정보 삭제
-        return redirect(reverse('menus:dashboard')) # 로그인 페이지로 리다이렉트
+        return redirect(reverse('accounts:login')) # 로그인 페이지로 리다이렉트
         
     return redirect(reverse('accounts:profile'))
 
