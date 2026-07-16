@@ -442,3 +442,33 @@ proxy_set_header X-Forwarded-Proto $scheme;
 - **Django는 마이그레이션을 파일 이름으로만 추적한다.** 이미 적용된 마이그레이션 파일의 내용을 나중에 바꿔치기하면, 실제 DB는 안 바뀌는데 `makemigrations --check`는 "변경 없음"이라고 속인다. 스키마를 바꾸려면 반드시 새 마이그레이션(또는 `migrate zero` 후 재적용)을 거쳐야 한다.
 - **다른 사람이 만든 앱과 연동하는 코드는 그 앱의 실제 모델 필드를 먼저 확인하고 짠다.** 이름만 그럴듯하게 맞춰 짜면(`menu_id`, `date`) 나중에 실제 스키마와 어긋난다.
 - `manage.py check`/`makemigrations --check`가 통과해도 **실제 DB 컬럼과 일치한다는 보장은 없다** — `dbshell`로 실제 테이블 구조를 직접 봐야 확신할 수 있다.
+
+---
+
+## [2026-07-15 | theme.css를 아무리 collectstatic해도 사이트에 반영이 안 됨]
+
+**증상**
+- `static/css/theme.css`를 수정하고 `collectstatic` → gunicorn 재시작까지 했는데도 실제 사이트 색상이 안 바뀜.
+
+**시도한 것 (원인 추적 과정)**
+1. `staticfiles/css/theme.css`가 실제로 있는지 확인 → **아예 없었다.** `find staticfiles -maxdepth 2`로 보니 `staticfiles/accounts/`, `staticfiles/records/`, `staticfiles/admin/`만 있고 `staticfiles/css/`가 없음.
+2. 실 서버에 직접 확인:
+   ```
+   curl -sk https://192.168.32.74/static/css/theme.css → 404
+   ```
+3. `config/settings.py`에서 `STATICFILES_DIRS`를 검색 → **아예 정의돼 있지 않았다.** `STATIC_URL`/`STATIC_ROOT`만 있음.
+
+**원인**
+- Django의 `collectstatic`은 (1) 각 앱 자체의 `<app>/static/` 폴더(`AppDirectoriesFinder`, 자동 인식)와 (2) `STATICFILES_DIRS`에 등록된 경로(`FileSystemFinder`)만 수집한다.
+- `accounts/static/`, `records/static/`은 앱 폴더라 자동으로 수집됐지만, 프로젝트 루트의 공용 `static/`(theme.css가 있는 곳)은 `STATICFILES_DIRS`에 등록된 적이 없어서 **`collectstatic`이 존재 자체를 몰랐다.** 즉 `collectstatic`을 몇 번을 다시 돌려도 절대 복사될 수 없는 상태였다 — theme.css는 만들어진 시점부터 이번에 고치기 전까지 실제 서버에 한 번도 반영된 적이 없었다.
+
+**해결**
+```python
+# config/settings.py
+STATICFILES_DIRS = [BASE_DIR / 'static']
+```
+추가 후 `python manage.py collectstatic --noinput` → `staticfiles/css/theme.css` 생성 확인, `curl`로 실제 200 + 새 색상 값까지 확인.
+
+**배운 것**
+- **`collectstatic`이 "성공"(에러 없이 끝남)해도 원하는 파일이 실제로 복사됐는지는 보장하지 않는다.** 앱 폴더 밖(`static/` 프로젝트 루트)에 정적 파일을 두려면 `STATICFILES_DIRS`를 반드시 등록해야 하고, 등록 안 해도 `collectstatic`은 조용히 그 파일을 건너뛸 뿐 에러를 내지 않는다.
+- CSS/정적 파일이 "안 바뀐다"는 증상이 나오면 브라우저 캐시부터 의심하기 쉽지만, **`staticfiles/`에 파일이 실제로 존재하는지, `curl`로 실제 200이 오는지부터 먼저 확인**한다(이번처럼 애초에 파일 자체가 없는 경우가 있다).

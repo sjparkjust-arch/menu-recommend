@@ -1,24 +1,27 @@
 /* ==========================================================================
-   메뉴 추천 서비스 테마 — 따뜻하고 식욕을 돋우는 미식 톤 (프로페셔널)
+   메뉴 추천 서비스 테마 — 피치 배경 + 오렌지 포인트 + 다크 브라운 네비바
+   (참고: dongbangfood.com — 살구/피치 배경, 다크 에스프레소 브라운 네비게이션,
+   비비드 오렌지 포인트, 굵은 임팩트 헤드라인 타이포)
    Bootstrap 5.3 위에 얹는 커스텀 레이어. 색은 CSS 변수로 관리.
    ========================================================================== */
 
 :root {
-    /* 브랜드 팔레트 */
-    --brand: #E8623D;          /* 토마토/테라코타 */
-    --brand-dark: #C64B2A;
-    --brand-soft: #FCEEE7;     /* 아주 옅은 배경 */
+    /* 브랜드 팔레트 — accounts 페이지(로그인/회원가입)의 오렌지와 통일 */
+    --brand: #F36235;          /* 오렌지 */
+    --brand-dark: #DE632E;
+    --brand-soft: #FDEEE5;     /* 아주 옅은 배경 */
     --accent: #E9A23B;         /* 허니 앰버 */
-    --ink: #2C2118;            /* 따뜻한 다크 브라운 (본문) */
-    --muted: #8C7E72;          /* 웜 그레이 */
-    --cream: #FBF6F0;          /* 배경 크림 */
+    --ink: #2B1B12;            /* 다크 에스프레소 브라운 (본문·네비바) */
+    --muted: #8C7568;          /* 웜 브라운 그레이 */
+    --cream: #F8DFC4;          /* 배경 피치/살구 */
     --surface: #FFFFFF;
-    --line: #ECE1D6;           /* 경계선 */
+    --line: #EAD9C4;           /* 경계선 */
+    --display-font: "Black Han Sans", "Pretendard Variable", sans-serif;
 
     /* Bootstrap 토큰 리매핑 → utility/badge/bg-primary/link 등에 반영 */
     --bs-primary: var(--brand);
-    --bs-primary-rgb: 232, 98, 61;
-    --bs-secondary-rgb: 140, 126, 114;
+    --bs-primary-rgb: 243, 98, 53;
+    --bs-secondary-rgb: 140, 117, 104;
     --bs-info-rgb: 233, 162, 59;
     --bs-success-rgb: 91, 140, 90;
     --bs-body-color: var(--ink);
@@ -28,10 +31,10 @@
     --bs-link-color: var(--brand-dark);
     --bs-link-hover-color: var(--brand);
 
-    /* 부드러운 그림자 */
-    --shadow-sm: 0 1px 2px rgba(44, 33, 24, .06), 0 3px 10px rgba(44, 33, 24, .05);
-    --shadow-md: 0 10px 26px rgba(44, 33, 24, .12);
-    --radius: .9rem;
+    /* 미니멀한 그림자 (기존보다 옅고 절제됨) */
+    --shadow-sm: 0 1px 2px rgba(43, 27, 18, .05), 0 2px 8px rgba(43, 27, 18, .05);
+    --shadow-md: 0 8px 20px rgba(43, 27, 18, .1);
+    --radius: .75rem;
 }
 
 body {
@@ -42,24 +45,54 @@ body {
 }
 
 main.container {
-    padding-top: 2rem;
-    padding-bottom: 3rem;
+    padding-top: 2.5rem;
+    padding-bottom: 3.5rem;
 }
 
-h1, h2, h3, h4, h5 {
+h1, h2, h3, h4 {
+    font-family: var(--display-font);
+    font-weight: 400; /* Black Han Sans 자체가 두꺼운 단일 굵기 */
+    color: var(--ink);
+    letter-spacing: -0.01em;
+}
+h5 {
     font-weight: 700;
     color: var(--ink);
     letter-spacing: -0.02em;
 }
 
-/* ===== Navbar ===== */
+/* 대시보드 섹션 제목 위 점선+라벨 (동방푸드 히어로 참고) */
+.eyebrow-label {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    color: var(--brand-dark);
+    font-weight: 700;
+    font-size: .85rem;
+    letter-spacing: .02em;
+    margin-bottom: .35rem;
+}
+.eyebrow-label::before,
+.eyebrow-label::after {
+    content: "";
+    flex: 1 1 auto;
+    border-top: 1px dashed var(--brand);
+    opacity: .55;
+}
+
+/* ===== Navbar — 다크 에스프레소 브라운 (동방푸드 참고) ===== */
 .navbar.bg-primary {
-    background: linear-gradient(90deg, var(--brand) 0%, #F0865A 100%) !important;
+    background: var(--ink) !important;
     box-shadow: var(--shadow-sm);
 }
-.navbar .navbar-brand { font-weight: 800; letter-spacing: -0.03em; }
+.navbar .navbar-brand {
+    font-family: var(--display-font);
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    color: var(--brand) !important;
+}
 .navbar .nav-link { font-weight: 500; opacity: .92; }
-.navbar .nav-link:hover { opacity: 1; }
+.navbar .nav-link:hover { opacity: 1; color: var(--brand) !important; }
 .navbar > .container { flex-wrap: wrap; row-gap: .4rem; column-gap: .5rem; }
 
 /* ===== Cards ===== */
@@ -127,7 +160,7 @@ h1, h2, h3, h4, h5 {
     --bs-btn-active-border-color: var(--brand-dark);
     --bs-btn-disabled-bg: var(--brand);
     --bs-btn-disabled-border-color: var(--brand);
-    box-shadow: 0 3px 10px rgba(232, 98, 61, .28);
+    box-shadow: 0 3px 10px rgba(243, 98, 53, .24);
 }
 .btn-outline-primary {
     --bs-btn-color: var(--brand-dark);
@@ -179,7 +212,7 @@ h1, h2, h3, h4, h5 {
 }
 .form-control:focus, .form-select:focus, .form-check-input:focus {
     border-color: var(--brand);
-    box-shadow: 0 0 0 .2rem rgba(232, 98, 61, .18);
+    box-shadow: 0 0 0 .2rem rgba(243, 98, 53, .16);
 }
 .form-check-input:checked {
     background-color: var(--brand);
@@ -193,7 +226,7 @@ h1, h2, h3, h4, h5 {
     --bs-pagination-hover-bg: var(--brand-soft);
     --bs-pagination-active-bg: var(--brand);
     --bs-pagination-active-border-color: var(--brand);
-    --bs-pagination-focus-box-shadow: 0 0 0 .2rem rgba(232, 98, 61, .18);
+    --bs-pagination-focus-box-shadow: 0 0 0 .2rem rgba(243, 98, 53, .16);
     --bs-pagination-border-color: var(--line);
 }
 

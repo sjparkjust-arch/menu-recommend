@@ -64,6 +64,7 @@
         </form>
 
         {# 추천 카드 #}
+        <div class="eyebrow-label">오늘의 메뉴</div>
         <h4 class="mb-3">오늘의 {% if meal_time == meal_lunch %}점심{% else %}저녁{% endif %} 추천</h4>
         {% if recommendations %}
         <div class="row row-cols-1 row-cols-md-3 g-3">
@@ -102,7 +103,8 @@
         {% endif %}
 
         {# 디저트 추천 카드 #}
-        <h4 class="mb-3 mt-4">오늘의 디저트 추천</h4>
+        <div class="eyebrow-label mt-4">달콤하게 마무리</div>
+        <h4 class="mb-3">오늘의 디저트 추천</h4>
         {% if dessert_recommendations %}
         <div class="row row-cols-1 row-cols-md-3 g-3">
             {% for menu in dessert_recommendations %}
