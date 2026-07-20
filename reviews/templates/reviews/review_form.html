@@ -75,7 +75,7 @@
                 <button type="submit" class="btn btn-primary">
                     {% if form.instance.pk %}수정{% else %}등록{% endif %}
                 </button>
-                <a href="{% url 'reviews:list' %}" class="btn btn-outline-secondary">취소</a>
+                <a href="{% url 'reviews:review_list' %}" class="btn btn-outline-secondary">취소</a>
             </div>
         </form>
     </div>

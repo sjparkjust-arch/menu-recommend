@@ -41,6 +41,14 @@
         {% if search %}
         <a href="?sort={{ sort }}{% if review_type %}&type={{ review_type }}{% endif %}" class="btn btn-outline-secondary">초기화</a>
         {% endif %}
+        <div class="d-flex justify-content-end mb-3">
+        <div class="d-flex justify-content-end mb-3">
+    <a href="{% url 'reviews:review_create_general' %}" class="btn btn-primary" style="background-color: #ff6b4a; border: none;">
+        ✏️ 후기 작성하기
+    </a>
+</div>
+
+</div>
     </div>
 </form>
 

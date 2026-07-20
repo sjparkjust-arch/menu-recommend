@@ -4,19 +4,19 @@ from .models import Review
 class ReviewForm(forms.ModelForm):
     class Meta:
         model = Review
-        # 팀원의 템플릿 업데이트에 맞춰 review_type 구조를 채택합니다.
+        # review_type(카테고리 라디오 버튼) 구조를 온전히 유지합니다.
         fields = ['review_type', 'rating', 'content', 'image']
         widgets = {
             'review_type': forms.RadioSelect(attrs={'class': 'form-check-input'}),
-            'rating': forms.NumberInput(attrs={'min': 1, 'max': 5}),
+            'rating': forms.NumberInput(attrs={'min': 1, 'max': 5, 'class': 'form-control'}),
             'content': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 4,
-                'placeholder': '메뉴는 어떠셨나요?',
+                'placeholder': '메뉴나 음식점은 어떠셨나요?',
             }),
             'image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
-
+        
 class ReviewGeneralForm(forms.ModelForm):
     """메뉴 선택이 포함된 폼"""
     class Meta:

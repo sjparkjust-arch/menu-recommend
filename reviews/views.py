@@ -5,12 +5,13 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
-
+from django.urls import reverse_lazy
 from menus.models import Menu
 from reviews import services
 from reviews.forms import ReviewForm
 from reviews.mixins import OwnerOnlyMixin
 from reviews.models import Review, ReviewLike
+from django import forms
 
 PAGE_SIZE = 10
 
@@ -112,3 +113,30 @@ def like_toggle(request, pk):
         'liked': created,
         'like_count': review.likes.count(),
     })
+
+class ReviewCreateGeneralView(LoginRequiredMixin, CreateView):
+    """후기 게시판에서 바로 작성하는 뷰. 메뉴와 카테고리를 직접 선택합니다."""
+    
+    model = Review
+    # 팀원의 라디오 버튼 형식을 지원하기 위해, form.py에 정의된 일반 폼을 사용하거나 
+    # 아래 3번 단계에서 정의할 확장된 ReviewForm을 매핑합니다.
+    form_class = ReviewForm
+    template_name = 'reviews/review_form.html'
+    success_url = reverse_lazy('reviews:review_list') # 작성 완료 후 후기 목록으로 이동
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        # 게시판에서 바로 쓸 때는 어떤 메뉴에 대한 후기인지 골라야 하므로 
+        # 폼 필드에 'menu'를 동적으로 추가해 줍니다.
+        from menus.models import Menu
+        form.fields['menu'] = forms.ModelChoiceField(
+            queryset=Menu.objects.all(),
+            widget=forms.Select(attrs={'class': 'form-select'}),
+            label="메뉴 선택"
+        )
+        return form
+
+    def form_valid(self, form):
+        # 현재 로그인한 사용자를 작성자로 주입합니다.
+        form.instance.user = self.request.user
+        return super().form_valid(form)
