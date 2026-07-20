@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}랭킹 · 메뉴 추천{% endblock %}
+
+{% block content %}
+<div class="eyebrow-label">후기 평점 TOP {{ menus|length }}</div>
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h3 class="mb-0">메뉴 랭킹</h3>
+    <div class="btn-group" role="group" aria-label="기간">
+        <a href="?" class="btn btn-sm {% if not period %}btn-primary{% else %}btn-outline-primary{% endif %}">전체</a>
+        <a href="?period=today" class="btn btn-sm {% if period == 'today' %}btn-primary{% else %}btn-outline-primary{% endif %}">오늘</a>
+        <a href="?period=week" class="btn btn-sm {% if period == 'week' %}btn-primary{% else %}btn-outline-primary{% endif %}">이번주</a>
+        <a href="?period=month" class="btn btn-sm {% if period == 'month' %}btn-primary{% else %}btn-outline-primary{% endif %}">이번달</a>
+    </div>
+</div>
+
+{% if menus %}
+<div class="list-group">
+    {% for menu in menus %}
+    <div class="list-group-item d-flex align-items-center gap-3 py-3">
+        <span class="ranking-rank {% if forloop.counter <= 3 %}ranking-rank-top{% endif %}">
+            {{ forloop.counter }}
+        </span>
+        <div class="flex-grow-1">
+            <a href="{% url 'menus:detail' menu.pk %}" class="text-decoration-none text-body fw-semibold">
+                {{ menu.name }}
+            </a>
+            <div class="mt-1">
+                <span class="badge text-bg-secondary">{{ menu.cuisine.name }}</span>
+                <span class="badge text-bg-light border">{{ menu.course.name }}</span>
+            </div>
+        </div>
+        <div class="text-end">
+            <div class="fw-semibold">⭐ {{ menu.avg_rating|floatformat:1 }}</div>
+            <div class="small text-muted">후기 {{ menu.review_count }}개</div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-secondary">
+    {% if period %}이 기간에는 후기가 달린 메뉴가 없습니다.{% else %}아직 후기가 달린 메뉴가 없습니다.{% endif %}
+</div>
+{% endif %}
+{% endblock %}

@@ -442,3 +442,67 @@ proxy_set_header X-Forwarded-Proto $scheme;
 - **Django는 마이그레이션을 파일 이름으로만 추적한다.** 이미 적용된 마이그레이션 파일의 내용을 나중에 바꿔치기하면, 실제 DB는 안 바뀌는데 `makemigrations --check`는 "변경 없음"이라고 속인다. 스키마를 바꾸려면 반드시 새 마이그레이션(또는 `migrate zero` 후 재적용)을 거쳐야 한다.
 - **다른 사람이 만든 앱과 연동하는 코드는 그 앱의 실제 모델 필드를 먼저 확인하고 짠다.** 이름만 그럴듯하게 맞춰 짜면(`menu_id`, `date`) 나중에 실제 스키마와 어긋난다.
 - `manage.py check`/`makemigrations --check`가 통과해도 **실제 DB 컬럼과 일치한다는 보장은 없다** — `dbshell`로 실제 테이블 구조를 직접 봐야 확신할 수 있다.
+
+---
+
+## [2026-07-15 | theme.css를 아무리 collectstatic해도 사이트에 반영이 안 됨]
+
+**증상**
+- `static/css/theme.css`를 수정하고 `collectstatic` → gunicorn 재시작까지 했는데도 실제 사이트 색상이 안 바뀜.
+
+**시도한 것 (원인 추적 과정)**
+1. `staticfiles/css/theme.css`가 실제로 있는지 확인 → **아예 없었다.** `find staticfiles -maxdepth 2`로 보니 `staticfiles/accounts/`, `staticfiles/records/`, `staticfiles/admin/`만 있고 `staticfiles/css/`가 없음.
+2. 실 서버에 직접 확인:
+   ```
+   curl -sk https://192.168.32.74/static/css/theme.css → 404
+   ```
+3. `config/settings.py`에서 `STATICFILES_DIRS`를 검색 → **아예 정의돼 있지 않았다.** `STATIC_URL`/`STATIC_ROOT`만 있음.
+
+**원인**
+- Django의 `collectstatic`은 (1) 각 앱 자체의 `<app>/static/` 폴더(`AppDirectoriesFinder`, 자동 인식)와 (2) `STATICFILES_DIRS`에 등록된 경로(`FileSystemFinder`)만 수집한다.
+- `accounts/static/`, `records/static/`은 앱 폴더라 자동으로 수집됐지만, 프로젝트 루트의 공용 `static/`(theme.css가 있는 곳)은 `STATICFILES_DIRS`에 등록된 적이 없어서 **`collectstatic`이 존재 자체를 몰랐다.** 즉 `collectstatic`을 몇 번을 다시 돌려도 절대 복사될 수 없는 상태였다 — theme.css는 만들어진 시점부터 이번에 고치기 전까지 실제 서버에 한 번도 반영된 적이 없었다.
+
+**해결**
+```python
+# config/settings.py
+STATICFILES_DIRS = [BASE_DIR / 'static']
+```
+추가 후 `python manage.py collectstatic --noinput` → `staticfiles/css/theme.css` 생성 확인, `curl`로 실제 200 + 새 색상 값까지 확인.
+
+**배운 것**
+- **`collectstatic`이 "성공"(에러 없이 끝남)해도 원하는 파일이 실제로 복사됐는지는 보장하지 않는다.** 앱 폴더 밖(`static/` 프로젝트 루트)에 정적 파일을 두려면 `STATICFILES_DIRS`를 반드시 등록해야 하고, 등록 안 해도 `collectstatic`은 조용히 그 파일을 건너뛸 뿐 에러를 내지 않는다.
+- CSS/정적 파일이 "안 바뀐다"는 증상이 나오면 브라우저 캐시부터 의심하기 쉽지만, **`staticfiles/`에 파일이 실제로 존재하는지, `curl`로 실제 200이 오는지부터 먼저 확인**한다(이번처럼 애초에 파일 자체가 없는 경우가 있다).
+
+## [2026-07-16 | 달력이 항상 비어 보임 — created_at__month 필터가 0건 반환]
+
+**증상**
+- 대시보드 "최근 먹은 음식" 달력에 식사 기록이 하나도 안 뜸. 분명히 이번 달(2026-07)에 기록이 있는데 달력은 비어 있음.
+
+**시도한 것 (원인 추적 과정)**
+1. `records.services.meal_calendar()`가 `total: 0`, `records_by_day: {}`를 반환하는 걸 shell에서 확인.
+2. 기록 자체는 있나 확인 → `MealRecord.objects.filter(user=u)` 2건 존재, `created_at`는 `2026-07-16 06:53 UTC`(localtime `2026-07-16 15:53 KST`). 이번 달 맞음.
+3. 필터를 쪼개서 확인:
+   ```
+   filter(created_at__year=2026)            → 2건
+   filter(created_at__month=7)              → 0건   ← 여기!
+   filter(created_at__year=2026, __month=7) → 0건
+   filter(created_at__date='2026-07-16')    → 0건
+   ```
+   `__year`는 되는데 `__month`/`__date`만 0건.
+
+**원인**
+- `USE_TZ=True`, `TIME_ZONE='Asia/Seoul'`일 때 Django의 `__month`/`__day`/`__date` 룩업은 컬럼을 `CONVERT_TZ(created_at, 'UTC', 'Asia/Seoul')`로 감싼다. **MariaDB에 시간대(timezone) 테이블이 적재돼 있지 않으면 `CONVERT_TZ`가 NULL을 반환**해서 조건이 아무것도 매칭하지 않는다. 반면 `__year`는 내부적으로 파이썬에서 계산한 연 시작~끝 BETWEEN 범위 비교라 `CONVERT_TZ`를 안 써서 정상 동작한다. (`created_at__gte=since` 같은 범위 비교도 안전.)
+
+**해결**
+- `meal_calendar()`에서 `created_at__year`/`__month` 대신 로컬 기준 한 달 구간을 datetime 범위로 필터:
+  ```python
+  month_start = timezone.make_aware(datetime(year, month, 1))
+  month_end   = timezone.make_aware(datetime(next_year, next_month, 1))
+  MealRecord.objects.filter(created_at__gte=month_start, created_at__lt=month_end)
+  ```
+  범위 비교라 `CONVERT_TZ` 없이 동작 → 시간대 테이블 적재 여부와 무관하게 안전.
+- (근본 해결책은 MariaDB에 `mysql_tzinfo_to_sql`로 시간대 테이블을 적재하는 것이지만, DB 서버 관리 작업이라 코드 쪽에서 범위 필터로 우회.)
+
+**배운 것**
+- `USE_TZ=True` + MySQL/MariaDB에서 **`__month`/`__day`/`__date`/`__week_day` 룩업은 시간대 테이블이 없으면 조용히 0건**을 낸다(에러도 없음). 날짜 부분 추출 대신 **datetime 범위 비교(`__gte`/`__lt`)로 쓰는 게 안전**하다.
+- "필터가 0건"일 때 `__year`만 따로 떼서 되는지 보면 시간대 변환 문제인지 금방 갈린다.

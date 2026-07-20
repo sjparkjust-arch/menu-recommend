@@ -34,7 +34,15 @@
 
     {# 정보 #}
     <div class="col-md-7">
-        <h3 class="mb-2">{{ menu.name }}</h3>
+        <div class="d-flex justify-content-between align-items-start mb-2">
+            <h3 class="mb-0">{{ menu.name }}</h3>
+            <button type="button"
+                    class="btn btn-sm like-btn {% if menu_liked %}btn-danger{% else %}btn-outline-danger{% endif %}"
+                    data-url="{% url 'menus:like' menu.pk %}"
+                    {% if not user.is_authenticated %}data-login-required="1"{% endif %}>
+                ♥ <span class="like-count">{{ menu.like_count }}</span>
+            </button>
+        </div>
         <div class="mb-3">
             <span class="badge text-bg-secondary">{{ menu.cuisine.name }}</span>
             <span class="badge text-bg-light border">{{ menu.course.name }}</span>

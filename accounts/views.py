@@ -5,11 +5,15 @@ from django.contrib.auth import get_user_model, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login as auth_login
 from records.models import MealRecord
+from records import services as record_services
+from reviews import services as review_services
 
 User = get_user_model()
 
 
 # Create your views here.
+def index(request):
+    return render(request, 'accounts/index.html')
 
 def login_view(request):
     remembered_username = request.COOKIES.get('remembered_username', '')
@@ -89,6 +93,9 @@ def logout_view(request):
     logout(request)
     return redirect(reverse('menus:dashboard'))
 
+#@login_required(login_url='accounts:login')
+def profile(request):
+    return render(request, 'accounts/profile.html')
 
 def signup_view(request):
     if request.method == 'POST':
@@ -120,8 +127,6 @@ def signup_view(request):
         # re.search를 사용해 영어 알파벳(a-z, A-Z)과 숫자(0-9)가 각각 하나라도 있는지 확인합니다.
         elif not (re.search(r'[a-zA-Z]', password1) and re.search(r'[0-9]', password1)):
             errors['password1'] = '비밀번호는 영문과 숫자를 모두 포함해야 합니다.'
-        elif not re.match(r'^[a-zA-Z0-9]+$', password1):
-            errors['password1'] = '비밀번호는 영문(소문자/대문자)과 숫자만 사용할 수 있습니다.'
 
         # 비밀번호 확인 검증
         if not password2:
@@ -152,7 +157,7 @@ def signup_view(request):
             email=email,
         )
 
-        return redirect(reverse('accounts:login'))
+        return render(request, 'accounts/signup.html', {'signup_success': True})
 
     return render(request, 'accounts/signup.html')
 
@@ -286,18 +291,20 @@ def delete_account_confirm(request):
     # 회원탈퇴 확인 페이지 (GET)
     return render(request, 'accounts/delete_confirm.html')
 
-
-@login_required(login_url='accounts:login')
+@login_required
 def profile(request):
-    # 1. 로그인한 사용자가 좋아요(하트) 표시한 메뉴들을 가져옵니다.
-    liked_menus = request.user.liked_menus.all()
-    
-    # 2. 최근 사용자가 기록한 식사 내역 (최대 5개)
-    meal_records = request.user.meal_records.order_by('-created_at')[:5]
+    # 로그인한 사용자의 식사 기록 중 최신 5개만 가져옵니다.
+    # records모델에서 데이터를 가져옴
+    recent_records = MealRecord.objects.filter(user=request.user).order_by('-created_at')[:5]
+
+    recent_viewed_reviews = review_services.recently_viewed_reviews(request.user, limit=5)
 
     context = {
-        'liked_menus': liked_menus,
-        'meal_records': meal_records,
+        'meal_records': recent_records, # 템플릿의 {% for record in meal_records %} 와 매핑됩니다. / # 여기에 식사 기록 데이터 바인딩
+        'my_allergies': request.user.allergies.all(),
+        'my_preferences': request.user.preferences.select_related('cuisine').order_by('-score'),
+        'recent_viewed_reviews': recent_viewed_reviews,
+        'liked_ids': review_services.liked_review_ids(request.user, recent_viewed_reviews),
+        'food_stats': record_services.food_count_stats(request.user),
     }
-    # 기존에 사용하시던 profile.html 템플릿으로 데이터를 확실하게 밀어줍니다!
     return render(request, 'accounts/profile.html', context)

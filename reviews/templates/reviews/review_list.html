@@ -1,56 +1,67 @@
 {% extends "base.html" %}
-{% load static %}
+
+{% block title %}후기 · 메뉴 추천{% endblock %}
 
 {% block content %}
-<!-- 리뷰 게시판 상단 컨트롤 박스 -->
-<div class="card mb-4 shadow-sm" style="border: 1px solid var(--line); border-radius: var(--radius);">
-    <div class="card-body d-flex flex-wrap align-items-center justify-content-between p-3 gap-3">
-        
-        <!-- [좌측] 1. 후기 타이틀 및 2. 말머리 필터 -->
-        <div class="d-flex align-items-center gap-3">
-            <h4 class="mb-0 fw-bold" style="color: var(--brand);">후기</h4>
-            
-            <div class="btn-group" role="group">
-                <a href="?category=&q={{ q }}&sort={{ sort }}" class="btn {% if not current_category %}btn-primary{% else %}btn-outline-primary{% endif %} btn-sm">전체</a>
-                <a href="?category=RESTAURANT&q={{ q }}&sort={{ sort }}" class="btn {% if current_category == 'RESTAURANT' %}btn-primary{% else %}btn-outline-primary{% endif %} btn-sm">맛집후기</a>
-                <a href="?category=FOOD&q={{ q }}&sort={{ sort }}" class="btn {% if current_category == 'FOOD' %}btn-primary{% else %}btn-outline-primary{% endif %} btn-sm">음식후기</a>
-            </div>
-        </div>
-
-        <!-- 중앙 공백은 justify-content-between 으로 자동 생성됨 -->
-
-        <!-- [우측] 3. 검색창, 4. 정렬 버튼, 5. 글쓰기 버튼 (여백 추가) -->
-        <div class="d-flex align-items-center flex-wrap">
-            
-            <!-- 검색 폼 (우측에 me-3 여백 추가) -->
-            <form method="GET" action="{% url 'reviews:list' %}" class="d-flex mb-0 align-items-center me-3">
-                <input type="hidden" name="category" value="{{ current_category }}">
-                <input type="hidden" name="sort" value="{{ sort }}">
-                
-                <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm search-input me-2" placeholder="제목/내용 검색" style="width: 160px;">
-                <button type="submit" class="btn btn-search btn-sm">검색</button>
-            </form>
-
-            <!-- 정렬 버튼 (우측에 me-3 여백 추가) -->
-            <div class="btn-group me-3">
-                <a href="?category={{ current_category }}&q={{ q }}&sort=latest" class="btn {% if sort == 'latest' %}btn-primary{% else %}btn-outline-primary{% endif %} btn-sm">최신순</a>
-                <a href="?category={{ current_category }}&q={{ q }}&sort=likes" class="btn {% if sort == 'likes' %}btn-primary{% else %}btn-outline-primary{% endif %} btn-sm">좋아요순</a>
-            </div>
-
-            <!-- 글쓰기 버튼 (새로운 범용 글쓰기 주소로 연결) -->
-            <a href="{% url 'reviews:create_general' %}" class="btn btn-success btn-sm">✏️ 글쓰기</a>
-        </div>
-
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h3 class="mb-0">후기</h3>
+    <div class="btn-group" role="group" aria-label="정렬">
+        <a href="?sort=latest{% if search %}&q={{ search|urlencode }}{% endif %}"
+           class="btn btn-sm {% if sort == 'latest' %}btn-primary{% else %}btn-outline-primary{% endif %}">최신순</a>
+        <a href="?sort=likes{% if search %}&q={{ search|urlencode }}{% endif %}"
+           class="btn btn-sm {% if sort == 'likes' %}btn-primary{% else %}btn-outline-primary{% endif %}">좋아요순</a>
     </div>
 </div>
 
-<!-- 여기에 리뷰 리스트 출력 코드 (반복문) 배치 -->
-<!-- 예시: 
-{% for review in reviews %}
-    <div>[{{ review.get_category_display }}] {{ review.title }} - 별점: {{ review.rating }}</div>
-{% empty %}
-    <div class="alert empty-alert">아직 등록된 후기가 없습니다.</div>
-{% endfor %} 
--->
+{# 메뉴 이름/후기 내용 검색 (GET, 정렬 유지) #}
+<form method="get" class="d-flex gap-2 mb-3">
+    <input type="hidden" name="sort" value="{{ sort }}">
+    <input type="text" name="q" value="{{ search }}" class="form-control"
+           placeholder="메뉴 이름이나 후기 내용으로 검색">
+    <button type="submit" class="btn btn-primary px-4">검색</button>
+    {% if search %}
+    <a href="?sort={{ sort }}" class="btn btn-outline-secondary">초기화</a>
+    {% endif %}
+</form>
 
+{# 좋아요 AJAX용 CSRF 쿠키 보장 #}
+{% csrf_token %}
+
+{% if page_obj.object_list %}
+    {% for review in page_obj %}
+        {% include "reviews/_review_item.html" with show_menu=True %}
+    {% endfor %}
+
+    {% if page_obj.has_other_pages %}
+    <nav class="mt-4" aria-label="후기 페이지">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&sort={{ sort }}{% if search %}&q={{ search|urlencode }}{% endif %}">이전</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">이전</span></li>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+            <li class="page-item {% if num == page_obj.number %}active{% endif %}">
+                <a class="page-link" href="?page={{ num }}&sort={{ sort }}{% if search %}&q={{ search|urlencode }}{% endif %}">{{ num }}</a>
+            </li>
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}&sort={{ sort }}{% if search %}&q={{ search|urlencode }}{% endif %}">다음</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">다음</span></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+{% else %}
+    <div class="alert alert-secondary">
+        {% if search %}"{{ search }}"에 대한 검색 결과가 없습니다.{% else %}아직 후기가 없습니다.{% endif %}
+    </div>
+{% endif %}
 {% endblock %}
+
+{% block extra_js %}{% include "reviews/_like_script.html" %}{% endblock %}
