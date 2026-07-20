@@ -5,11 +5,27 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-7">
-        <h4 class="mb-3">{{ menu.name }} · 후기 {% if form.instance.pk %}수정{% else %}작성{% endif %}</h4>
+        <h4 class="mb-3">{{ menu.name }} 후기 {% if form.instance.pk %}수정{% else %}작성{% endif %}</h4>
 
+      
         <form method="post" enctype="multipart/form-data" class="card card-body shadow-sm">
             {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label fw-semibold" for="{{ form.category.id_for_label }}">말머리</label>
+                {{ form.category }}
+                {% if form.category.errors %}
+                <div class="text-danger small">{{ form.category.errors|striptags }}</div>
+                {% endif %}
+            </div>
 
+    
+            <div class="mb-3">
+                <label class="form-label fw-semibold" for="{{ form.title.id_for_label }}">제목</label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                <div class="text-danger small">{{ form.title.errors|striptags }}</div>
+                {% endif %}
+            </div>
             <div class="mb-3">
                 <label class="form-label fw-semibold d-block">평점</label>
                 <div class="star-rating">
@@ -44,7 +60,7 @@
                 <button type="submit" class="btn btn-primary">
                     {% if form.instance.pk %}수정{% else %}등록{% endif %}
                 </button>
-                <a href="{% url 'menus:detail' menu.pk %}" class="btn btn-outline-secondary">취소</a>
+                <a href="{% url 'reviews:list' %}" class="btn btn-outline-secondary">취소</a>
             </div>
         </form>
     </div>

@@ -1,0 +1,247 @@
+/* menus/static/menus/dashboard.css */
+
+/* 1. 색상 테마 변수 */
+:root {
+    --point-orange: #F36235 !important; /* 밥픽 메인 오렌지색 */
+    --point-brown: #4A3326 !important;  /* 테두리 및 텍스트용 짙은 갈색 */
+    --bg-color: #FDF9F3 !important;     /* 부드러운 크림색 배경 */
+    --white: #FFFFFF !important;
+}
+
+/* 2. 전체 배경 및 폰트 강제 적용 */
+body {
+    background-color: #FDF9F3 !important; /* 메인 배경색 크림색으로 덮어쓰기 */
+}
+
+.menu-dashboard-container {
+    font-family: 'Jua', sans-serif !important;
+    color: #4A3326 !important;
+    padding-bottom: 50px;
+}
+
+/* 타이틀 디자인 */
+.menu-dashboard-container h3.page-title {
+    font-size: 2.2rem !important;
+    font-weight: bold !important;
+    color: #F36235 !important;
+    text-shadow: 2px 2px 0px #4A3326 !important;
+    margin-bottom: 25px !important;
+    display: inline-block;
+}
+
+/* 3. 상단 필터 검색 카드 디자인 */
+.menu-dashboard-container .filter-card {
+    background-color: #FFFFFF !important;
+    border: 4px solid #4A3326 !important;
+    border-radius: 20px !important;
+    padding: 25px !important;
+    box-shadow: 6px 6px 0px #F36235 !important;
+}
+
+.menu-dashboard-container .filter-label {
+    color: #4A3326 !important;
+    font-size: 1.2rem !important;
+    font-weight: bold !important;
+}
+
+/* 체크박스 */
+.menu-dashboard-container .custom-check {
+    border: 2px solid #4A3326 !important;
+    cursor: pointer;
+}
+
+.menu-dashboard-container .custom-check:checked {
+    background-color: #F36235 !important;
+    border-color: #4A3326 !important;
+}
+
+.menu-dashboard-container .divider-line {
+    border-top: 3px solid #4A3326 !important;
+    opacity: 1 !important;
+    margin: 20px 0 !important;
+}
+
+/* 검색창 */
+.menu-dashboard-container .search-input {
+    border: 3px solid #4A3326 !important;
+    border-radius: 30px !important;
+    padding: 10px 20px !important;
+    font-size: 1.1rem !important;
+    color: #4A3326 !important;
+    background-color: #FFFFFF !important;
+}
+
+.menu-dashboard-container .search-input:focus {
+    border-color: #F36235 !important;
+    box-shadow: none !important;
+}
+
+/* 검색 버튼 */
+.menu-dashboard-container .btn-search {
+    background-color: #F36235 !important;
+    color: #FFFFFF !important;
+    border: 3px solid #4A3326 !important;
+    border-radius: 30px !important;
+    font-size: 1.1rem !important;
+    font-weight: bold !important;
+    box-shadow: 3px 3px 0px #4A3326 !important;
+    transition: all 0.2s ease !important;
+}
+
+.menu-dashboard-container .btn-search:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 3px 5px 0px #4A3326 !important;
+}
+
+/* 초기화 버튼 */
+.menu-dashboard-container .btn-reset {
+    background-color: #FFFFFF !important;
+    color: #4A3326 !important;
+    border: 3px solid #4A3326 !important;
+    border-radius: 30px !important;
+    font-size: 1.1rem !important;
+    font-weight: bold !important;
+    box-shadow: 3px 3px 0px #4A3326 !important;
+    transition: all 0.2s ease !important;
+}
+
+.menu-dashboard-container .btn-reset:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 3px 5px 0px #4A3326 !important;
+    background-color: #FDF9F3 !important;
+}
+
+/* 4. 결과 개수 및 그리드 카드 영역 */
+.menu-dashboard-container .summary-count {
+    color: #4A3326 !important;
+    font-size: 1.1rem !important;
+    font-weight: bold !important;
+}
+
+/* 개별 메뉴 카드 */
+.menu-dashboard-container .menu-item-card {
+    background-color: #FFFFFF !important;
+    border: 4px solid #4A3326 !important;
+    border-radius: 20px !important;
+    box-shadow: 5px 5px 0px #F36235 !important;
+    overflow: hidden !important;
+    transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+}
+
+.menu-dashboard-container .menu-item-card:hover {
+    transform: scale(1.03) !important;
+    box-shadow: 5px 8px 0px #F36235 !important;
+}
+
+/* 알러지 경고 뱃지 */
+.menu-dashboard-container .allergy-badge {
+    background-color: #FF5A5A !important;
+    color: #FFFFFF !important;
+    border: 2px solid #4A3326 !important;
+    border-radius: 30px !important;
+    font-size: 11px !important;
+    padding: 6px 12px !important;
+    font-weight: bold !important;
+}
+
+/* 이미지 */
+.menu-dashboard-container .menu-card-img {
+    height: 140px !important;
+    object-fit: cover !important;
+    border-bottom: 4px solid #4A3326 !important;
+}
+
+.menu-dashboard-container .empty-img-box {
+    background-color: #FDF9F3 !important;
+    color: #4A3326 !important;
+    border-bottom: 4px solid #4A3326 !important;
+}
+
+/* 카드 내부 타이틀 */
+.menu-dashboard-container .menu-card-title {
+    font-size: 1.3rem !important;
+    font-weight: bold !important;
+}
+
+.menu-dashboard-container .menu-card-title a {
+    color: #4A3326 !important;
+}
+
+.menu-dashboard-container .menu-card-title a:hover {
+    color: #F36235 !important;
+}
+
+/* 태그 및 뱃지 스타일 */
+.menu-dashboard-container .badge-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 12px;
+}
+
+.menu-dashboard-container .badge {
+    border: 2px solid #4A3326 !important;
+    font-size: 11px !important;
+    border-radius: 30px !important;
+    padding: 5px 10px !important;
+}
+
+.menu-dashboard-container .tag-cuisine {
+    background-color: #FDF9F3 !important;
+    color: #4A3326 !important;
+}
+
+.menu-dashboard-container .tag-course {
+    background-color: #FFFFFF !important;
+    color: #4A3326 !important;
+}
+
+.menu-dashboard-container .tag-time.아침 { background-color: #6FA3EF !important; color: white !important; }
+.menu-dashboard-container .tag-time.점심 { background-color: #F36235 !important; color: white !important; }
+.menu-dashboard-container .tag-time.저녁 { background-color: #4A3326 !important; color: white !important; }
+
+/* 별점 박스 */
+.menu-dashboard-container .rating-box {
+    color: #e5a93b !important;
+    font-size: 1.1rem !important;
+    font-weight: bold !important;
+}
+
+.menu-dashboard-container .review-count {
+    color: #4A3326 !important;
+    font-size: 0.9rem !important;
+}
+
+/* 5. 페이지네이션 */
+.menu-dashboard-container .custom-pagination .page-link {
+    color: #4A3326 !important;
+    border: 3px solid #4A3326 !important;
+    background-color: #FFFFFF !important;
+    border-radius: 10px !important;
+    margin: 0 4px;
+    font-weight: bold !important;
+    box-shadow: 2px 2px 0px #4A3326 !important;
+    transition: all 0.2s !important;
+}
+
+.menu-dashboard-container .custom-pagination .page-item.active .page-link {
+    background-color: #F36235 !important;
+    color: #FFFFFF !important;
+    box-shadow: 1px 1px 0px #4A3326 !important;
+}
+
+.menu-dashboard-container .custom-pagination .page-link:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 2px 4px 0px #4A3326 !important;
+}
+
+/* 결과 없음 알림창 */
+.menu-dashboard-container .empty-alert {
+    background-color: #FFFFFF !important;
+    border: 4px dashed #4A3326 !important;
+    color: #4A3326 !important;
+    border-radius: 20px !important;
+    text-align: center;
+    padding: 35px !important;
+    font-size: 1.2rem !important;
+}

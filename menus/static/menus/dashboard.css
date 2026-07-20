@@ -1,0 +1,238 @@
+/* ==========================================================================
+   오늘 뭐 먹지 - 메뉴 추천 서비스 통합 테마 (모던 & 프로페셔널)
+   동방푸드 스타일 벤치마킹: 깔끔한 여백, 소프트한 크림/화이트 배경, 
+   세련된 오렌지 포인트 컬러 적용
+   ========================================================================== */
+
+:root {
+    /* 브랜드 팔레트 (동방푸드 스타일) */
+    --brand: #E8623D;         /* 메인 토마토/테라코타 (포인트 컬러) */
+    --brand-dark: #C64B2A;
+    --brand-soft: #FCEEE7;    /* 아주 옅은 오렌지 배경 */
+    --accent: #E9A23B;        /* 허니 앰버 */
+    --ink: #2C2118;           /* 따뜻한 다크 브라운 (기본 텍스트) */
+    --muted: #8C7E72;         /* 웜 그레이 */
+    --cream: #FDF9F3;         /* 전체 페이지 크림색 배경 */
+    --surface: #FFFFFF;       /* 카드/박스 흰색 배경 */
+    --line: #ECE1D6;          /* 부드러운 경계선 */
+
+    /* Bootstrap 토큰 리매핑 */
+    --bs-primary: var(--brand);
+    --bs-primary-rgb: 232, 98, 61;
+    --bs-secondary-rgb: 140, 126, 114;
+    --bs-info-rgb: 233, 162, 59;
+    --bs-success-rgb: 91, 140, 90;
+    --bs-body-color: var(--ink);
+    --bs-body-bg: var(--cream);
+    --bs-tertiary-bg: var(--cream);
+    --bs-border-color: var(--line);
+    --bs-link-color: var(--brand-dark);
+    --bs-link-hover-color: var(--brand);
+
+    /* 부드럽고 세련된 그림자 (투박한 테두리 대신 사용) */
+    --shadow-sm: 0 2px 8px rgba(44, 33, 24, .04), 0 1px 3px rgba(44, 33, 24, .02);
+    --shadow-md: 0 10px 24px rgba(44, 33, 24, .08);
+    --radius: 1rem; /* 모서리 둥글게 */
+}
+
+/* ===== Typography & Body ===== */
+body {
+    /* Jua 대신 가독성이 뛰어난 Pretendard 폰트 사용 */
+    font-family: "Pretendard Variable", "Pretendard", system-ui, -apple-system, sans-serif !important;
+    background-color: var(--cream) !important;
+    color: var(--ink) !important;
+    letter-spacing: -0.01em;
+    padding-bottom: 50px;
+}
+
+main.container {
+    padding-top: 2.5rem;
+    padding-bottom: 3rem;
+}
+
+h1, h2, h3, h4, h5, .page-title {
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+}
+
+.page-title {
+    font-size: 2.2rem;
+    color: var(--brand) !important;
+    margin-bottom: 1.5rem;
+}
+
+/* ===== Navbar (상단 네비게이션) ===== */
+.navbar.bg-primary {
+    background: var(--surface) !important; /* 상단을 하얗고 깔끔하게 */
+    box-shadow: var(--shadow-sm);
+    border-bottom: 1px solid var(--line);
+    padding: 1rem 0;
+}
+.navbar .navbar-brand { 
+    font-weight: 800; 
+    letter-spacing: -0.03em; 
+    color: var(--brand) !important; 
+}
+.navbar .nav-link { 
+    font-weight: 600; 
+    color: var(--ink) !important; 
+    opacity: 0.8; 
+    transition: all 0.2s;
+}
+.navbar .nav-link:hover { 
+    opacity: 1; 
+    color: var(--brand) !important;
+}
+
+/* 네비 메뉴 글씨 크기 조정 */
+.navbar .nav-link div:first-child { font-size: 0.95rem; font-weight: 700; }
+.navbar .nav-link div:last-child { font-size: 0.8rem; opacity: 0.7; }
+
+/* ===== Cards (필터 및 메뉴 카드) ===== */
+.card, .filter-card, .menu-item-card {
+    border: 1px solid var(--line) !important; /* 두꺼운 테두리 대신 얇고 깔끔한 선 */
+    border-radius: var(--radius) !important;
+    background: var(--surface) !important;
+    box-shadow: var(--shadow-sm) !important;
+    transition: transform .25s ease, box-shadow .25s ease;
+    overflow: hidden;
+}
+
+.card:hover, .menu-item-card:hover {
+    transform: translateY(-5px) !important;
+    box-shadow: var(--shadow-md) !important;
+}
+
+.card-body { padding: 1.5rem; }
+.card-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+    font-weight: 700;
+    color: var(--ink);
+    padding: 1.2rem 1.5rem;
+}
+
+/* ===== 이미지 플레이스홀더 ===== */
+.card-img-top, .menu-card-img {
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    width: 100%;
+    border-bottom: 1px solid var(--line);
+}
+.card-img-placeholder, .empty-img-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    background-color: var(--brand-soft) !important;
+    color: var(--brand-dark) !important;
+    font-size: 2.6rem;
+    border-bottom: 1px solid var(--line);
+}
+
+/* ===== Buttons ===== */
+.btn, .btn-search, .btn-reset {
+    border-radius: 999px !important;
+    font-weight: 600;
+    padding: 0.6rem 1.4rem;
+    transition: all .2s ease;
+    border: none;
+}
+.btn-sm { padding: 0.4rem 1rem; }
+
+.btn-primary, .btn-search {
+    background-color: var(--brand) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 12px rgba(232, 98, 61, 0.2);
+}
+.btn-primary:hover, .btn-search:hover {
+    background-color: var(--brand-dark) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(232, 98, 61, 0.3);
+}
+
+.btn-outline-primary, .btn-reset {
+    background-color: transparent !important;
+    color: var(--brand) !important;
+    border: 1px solid var(--brand) !important;
+}
+.btn-outline-primary:hover, .btn-reset:hover {
+    background-color: var(--brand-soft) !important;
+}
+
+.btn-success { background-color: #5B8C5A !important; color: #fff !important; }
+.btn-danger { background-color: #D6455D !important; color: #fff !important; }
+
+/* ===== Forms & Inputs ===== */
+.form-control, .form-select, .search-input {
+    border-radius: 0.5rem !important;
+    border: 1px solid var(--line) !important;
+    padding: 0.75rem 1rem !important;
+    background-color: var(--surface) !important;
+    color: var(--ink) !important;
+    font-size: 1rem;
+}
+.form-control:focus, .form-select:focus, .search-input:focus {
+    border-color: var(--brand) !important;
+    box-shadow: 0 0 0 .2rem rgba(232, 98, 61, .15) !important;
+    outline: none;
+}
+.form-check-input:checked, .custom-check:checked {
+    background-color: var(--brand) !important;
+    border-color: var(--brand) !important;
+}
+
+/* ===== Badges & Tags ===== */
+.badge {
+    font-weight: 500;
+    padding: .4em .8em;
+    border-radius: 6px !important;
+    letter-spacing: -.01em;
+}
+.badge-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 12px;
+}
+.tag-cuisine, .text-bg-secondary { background-color: var(--line) !important; color: var(--ink) !important; }
+.tag-course, .text-bg-light { background-color: var(--surface) !important; color: var(--muted) !important; border: 1px solid var(--line) !important; }
+.tag-time.아침 { background-color: #6FA3EF !important; color: white !important; }
+.tag-time.점심, .text-bg-info { background-color: var(--brand) !important; color: white !important; }
+.tag-time.저녁 { background-color: var(--ink) !important; color: white !important; }
+.allergy-badge { background-color: #D6455D !important; color: #fff !important; }
+
+/* ===== Rating Box ===== */
+.rating-box { color: var(--accent) !important; font-weight: bold; }
+.review-count { color: var(--muted) !important; font-size: 0.9rem; }
+
+/* ===== Alerts (알림창) ===== */
+.alert, .empty-alert {
+    border-radius: var(--radius) !important;
+    border: 1px solid var(--brand-soft) !important;
+    background-color: var(--surface) !important;
+    color: var(--ink) !important;
+    padding: 1.5rem !important;
+    box-shadow: var(--shadow-sm);
+}
+
+/* ===== Pagination ===== */
+.pagination .page-link {
+    color: var(--ink) !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 8px !important;
+    margin: 0 4px;
+    transition: all 0.2s;
+}
+.pagination .page-item.active .page-link {
+    background-color: var(--brand) !important;
+    color: #fff !important;
+    border-color: var(--brand) !important;
+}
+.pagination .page-link:hover {
+    background-color: var(--brand-soft) !important;
+    color: var(--brand) !important;
+    border-color: var(--brand-soft) !important;
+}

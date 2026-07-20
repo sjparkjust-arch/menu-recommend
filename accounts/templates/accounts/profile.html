@@ -5,72 +5,140 @@
     <meta charset="UTF-8">
     <title>밥픽 - 마이페이지</title>
     <link rel="stylesheet" href="{% static 'accounts/profile.css' %}">
+    <style>
+        /* 💖 내가 좋아요 한 메뉴 카드 스타일 추가 */
+        .liked-menus-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            border: 1px solid #ECE1D6;
+        }
+        .liked-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .liked-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: #2C2118;
+            transition: transform 0.2s;
+        }
+        .liked-item:hover {
+            transform: translateY(-3px);
+        }
+        .liked-img-box {
+            width: 100%;
+            height: 90px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #FCEEE7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin-bottom: 8px;
+            box-shadow: 0 2px 5px rgba(44, 33, 24, .05);
+            border: 1px solid #ECE1D6;
+        }
+        .liked-img-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .liked-name {
+            font-weight: bold;
+            font-size: 13px;
+            text-align: center;
+            word-break: keep-all;
+        }
+    </style>
 </head>
 <body>
 
-    <div class="profile-container">
+    <div class="profile-container" style="max-width: 800px; margin: 0 auto; padding: 20px;">
         <h1 class="title">마이페이지</h1>
 
         <!-- 1. 내 정보 카드 섹션 -->
         <div class="info-card">
             <div class="avatar">🍚</div>
             <div class="info-details">
-                <!-- 아이디 대신 실제 이름(last_name + first_name)이 들어가도록 수정 -->
                 <div class="user-id">
                     {{ request.user.last_name|default:"" }}{{ request.user.first_name|default:"사용자" }}님 반가워요!
-            </div>
-            <div class="info-grid">
-                <!-- 성명 자리 대신 아이디(username)를 보여주도록 수정 -->
-                <div class="info-row id-row">
-                    <span class="label">아이디</span>
-                    <span class="value">{{ request.user.username }}</span>
                 </div>
-                <!-- 이메일은 그대로 유지 -->
-                <div class="info-row email-row">
-                    <span class="label">이메일</span>
-                    <span class="value">{{ request.user.email|default:"미입력" }}</span>
+                <div class="info-grid">
+                    <div class="info-row id-row">
+                        <span class="label">아이디</span>
+                        <span class="value">{{ request.user.username }}</span>
+                    </div>
+                    <div class="info-row email-row">
+                        <span class="label">이메일</span>
+                        <span class="value">{{ request.user.email|default:"미입력" }}</span>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-        <!-- 2. 메뉴 추천 및 식사 기록 섹션 -->
+        <!-- 💖 2. 내가 좋아요 누른 메뉴 리스트 섹션 (여기가 빠져 있었습니다!) -->
+        <div class="liked-menus-card">
+            <h2 class="section-title" style="margin: 0; font-size: 18px;">❤️ 내가 좋아요 한 맛있는 메뉴</h2>
+            {% if liked_menus %}
+                <div class="liked-grid">
+                    {% for menu in liked_menus %}
+                        <a href="{% url 'menus:detail' menu.pk %}" class="liked-item">
+                            <div class="liked-img-box">
+                                {% if menu.image %}
+                                    <img src="{{ menu.image.url }}" alt="{{ menu.name }}">
+                                {% else %}
+                                    🍚
+                                {% endif %}
+                            </div>
+                            <div class="liked-name">{{ menu.name }}</div>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p style="color: #8C7E72; font-size: 13px; text-align: center; margin-top: 25px; margin-bottom: 10px;">
+                    아직 하트(좋아요)를 누른 추천 메뉴가 없습니다.<br>
+                    메뉴 리스트에서 마음에 드는 음식을 찜해 보세요! 🤍
+                </p>
+            {% endif %}
+        </div>
 
+        <!-- 3. 메뉴 추천 및 식사 기록 섹션 -->
         <div class="history-card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2 class="section-title" style="margin: 0;">🕒 최근 먹은 메뉴 & 추천 내역</h2>
-                <!-- 📌 전체 식사 기록 페이지로 이동하는 링크 추가! -->
-                <a href="{% url 'records:history' %}" style="color: #F37943; font-weight: bold; text-decoration: none; font-size: 14px;">전체보기 &gt;</a>
+                <a href="{% url 'records:history' %}" style="color: #E8623D; font-weight: bold; text-decoration: none; font-size: 14px;">전체보기 &gt;</a>
             </div>
-                <ul class="record-list">
-                <!-- 실제 데이터가 연결되기 전 보여줄 임시 예시 리스트입니다 -->
+            <ul class="record-list">
                 {% if meal_records %}
                     {% for record in meal_records %}
-                        <li class="record-item">
-                            <span class="food-name">{{ record.food_name }}</span>
-                            <span class="record-date">{{ record.created_at|date:"Y-m-d" }}</span>
+                        <li class="record-item" style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #ECE1D6;">
+                            <span class="food-name" style="font-weight: 500;">{{ record.food_name }}</span>
+                            <span class="record-date" style="color: #8C7E72; font-size: 12px;">{{ record.created_at|date:"Y-m-d" }}</span>
                         </li>
                     {% endfor %}
                 {% else %}
-                    <!-- 데이터가 없을 때 뜰 예쁜 예시 안내창 -->
-                    <li class="record-empty">
+                    <li class="record-empty" style="list-style: none; text-align: center; color: #8C7E72; padding: 20px 0;">
                         아직 추천받거나 기록한 메뉴가 없어요.<br>
                         오늘 첫 메뉴 추천을 받아보세요! 🍙
                     </li>
                 {% endif %}
-                </ul>
+            </ul>
         </div> 
 
-
-
-        <!-- 3. 계정 관리 하단 버튼 및 회원 탈퇴 링크 -->
-        <div class="account-actions">
-            <a href="{% url 'menus:dashboard' %}" class="back-btn">메인으로 가기</a>
-            
-            <!-- 회원탈퇴 버튼 클릭 시 확인 페이지(GET)로 이동시킵니다 -->
-            <p class="delete-area">
+        <!-- 4. 계정 관리 하단 버튼 및 회원 탈퇴 링크 -->
+        <div class="account-actions" style="margin-top: 30px; text-align: center;">
+            <a href="{% url 'menus:dashboard' %}" class="back-btn" style="display: inline-block; padding: 10px 20px; background-color: #ECE1D6; color: #2C2118; text-decoration: none; border-radius: 6px; font-weight: bold; margin-bottom: 15px;">메인으로 가기</a>
+            <p class="delete-area" style="color: #8C7E72; font-size: 12px;">
                 아쉬운 점이 있으신가요? 
-                <a href="{% url 'accounts:delete_confirm' %}" class="delete-link">회원탈퇴</a>
+                <a href="{% url 'accounts:delete_confirm' %}" class="delete-link" style="color: #E8623D; text-decoration: underline;">회원탈퇴</a>
             </p>
         </div>
     </div>

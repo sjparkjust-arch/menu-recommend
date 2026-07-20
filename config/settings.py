@@ -169,9 +169,18 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
+
+
+
+# config/settings.py 파일 하단 부근 확인
 STATIC_URL = 'static/'
-# collectstatic 수집 경로. Nginx가 /static/ 을 여기서 직접 서빙한다.
-STATIC_ROOT = env('STATIC_ROOT', default=BASE_DIR / 'staticfiles')
+
+# 이 부분이 들어가 있어야 static/css/theme.css를 인식합니다!
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
+
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 
 # Media (업로드 파일)

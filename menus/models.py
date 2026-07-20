@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 
 class Cuisine(models.Model):
@@ -63,6 +64,15 @@ class Menu(models.Model):
         through='MenuAllergy',
         related_name='menus',
         blank=True,
+    )
+
+    # ── [새로 추가된 좋아요 필드] ──
+    # 유저 한 명이 여러 메뉴에 좋아요를 누를 수 있고, 메뉴 하나도 여러 유저로부터 좋아요를 받을 수 있으므로 ManyToMany로 선언합니다.
+    likes = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        related_name='liked_menus',
+        blank=True,
+        verbose_name='좋아요 한 사용자들'
     )
 
     class Meta:

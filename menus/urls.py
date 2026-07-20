@@ -9,4 +9,5 @@ urlpatterns = [
     path('', views.dashboard, name='dashboard'),
     path('menus/', views.menu_list, name='list'),
     path('menus/<int:pk>/', views.menu_detail, name='detail'),
+    path('menus/<int:pk>/like/', views.menu_like_toggle, name='like'),
 ]

@@ -5,6 +5,11 @@ from menus.models import Course, Cuisine, Menu
 from menus.services import catalog
 from menus.services.recommender import recommend
 from reviews import services as review_services
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+from django.views.decorators.http import require_POST
+from .models import Menu
+import json
 
 RECENT_LIMIT = 10
 RECOMMEND_LIMIT = 3
@@ -12,45 +17,85 @@ PAGE_SIZE = 12
 
 
 def dashboard(request):
-    """메인 대시보드. 비로그인도 열람 가능(알러지 필터·최근 기록은 로그인 사용자에게만).
-
-    추천 로직은 recommender.recommend() 에만 있다(CLAUDE.md 코드 스타일).
-    이 뷰는 요청 파라미터 파싱 → recommend() 호출 → 화면용 데이터 조회만 한다.
-    """
-    # 점심/저녁 토글. 유효하지 않으면 점심으로.
-    meal_time = request.GET.get('meal', Menu.MealTime.LUNCH)
-    if meal_time not in {Menu.MealTime.LUNCH, Menu.MealTime.DINNER}:
-        meal_time = Menu.MealTime.LUNCH
-
+    """메인 대시보드. 달력 데이터 포함."""
     cuisine_ids = _as_int_list(request.GET.getlist('cuisine'))
     course_ids = _as_int_list(request.GET.getlist('course'))
 
-    recommendations = recommend(
-        request.user,
-        meal_time,
-        cuisine_ids=cuisine_ids or None,
-        course_ids=course_ids or None,
-        limit=RECOMMEND_LIMIT,
+    # 점심 추천 1개 호출
+    lunch_recommendations = recommend(
+        request.user, Menu.MealTime.LUNCH,
+        cuisine_ids=cuisine_ids or None, course_ids=course_ids or None, limit=1,
+    )
+    lunch_recommendation = lunch_recommendations[0] if lunch_recommendations else None
+
+    # 중복 방지용 ID 추출
+    excluded_menu_ids = [lunch_recommendation.id] if lunch_recommendation else []
+
+    # 저녁 추천 호출
+    dinner_recommendations_raw = recommend(
+        request.user, Menu.MealTime.DINNER,
+        cuisine_ids=cuisine_ids or None, course_ids=course_ids or None, limit=3,
     )
 
+    dinner_recommendation = None
+    for menu in dinner_recommendations_raw:
+        if menu.id not in excluded_menu_ids:
+            dinner_recommendation = menu
+            break
+
+    # 💡 달력 데이터를 담을 빈 문자열 기본값
+    calendar_events_json = "[]" 
+
     if request.user.is_authenticated:
-        recent_records = request.user.meal_records.order_by('-created_at')[:RECENT_LIMIT]
+        recent_records = request.user.meal_records.order_by('-created_at')[:10]
         allergies = request.user.allergies.all()
+
+        # 💡 [달력 데이터 변환 로직] 사용자가 기록한 모든 식사를 달력 포맷으로 변환
+        all_records = request.user.meal_records.all()
+        events = []
+        for record in all_records:
+            if record.meal_type == 'BREAKFAST':
+                color = '#6FA3EF'
+                display_title = '아침'
+                sort_order = 1
+            elif record.meal_type == 'LUNCH':
+                color = '#E8623D'
+                display_title = '점심'
+                sort_order = 2
+            elif record.meal_type == 'DINNER':
+                color = '#2C2118'
+                display_title = '저녁'
+                sort_order = 3
+            else:
+                color = '#8C7E72'
+                display_title = record.get_meal_type_display()
+                sort_order = 4
+                
+            events.append({
+                'title': display_title, 
+                'start': record.created_at.strftime('%Y-%m-%d'), 
+                'color': color,
+                'textColor': 'white',
+                'food_name': record.food_name,
+                'sort_order': sort_order # 정렬용 숨김 데이터 추가
+            })
+        
+        calendar_events_json = json.dumps(events)
     else:
         recent_records = None
         allergies = None
 
     context = {
-        'meal_time': meal_time,
-        'meal_lunch': Menu.MealTime.LUNCH,
-        'meal_dinner': Menu.MealTime.DINNER,
-        'recommendations': recommendations,
+        'lunch_recommendation': lunch_recommendation,
+        'dinner_recommendation': dinner_recommendation,
         'cuisines': Cuisine.objects.all(),
         'courses': Course.objects.all(),
         'selected_cuisines': cuisine_ids,
         'selected_courses': course_ids,
         'recent_records': recent_records,
         'allergies': allergies,
+        # 💡 HTML 템플릿으로 달력 JSON 데이터를 전송
+        'calendar_events_json': calendar_events_json, 
     }
     return render(request, 'menus/dashboard.html', context)
 
@@ -119,3 +164,25 @@ def _as_int_list(values):
         except (TypeError, ValueError):
             continue
     return result
+
+@require_POST
+def menu_like_toggle(request, pk):
+    """메뉴 좋아요 토글 (AJAX 비동기 처리)"""
+    # 1. 로그인 여부를 먼저 안전하게 검사합니다.
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': '로그인이 필요합니다.'}, status=401)
+        
+    menu = get_object_or_404(Menu, pk=pk)
+    
+    # 2. 좋아요 토글 처리
+    if request.user in menu.likes.all():
+        menu.likes.remove(request.user)
+        liked = False
+    else:
+        menu.likes.add(request.user)
+        liked = True
+        
+    return JsonResponse({
+        'liked': liked,
+        'like_count': menu.likes.count(),
+    })

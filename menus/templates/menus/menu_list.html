@@ -38,50 +38,66 @@
 
     <hr>
 
-    <div class="d-flex gap-2">
-        <input type="text" name="q" value="{{ search }}" class="form-control"
-               placeholder="메뉴 이름 검색">
-        <button type="submit" class="btn btn-primary px-4">검색</button>
-        <a href="{% url 'menus:list' %}" class="btn btn-outline-secondary">초기화</a>
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <input type="text" name="q" value="{{ search }}" class="form-control" placeholder="메뉴 이름 검색">
+        </div>
+        <div class="col-auto d-flex gap-2">
+            <button type="submit" class="btn btn-primary px-4">검색</button>
+            <a href="{% url 'menus:list' %}" class="btn btn-outline-secondary">초기화</a>
+        </div>
     </div>
 </form>
 
 {# 결과 요약 #}
 <p class="text-muted small">총 {{ page_obj.paginator.count }}개</p>
 
+{# 💡 하트 버튼이 적용된 단 하나의 그리드만 남겨둡니다 #}
 {% if page_obj.object_list %}
 <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3">
     {% for menu in page_obj %}
     <div class="col">
-        <div class="card h-100 shadow-sm position-relative">
+        <div class="card h-100 shadow-sm position-relative menu-card">
+            
             {% if menu.pk in allergy_hits %}
-            <span class="badge text-bg-danger position-absolute top-0 start-0 m-2">
+            <span class="badge text-bg-danger position-absolute top-0 start-0 m-2" style="z-index: 3;">
                 ⚠️ 알러지 주의
             </span>
             {% endif %}
 
-            {% if menu.image %}
-            <img src="{{ menu.image.url }}" class="card-img-top" alt="{{ menu.name }}">
-            {% else %}
-            <div class="bg-light d-flex align-items-center justify-content-center"
-                 style="height:130px;font-size:2.5rem;">🍚</div>
-            {% endif %}
+            <!-- 💖 이미지 위에 둥둥 뜨는 하트 토글 버튼 -->
+            <button class="btn btn-like-overlay position-absolute top-0 end-0 m-2" 
+                    data-id="{{ menu.pk }}" 
+                    style="z-index: 3; background: rgba(255, 255, 255, 0.85); border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border: none; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
+                <span class="heart-icon" style="font-size: 1.1rem; line-height: 1;">
+                    {% if user in menu.likes.all %}❤️{% else %}🤍{% endif %}
+                </span>
+            </button>
+
+            <!-- 메뉴 디테일 링크로 감싸진 이미지 영역 -->
+            <a href="{% url 'menus:detail' menu.pk %}" class="text-decoration-none text-body">
+                {% if menu.image %}
+                <img src="{{ menu.image.url }}" class="card-img-top" alt="{{ menu.name }}" style="height: 150px; object-fit: cover;">
+                {% else %}
+                <div class="bg-light d-flex align-items-center justify-content-center" style="height:150px; font-size:2.5rem;">🍚</div>
+                {% endif %}
+            </a>
 
             <div class="card-body">
                 <h6 class="card-title mb-2">
-                    <a href="{% url 'menus:detail' menu.pk %}"
-                       class="text-decoration-none text-body stretched-link">{{ menu.name }}</a>
+                    <a href="{% url 'menus:detail' menu.pk %}" class="text-decoration-none text-body fw-bold">{{ menu.name }}</a>
                 </h6>
                 <div>
                     <span class="badge text-bg-secondary">{{ menu.cuisine.name }}</span>
                     <span class="badge text-bg-light border">{{ menu.course.name }}</span>
                     <span class="badge text-bg-info">{{ menu.get_meal_time_display }}</span>
                 </div>
-                {% if menu.review_count %}
-                <div class="small text-muted mt-2">
-                    ⭐ {{ menu.avg_rating|floatformat:1 }} ({{ menu.review_count }})
+                
+                <!-- 하단 누적 좋아요 수 표시 영역 -->
+                <div class="small text-muted mt-2 d-flex align-items-center gap-1">
+                    <span>❤️</span>
+                    <span class="like-count-{{ menu.pk }}">{{ menu.likes.count }}</span>명이 좋아합니다
                 </div>
-                {% endif %}
             </div>
         </div>
     </div>
@@ -120,4 +136,57 @@
 {% else %}
 <div class="alert alert-secondary">조건에 맞는 메뉴가 없습니다.</div>
 {% endif %}
+
+<!-- AJAX 비동기 토글 처리를 위한 CSRF 토큰 보장 -->
+{% csrf_token %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        // 목록 이미지 우측 위 오버레이 하트 버튼 클릭 핸들러
+        document.querySelectorAll('.btn-like-overlay').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation(); // 부모 카드 클릭 이벤트 전파 완전 차단
+
+                const menuId = this.getAttribute('data-id');
+                const heartIcon = this.querySelector('.heart-icon');
+                const likeTextCount = document.querySelector(`.like-count-${menuId}`);
+
+                fetch(`/menus/${menuId}/like/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => {
+                    if (response.status === 401 || response.status === 403) {
+                        alert('로그인이 필요한 서비스입니다.');
+                        window.location.href = "{% url 'accounts:login' %}";
+                        return;
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data) {
+                        if (data.liked) {
+                            heartIcon.textContent = '❤️';
+                        } else {
+                            heartIcon.textContent = '🤍';
+                        }
+                        if (likeTextCount) {
+                            likeTextCount.textContent = data.like_count;
+                        }
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        });
+    });
+</script>
 {% endblock %}

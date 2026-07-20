@@ -89,9 +89,6 @@ def logout_view(request):
     logout(request)
     return redirect(reverse('menus:dashboard'))
 
-#@login_required(login_url='accounts:login')
-def profile(request):
-    return render(request, 'accounts/profile.html')
 
 def signup_view(request):
     if request.method == 'POST':
@@ -289,13 +286,18 @@ def delete_account_confirm(request):
     # 회원탈퇴 확인 페이지 (GET)
     return render(request, 'accounts/delete_confirm.html')
 
-@login_required
+
+@login_required(login_url='accounts:login')
 def profile(request):
-    # 로그인한 사용자의 식사 기록 중 최신 5개만 가져옵니다.
-    # records모델에서 데이터를 가져옴
-    recent_records = MealRecord.objects.filter(user=request.user).order_by('-created_at')[:5]
+    # 1. 로그인한 사용자가 좋아요(하트) 표시한 메뉴들을 가져옵니다.
+    liked_menus = request.user.liked_menus.all()
     
+    # 2. 최근 사용자가 기록한 식사 내역 (최대 5개)
+    meal_records = request.user.meal_records.order_by('-created_at')[:5]
+
     context = {
-        'meal_records': recent_records, # 템플릿의 {% for record in meal_records %} 와 매핑됩니다. / # 여기에 식사 기록 데이터 바인딩
+        'liked_menus': liked_menus,
+        'meal_records': meal_records,
     }
+    # 기존에 사용하시던 profile.html 템플릿으로 데이터를 확실하게 밀어줍니다!
     return render(request, 'accounts/profile.html', context)

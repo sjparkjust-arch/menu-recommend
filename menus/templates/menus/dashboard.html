@@ -5,7 +5,7 @@
 {% block content %}
 <div class="row g-4">
 
-    {# ── 좌측: 추천 + 필터 ───────────────────────────────── #}
+    {# ── 좌측: 추천 + 필터 (이 영역은 기존과 동일합니다) ───────────────────────────────── #}
     <div class="col-lg-8">
 
         {# 알러지 자동 제외 안내 #}
@@ -26,7 +26,7 @@
             </div>
         </div>
 
-        {# 필터 + 끼니 토글 (GET 폼) #}
+        {# 필터 폼 #}
         <form method="get" class="card card-body mb-4 shadow-sm">
             <div class="row">
                 <div class="col-md-6 mb-3 mb-md-0">
@@ -59,99 +59,125 @@
 
             <hr>
 
-            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-                <div class="btn-group" role="group" aria-label="끼니 선택">
-                    <button type="submit" name="meal" value="{{ meal_lunch }}"
-                            class="btn {% if meal_time == meal_lunch %}btn-primary{% else %}btn-outline-primary{% endif %}">
-                        ☀️ 점심
-                    </button>
-                    <button type="submit" name="meal" value="{{ meal_dinner }}"
-                            class="btn {% if meal_time == meal_dinner %}btn-primary{% else %}btn-outline-primary{% endif %}">
-                        🌙 저녁
-                    </button>
-                </div>
-                <button type="submit" name="meal" value="{{ meal_time }}" class="btn btn-success">
+            <div class="d-flex align-items-center justify-content-end flex-wrap gap-2">
+                <button type="submit" class="btn btn-success">
                     🔄 다시 추천받기
                 </button>
             </div>
         </form>
 
-        {# 추천 카드 #}
-        <h4 class="mb-3">오늘의 {% if meal_time == meal_lunch %}점심{% else %}저녁{% endif %} 추천</h4>
-        {% if recommendations %}
-        <div class="row row-cols-1 row-cols-md-3 g-3">
-            {% for menu in recommendations %}
-            <div class="col">
+        {# 추천 카드 (좌우 2열 배치) #}
+        <div class="row g-4 mb-4">
+            
+            {# ☀️ 점심 추천 1개 #}
+            <div class="col-md-6">
+                <h4 class="mb-3 fw-bold" style="color: var(--brand);">☀️ 오늘의 점심 추천</h4>
+                {% if lunch_recommendation %}
                 <div class="card h-100 shadow-sm position-relative">
-                    {% if menu.image %}
-                    <img src="{{ menu.image.url }}" class="card-img-top" alt="{{ menu.name }}">
+                    {% if lunch_recommendation.image %}
+                    <img src="{{ lunch_recommendation.image.url }}" class="card-img-top" alt="{{ lunch_recommendation.name }}" style="height: 180px; object-fit: cover;">
                     {% else %}
                     <div class="bg-light d-flex align-items-center justify-content-center"
-                         style="height:140px;font-size:2.5rem;">🍚</div>
+                         style="height:180px;font-size:2.5rem;">🍚</div>
                     {% endif %}
                     <div class="card-body">
                         <h5 class="card-title mb-1">
-                            <a href="{% url 'menus:detail' menu.pk %}"
-                               class="text-decoration-none text-body stretched-link">{{ menu.name }}</a>
+                            <a href="{% url 'menus:detail' lunch_recommendation.pk %}"
+                               class="text-decoration-none text-body stretched-link fw-bold">{{ lunch_recommendation.name }}</a>
                         </h5>
                         <p class="mb-2">
-                            <span class="badge text-bg-secondary">{{ menu.cuisine.name }}</span>
-                            <span class="badge text-bg-light border">{{ menu.course.name }}</span>
-                            <span class="badge text-bg-info">{{ menu.get_meal_time_display }}</span>
+                            <span class="badge text-bg-secondary">{{ lunch_recommendation.cuisine.name }}</span>
+                            <span class="badge text-bg-light border">{{ lunch_recommendation.course.name }}</span>
                         </p>
-                        {% if menu.description %}
-                        <p class="card-text small text-muted">{{ menu.description }}</p>
+                        {% if lunch_recommendation.description %}
+                        <p class="card-text small text-muted">{{ lunch_recommendation.description }}</p>
                         {% endif %}
                     </div>
                 </div>
+                {% else %}
+                <div class="alert alert-secondary py-5 text-center">
+                    조건에 맞는 점심 추천 메뉴가 없습니다.
+                </div>
+                {% endif %}
             </div>
-            {% endfor %}
+
+            {# 🌙 저녁 추천 1개 #}
+            <div class="col-md-6">
+                <h4 class="mb-3 fw-bold" style="color: var(--brand);">🌙 오늘의 저녁 추천</h4>
+                {% if dinner_recommendation %}
+                <div class="card h-100 shadow-sm position-relative">
+                    {% if dinner_recommendation.image %}
+                    <img src="{{ dinner_recommendation.image.url }}" class="card-img-top" alt="{{ dinner_recommendation.name }}" style="height: 180px; object-fit: cover;">
+                    {% else %}
+                    <div class="bg-light d-flex align-items-center justify-content-center"
+                         style="height:180px;font-size:2.5rem;">🍚</div>
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title mb-1">
+                            <a href="{% url 'menus:detail' dinner_recommendation.pk %}"
+                               class="text-decoration-none text-body stretched-link fw-bold">{{ dinner_recommendation.name }}</a>
+                        </h5>
+                        <p class="mb-2">
+                            <span class="badge text-bg-secondary">{{ dinner_recommendation.cuisine.name }}</span>
+                            <span class="badge text-bg-light border">{{ dinner_recommendation.course.name }}</span>
+                        </p>
+                        {% if dinner_recommendation.description %}
+                        <p class="card-text small text-muted">{{ dinner_recommendation.description }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="alert alert-secondary py-5 text-center">
+                    조건에 맞는 저녁 추천 메뉴가 없습니다.
+                </div>
+                {% endif %}
+            </div>
+
         </div>
-        {% else %}
-        <div class="alert alert-secondary">
-            조건에 맞는 추천 메뉴가 없습니다. 필터를 줄여 보세요.
-            (알러지·최근 먹은 메뉴는 항상 제외됩니다.)
-        </div>
-        {% endif %}
+
     </div>
 
-    {# ── 우측: 최근 먹은 음식 ────────────────────────────── #}
+    {# ── 우측: 식사 기록 달력 및 하단 박스 (수정된 영역) ────────────────────────────── #}
     <div class="col-lg-4">
-        <div class="card shadow-sm">
+        
+        <!-- 달력 카드 -->
+        <div class="card shadow-sm mb-3">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <span class="fw-semibold">최근 먹은 음식</span>
+                <span class="fw-semibold">🗓️ 나의 식사 달력</span>
                 {% if user.is_authenticated %}
                 <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addRecordModal">
                     + 오늘 뭐 먹었어?
                 </button>
                 {% endif %}
             </div>
-            {% if user.is_authenticated %}
-                {% if recent_records %}
-                <ul class="list-group list-group-flush">
-                    {% for r in recent_records %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <div>{{ r.food_name }}</div>
-                            <small class="text-muted">{{ r.created_at }} · {{ r.get_meal_type_display }}</small>
-                        </div>
-                    </li>
-                    {% endfor %}
-                </ul>
+            
+            <div class="card-body p-2"> 
+                {% if user.is_authenticated %}
+                    <div id="meal-calendar"></div>
                 {% else %}
-                <div class="card-body text-muted small">아직 기록된 식사가 없습니다.</div>
+                    <div class="text-muted small text-center p-4">
+                        <a href="{% url 'accounts:login' %}">로그인</a>하면 식사 기록 달력을 볼 수 있어요.
+                    </div>
                 {% endif %}
-            {% else %}
-                <div class="card-body text-muted small">
-                    <a href="{% url 'accounts:login' %}">로그인</a>하면 식사 기록을 볼 수 있어요.
-                </div>
-            {% endif %}
+            </div>
         </div>
-    </div>
 
+        <!-- 💡 팝업 대신 붙박이로 들어갈 [해당 날짜에 먹은 음식] 확인 박스 추가 -->
+        {% if user.is_authenticated %}
+        <div class="card shadow-sm" style="border: 2px solid var(--ink) !important;">
+            <div class="card-header bg-light border-0 py-2 text-center">
+                <span class="fw-bold" id="selected-date-label" style="color: var(--ink);">오늘 먹은 음식</span>
+            </div>
+            <div class="card-body p-3" id="selected-meals-box" style="min-height: 80px;">
+                <div class="text-center text-muted small mt-2">달력에서 날짜를 클릭해 보세요!</div>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
 </div>
 
-{# ── 기록 추가 모달 (records:create로 POST, 로그인 사용자만) ──── #}
+{# ── 기록 추가 모달 ──── #}
 {% if user.is_authenticated %}
 <div class="modal fade" id="addRecordModal" tabindex="-1" aria-labelledby="addRecordModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -162,6 +188,12 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
+                <!-- 💡 2번 요구사항: 날짜 선택 추가 및 기본값 설정을 위한 id 추가 -->
+                <div class="mb-3">
+                    <label for="record_date" class="form-label fw-semibold">식사 날짜</label>
+                    <input type="date" id="record_date" name="record_date" class="form-control" required>
+                </div>
+                
                 <div class="mb-3">
                     <label class="form-label fw-semibold">식사 구분</label>
                     <div>
@@ -210,4 +242,114 @@
     </div>
 </div>
 {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<!-- 💡 팝업 모달 HTML 코드는 삭제됨 -->
+
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // 💡 2번 요구사항: 모달 창 뜰 때 오늘 날짜 자동 세팅
+        var today = new Date().toLocaleDateString('en-CA'); // 'YYYY-MM-DD' 포맷 생성 (KST 기준)
+        var dateInput = document.getElementById('record_date');
+        if (dateInput) {
+            dateInput.value = today;
+        }
+
+        {% if user.is_authenticated %}
+            var calendarEl = document.getElementById('meal-calendar');
+            
+            if (calendarEl) {
+                var calendar = new FullCalendar.Calendar(calendarEl, {
+                    initialView: 'dayGridMonth',
+                    height: 500, 
+                    contentHeight: 'auto', 
+                    locale: 'ko', 
+                    headerToolbar: {
+                        left: 'prev,next',
+                        center: 'title',
+                        right: 'today'
+                    },
+                    events: {{ calendar_events_json|default:"[]"|safe }},
+                    
+                    // 💡 1번 요구사항: 달력 내부 정렬 기준 (views.py에서 만든 sort_order 기준)
+                    eventOrder: 'sort_order',
+                    
+                    eventDisplay: 'block',
+                    displayEventTime: false,
+
+                    dateClick: function(info) {
+                        showMealsInBox(info.dateStr, calendar.getEvents());
+                    },
+                    eventClick: function(info) {
+                        showMealsInBox(info.event.startStr, calendar.getEvents());
+                    }
+                });
+                calendar.render();
+            }
+
+            // 💡 1번 요구사항: 하단 박스에 표시할 때도 정렬 적용 및 좌우 배치
+            function showMealsInBox(clickedDate, allEvents) {
+                var mealsHtml = "";
+                
+                // 클릭한 날짜와 일치하는 기록 필터링
+                var dayEvents = allEvents.filter(function(event) {
+                    return event.startStr === clickedDate;
+                });
+                
+                // sort_order 기준으로 배열 오름차순 정렬 (점심 -> 저녁 순)
+                dayEvents.sort(function(a, b) {
+                    return a.extendedProps.sort_order - b.extendedProps.sort_order;
+                });
+
+                // 정렬된 순서대로 HTML 생성 (가로 나열)
+                dayEvents.forEach(function(event) {
+                    mealsHtml += `
+                        <div class="d-inline-flex align-items-center mb-2 me-3 p-2 rounded shadow-sm border" style="background-color: #fcfcfc;">
+                            <span class="badge me-2" style="background-color: ${event.backgroundColor}; width: 45px;">${event.title}</span>
+                            <span class="fw-bold" style="color: var(--ink);">${event.extendedProps.food_name || event.title}</span>
+                        </div>
+                    `;
+                });
+
+                // 라벨 제목 업데이트
+                document.getElementById('selected-date-label').textContent = clickedDate + " 식사 기록";
+
+                // 박스 안에 HTML 채우기
+                var boxEl = document.getElementById('selected-meals-box');
+                if (mealsHtml === "") {
+                    boxEl.innerHTML = "<div class='text-center text-muted small mt-2'>이날은 기록된 식사가 없습니다. 😢</div>";
+                } else {
+                    boxEl.innerHTML = mealsHtml;
+                }
+            }
+        {% endif %}
+    });
+</script>
+
+<style>
+    /* 미니 달력 디자인 미세조정 */
+    #meal-calendar .fc-toolbar-title { font-size: 1.1rem !important; font-weight: bold; color: var(--ink); }
+    #meal-calendar .fc-button { padding: 0.2rem 0.5rem !important; font-size: 0.8rem !important; }
+    
+    /* 💡 [점심], [저녁] 라벨 스타일 */
+    #meal-calendar .fc-daygrid-event { 
+        font-size: 0.75rem !important; 
+        padding: 2px 0px !important; 
+        margin: 2px 1px; 
+        border: none; 
+        cursor: pointer; 
+        text-align: center;
+        white-space: nowrap !important;
+        overflow: hidden;
+    }
+    
+    #meal-calendar .fc-col-header-cell-cushion { color: var(--ink); text-decoration: none; font-weight: bold; font-size: 0.85rem; }
+    #meal-calendar .fc-daygrid-day-number { color: var(--muted); text-decoration: none; cursor: pointer; font-size: 0.85rem;}
+    #meal-calendar .fc-day-today { background-color: var(--brand-soft) !important; }
+    #meal-calendar .fc-daygrid-day { cursor: pointer; transition: background-color 0.2s; }
+    #meal-calendar .fc-daygrid-day:hover { background-color: #f8f9fa; }
+</style>
 {% endblock %}

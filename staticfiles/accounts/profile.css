@@ -1,0 +1,573 @@
+/* accounts/static/accounts/profile.css */
+
+
+
+/* 전체 배경: 따뜻하고 부드러운 오트밀 베이지 */
+
+body {
+
+    background-color: #FAF6F0;
+
+    margin: 0;
+
+    padding: 40px 20px;
+
+    font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: flex-start; /* 위에서부터 자연스럽게 내려오도록 */
+
+    min-height: 100vh;
+
+    box-sizing: border-box;
+
+}
+
+
+
+/* 마이페이지 전체 컨테이너 (넓고 시원하게 확장) */
+
+.profile-container {
+
+    background-color: #ffffff;
+
+    width: 100%;
+
+    max-width: 700px; /* 기존 480px에서 700px로 대폭 확장 */
+
+    padding: 50px 40px;
+
+    border-radius: 20px; /* 좀 더 둥글고 부드러운 느낌 */
+
+    box-shadow: 0 10px 30px rgba(140, 117, 106, 0.05); /* 은은한 갈색 음영 */
+
+    box-sizing: border-box;
+
+}
+
+
+
+/* 상단 타이틀 (중앙 정렬 탈피, 좌측 정렬로 감성적이게) */
+
+.title {
+
+    font-size: 28px;
+
+    font-weight: 800;
+
+    color: #4A3022;
+
+    margin-top: 0;
+
+    margin-bottom: 35px;
+
+    text-align: left;
+
+    border-bottom: 2px solid #F37943; /* 포인트 밑줄 */
+
+    padding-bottom: 15px;
+
+    display: inline-block;
+
+}
+
+
+
+.info-card {
+
+    background: linear-gradient(135deg, #FFFDFB 0%, #FFF9F2 100%);
+
+    border: 1px solid #EADCC9;
+
+    border-radius: 16px;
+
+    padding: 30px;
+
+    margin-bottom: 30px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 25px;
+
+}
+
+
+
+.avatar {
+
+    font-size: 50px;
+
+    background-color: #ffffff;
+
+    width: 90px;
+
+    height: 90px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 50px;
+
+    box-shadow: 0 4px 10px rgba(243, 121, 67, 0.1);
+
+    border: 1px solid #EADCC9;
+
+    flex-shrink: 0;
+
+}
+
+
+
+.info-details {
+
+    flex: 1;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 12px; /* 닉네임과 정보창 간격 */
+
+    overflow: hidden; /* 영역 밖으로 튀어나가지 않게 방지 */
+
+}
+
+
+
+.user-id {
+
+    font-size: 20px;
+
+    font-weight: bold;
+
+    color: #4A3022;
+
+    margin: 0;
+
+}
+
+
+
+/* 성명과 이메일 박스가 아래로 하나씩 쌓이도록 설정 */
+
+.info-grid {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 8px; /* 위아래 줄간격 */
+
+}
+
+
+
+.info-row {
+
+    font-size: 14px;
+
+    display: flex;
+
+    align-items: center;
+
+    border-bottom: 1px dashed #EADCC9;
+
+    padding-bottom: 6px;
+
+}
+
+
+
+.info-row:last-child {
+
+    border-bottom: none;
+
+    padding-bottom: 0;
+
+}
+
+
+
+/* 왼쪽 항목 타이틀 (성명, 이메일) */
+
+.info-row .label {
+
+    color: #8C756A;
+
+    font-weight: bold;
+
+    width: 60px; /* 고정 크기를 주어 줄 시작위치를 정렬함 */
+
+    flex-shrink: 0;
+
+}
+
+
+
+/* 오른쪽 실제 값 */
+
+.info-row .value {
+
+    color: #333333;
+
+    font-weight: bold;
+
+}
+
+
+
+
+
+/* 2. 먹은 메뉴 & 추천 내역 섹션 (대시보드 스타일) */
+
+.history-card {
+
+    background-color: #ffffff;
+
+    border: 1px solid #EADCC9;
+
+    border-radius: 16px;
+
+    padding: 30px;
+
+    margin-bottom: 35px;
+
+}
+
+
+
+.section-title {
+
+    font-size: 18px;
+
+    color: #4A3022;
+
+    margin-top: 0;
+
+    margin-bottom: 20px;
+
+    font-weight: bold;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+}
+
+
+
+/* 타임라인 스타일 리스트 */
+
+.record-list {
+
+    list-style: none;
+
+    padding: 0;
+
+    margin: 0;
+
+}
+
+
+
+/* 데이터가 없을 때의 카드 디자인 */
+
+.record-empty {
+
+    text-align: center;
+
+    color: #8C756A;
+
+    font-size: 15px;
+
+    padding: 40px 0;
+
+    line-height: 1.8;
+
+    background-color: #FFF9F2;
+
+    border-radius: 12px;
+
+    border: 1px dashed #EADCC9;
+
+}
+
+
+
+/* 나중에 데이터가 추가되었을 때 들어갈 항목 디자인 */
+
+.record-item {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    padding: 15px 10px;
+
+    border-bottom: 1px solid #FAF6F0;
+
+}
+
+
+
+.record-item:last-child {
+
+    border-bottom: none;
+
+}
+
+
+
+.food-name {
+
+    font-weight: bold;
+
+    color: #F37943;
+
+}
+
+
+
+.record-date {
+
+    font-size: 13px;
+
+    color: #8C756A;
+
+}
+
+
+
+
+
+/* 3. 하단 네비게이션 및 탈퇴 영역 */
+
+.account-actions {
+
+    display: flex;
+
+    justify-content: space-between; /* 양 끝으로 분산 배치 */
+
+    align-items: center;
+
+    border-top: 1px solid #FAF6F0;
+
+    padding-top: 25px;
+
+}
+
+
+
+/* 메인으로 가기 버튼 (답답한 주황색 꽉 찬 버튼 탈피 -> 세련된 라인 버튼) */
+
+.back-btn {
+
+    display: inline-block;
+
+    padding: 12px 24px;
+
+    background-color: transparent;
+
+    color: #F37943;
+
+    border: 2px solid #F37943;
+
+    text-align: center;
+
+    text-decoration: none;
+
+    font-weight: bold;
+
+    border-radius: 30px; /* 알약 모양 */
+
+    font-size: 15px;
+
+    transition: all 0.2s ease;
+
+}
+
+
+
+.back-btn:hover {
+
+    background-color: #F37943;
+
+    color: white;
+
+}
+
+
+
+/* 탈퇴 영역 */
+
+.delete-area {
+
+    margin: 0;
+
+    font-size: 14px;
+
+    color: #8C756A;
+
+}
+
+
+
+.delete-link {
+
+    color: #C0A99D;
+
+    text-decoration: none;
+
+    margin-left: 10px;
+
+    transition: color 0.2s;
+
+}
+
+
+
+.delete-link:hover {
+
+    color: #FF5A5A;
+
+    text-decoration: underline;
+
+}
+
+
+
+/* ------------------------------------- */
+
+/* 회원 탈퇴 확인 페이지 전용 스타일 */
+
+/* ------------------------------------- */
+
+.text-center {
+
+    text-align: center;
+
+}
+
+
+
+.warning-card {
+
+    border: 1px solid #FFD3D3;
+
+    background-color: #FFF8F8;
+
+    border-radius: 16px;
+
+    padding: 30px;
+
+    margin-bottom: 30px;
+
+}
+
+
+
+.warning-text {
+
+    color: #555;
+
+    line-height: 1.8;
+
+    font-size: 15px;
+
+    margin: 0;
+
+}
+
+
+
+/* 탈퇴 확인용 제출 버튼 */
+
+.delete-btn {
+
+    display: inline-block;
+
+    width: auto;
+
+    padding: 14px 35px;
+
+    background-color: #FF5A5A;
+
+    color: white;
+
+    border: none;
+
+    border-radius: 30px;
+
+    font-size: 15px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    transition: background-color 0.2s;
+
+    margin-right: 15px;
+
+}
+
+
+
+.delete-btn:hover {
+
+    background-color: #E04444;
+
+}
+
+
+
+/* 탈퇴 취소 버튼 */
+
+.cancel-btn {
+
+    display: inline-block;
+
+    width: auto;
+
+    padding: 13px 35px;
+
+    background-color: #ffffff;
+
+    color: #8C756A;
+
+    border: 1px solid #EADCC9;
+
+    text-align: center;
+
+    text-decoration: none;
+
+    font-weight: bold;
+
+    border-radius: 30px;
+
+    font-size: 15px;
+
+    box-sizing: border-box;
+
+    transition: background-color 0.2s;
+
+}
+
+
+
+.cancel-btn:hover {
+
+    background-color: #FAF6F0;
+
+}

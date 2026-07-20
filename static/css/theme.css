@@ -1,21 +1,22 @@
 /* ==========================================================================
-   메뉴 추천 서비스 테마 — 따뜻하고 식욕을 돋우는 미식 톤 (프로페셔널)
-   Bootstrap 5.3 위에 얹는 커스텀 레이어. 색은 CSS 변수로 관리.
+   오늘 뭐 먹지 - 메뉴 추천 서비스 통합 테마 (모던 & 프로페셔널)
+   동방푸드 스타일 벤치마킹: 깔끔한 여백, 소프트한 크림/화이트 배경, 
+   세련된 오렌지 포인트 컬러 적용
    ========================================================================== */
 
 :root {
-    /* 브랜드 팔레트 */
-    --brand: #E8623D;          /* 토마토/테라코타 */
+    /* 브랜드 팔레트 (동방푸드 스타일) */
+    --brand: #E8623D;         /* 메인 토마토/테라코타 (포인트 컬러) */
     --brand-dark: #C64B2A;
-    --brand-soft: #FCEEE7;     /* 아주 옅은 배경 */
-    --accent: #E9A23B;         /* 허니 앰버 */
-    --ink: #2C2118;            /* 따뜻한 다크 브라운 (본문) */
-    --muted: #8C7E72;          /* 웜 그레이 */
-    --cream: #FBF6F0;          /* 배경 크림 */
-    --surface: #FFFFFF;
-    --line: #ECE1D6;           /* 경계선 */
+    --brand-soft: #FCEEE7;    /* 아주 옅은 오렌지 배경 */
+    --accent: #E9A23B;        /* 허니 앰버 */
+    --ink: #2C2118;           /* 따뜻한 다크 브라운 (기본 텍스트) */
+    --muted: #8C7E72;         /* 웜 그레이 */
+    --cream: #FDF9F3;         /* 전체 페이지 크림색 배경 */
+    --surface: #FFFFFF;       /* 카드/박스 흰색 배경 */
+    --line: #ECE1D6;          /* 부드러운 경계선 */
 
-    /* Bootstrap 토큰 리매핑 → utility/badge/bg-primary/link 등에 반영 */
+    /* Bootstrap 토큰 리매핑 */
     --bs-primary: var(--brand);
     --bs-primary-rgb: 232, 98, 61;
     --bs-secondary-rgb: 140, 126, 114;
@@ -28,183 +29,210 @@
     --bs-link-color: var(--brand-dark);
     --bs-link-hover-color: var(--brand);
 
-    /* 부드러운 그림자 */
-    --shadow-sm: 0 1px 2px rgba(44, 33, 24, .06), 0 3px 10px rgba(44, 33, 24, .05);
-    --shadow-md: 0 10px 26px rgba(44, 33, 24, .12);
-    --radius: .9rem;
+    /* 부드럽고 세련된 그림자 (투박한 테두리 대신 사용) */
+    --shadow-sm: 0 2px 8px rgba(44, 33, 24, .04), 0 1px 3px rgba(44, 33, 24, .02);
+    --shadow-md: 0 10px 24px rgba(44, 33, 24, .08);
+    --radius: 1rem; /* 모서리 둥글게 */
 }
 
+/* ===== Typography & Body ===== */
 body {
-    font-family: "Pretendard Variable", "Pretendard", system-ui, -apple-system, "Segoe UI", sans-serif;
-    background-color: var(--cream);
-    color: var(--ink);
+    /* Jua 대신 가독성이 뛰어난 Pretendard 폰트 사용 */
+    font-family: "Pretendard Variable", "Pretendard", system-ui, -apple-system, sans-serif !important;
+    background-color: var(--cream) !important;
+    color: var(--ink) !important;
     letter-spacing: -0.01em;
+    padding-bottom: 50px;
 }
 
 main.container {
-    padding-top: 2rem;
+    padding-top: 2.5rem;
     padding-bottom: 3rem;
 }
 
-h1, h2, h3, h4, h5 {
+h1, h2, h3, h4, h5, .page-title {
     font-weight: 700;
     color: var(--ink);
     letter-spacing: -0.02em;
 }
 
-/* ===== Navbar ===== */
-.navbar.bg-primary {
-    background: linear-gradient(90deg, var(--brand) 0%, #F0865A 100%) !important;
-    box-shadow: var(--shadow-sm);
+.page-title {
+    font-size: 2.2rem;
+    color: var(--brand) !important;
+    margin-bottom: 1.5rem;
 }
-.navbar .navbar-brand { font-weight: 800; letter-spacing: -0.03em; }
-.navbar .nav-link { font-weight: 500; opacity: .92; }
-.navbar .nav-link:hover { opacity: 1; }
-.navbar > .container { flex-wrap: wrap; row-gap: .4rem; column-gap: .5rem; }
 
-/* ===== Cards ===== */
-.card {
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    background: var(--surface);
+/* ===== Navbar (상단 네비게이션) ===== */
+.navbar.bg-primary {
+    background: var(--surface) !important; /* 상단을 하얗고 깔끔하게 */
     box-shadow: var(--shadow-sm);
-    transition: transform .18s ease, box-shadow .18s ease;
+    border-bottom: 1px solid var(--line);
+    padding: 1rem 0;
+}
+.navbar .navbar-brand { 
+    font-weight: 800; 
+    letter-spacing: -0.03em; 
+    color: var(--brand) !important; 
+}
+.navbar .nav-link { 
+    font-weight: 600; 
+    color: var(--ink) !important; 
+    opacity: 0.8; 
+    transition: all 0.2s;
+}
+.navbar .nav-link:hover { 
+    opacity: 1; 
+    color: var(--brand) !important;
+}
+
+/* 네비 메뉴 글씨 크기 조정 */
+.navbar .nav-link div:first-child { font-size: 0.95rem; font-weight: 700; }
+.navbar .nav-link div:last-child { font-size: 0.8rem; opacity: 0.7; }
+
+/* ===== Cards (필터 및 메뉴 카드) ===== */
+.card, .filter-card, .menu-item-card {
+    border: 1px solid var(--line) !important; /* 두꺼운 테두리 대신 얇고 깔끔한 선 */
+    border-radius: var(--radius) !important;
+    background: var(--surface) !important;
+    box-shadow: var(--shadow-sm) !important;
+    transition: transform .25s ease, box-shadow .25s ease;
     overflow: hidden;
 }
-.card.shadow-sm:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-md);
-}
-.card-body { padding: 1.15rem 1.2rem; }
-.card-header {
-    background: var(--brand-soft);
-    border-bottom: 1px solid var(--line);
-    font-weight: 700;
-    color: var(--brand-dark);
+
+.card:hover, .menu-item-card:hover {
+    transform: translateY(-5px) !important;
+    box-shadow: var(--shadow-md) !important;
 }
 
-/* 카드 이미지 & 플레이스홀더 — 비율 통일 */
-.card-img-top {
+.card-body { padding: 1.5rem; }
+.card-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+    font-weight: 700;
+    color: var(--ink);
+    padding: 1.2rem 1.5rem;
+}
+
+/* ===== 이미지 플레이스홀더 ===== */
+.card-img-top, .menu-card-img {
     aspect-ratio: 4 / 3;
     object-fit: cover;
     width: 100%;
+    border-bottom: 1px solid var(--line);
 }
-.card-img-placeholder,
-.detail-img-placeholder {
+.card-img-placeholder, .empty-img-box {
     display: flex;
     align-items: center;
     justify-content: center;
     width: 100%;
-    color: #D69A7B;
-    background:
-        radial-gradient(120% 120% at 28% 18%, #FDF2EA 0%, #F6DECC 68%, #EFCBB4 100%);
+    aspect-ratio: 4 / 3;
+    background-color: var(--brand-soft) !important;
+    color: var(--brand-dark) !important;
+    font-size: 2.6rem;
+    border-bottom: 1px solid var(--line);
 }
-.card-img-placeholder { aspect-ratio: 4 / 3; font-size: 2.6rem; }
-.detail-img-placeholder {
-    aspect-ratio: 16 / 10;
-    font-size: 5rem;
-    border-radius: var(--radius);
-}
-.card-img-placeholder > *,
-.detail-img-placeholder > * { filter: saturate(.85); opacity: .9; }
 
-/* ===== Buttons — 알약형, 통일 ===== */
-.btn {
-    border-radius: 999px;
+/* ===== Buttons ===== */
+.btn, .btn-search, .btn-reset {
+    border-radius: 999px !important;
     font-weight: 600;
-    padding-inline: 1.15rem;
-    transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease;
+    padding: 0.6rem 1.4rem;
+    transition: all .2s ease;
+    border: none;
 }
-.btn-sm { padding-inline: .85rem; }
-.btn:active { transform: translateY(1px); }
+.btn-sm { padding: 0.4rem 1rem; }
 
-.btn-primary {
-    --bs-btn-bg: var(--brand);
-    --bs-btn-border-color: var(--brand);
-    --bs-btn-hover-bg: var(--brand-dark);
-    --bs-btn-hover-border-color: var(--brand-dark);
-    --bs-btn-active-bg: var(--brand-dark);
-    --bs-btn-active-border-color: var(--brand-dark);
-    --bs-btn-disabled-bg: var(--brand);
-    --bs-btn-disabled-border-color: var(--brand);
-    box-shadow: 0 3px 10px rgba(232, 98, 61, .28);
+.btn-primary, .btn-search {
+    background-color: var(--brand) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 12px rgba(232, 98, 61, 0.2);
 }
-.btn-outline-primary {
-    --bs-btn-color: var(--brand-dark);
-    --bs-btn-border-color: var(--brand);
-    --bs-btn-hover-bg: var(--brand);
-    --bs-btn-hover-border-color: var(--brand);
-    --bs-btn-active-bg: var(--brand-dark);
-    --bs-btn-active-border-color: var(--brand-dark);
-}
-.btn-success {
-    --bs-btn-bg: #5B8C5A;
-    --bs-btn-border-color: #5B8C5A;
-    --bs-btn-hover-bg: #4d784c;
-    --bs-btn-hover-border-color: #4d784c;
-    --bs-btn-active-bg: #4d784c;
+.btn-primary:hover, .btn-search:hover {
+    background-color: var(--brand-dark) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(232, 98, 61, 0.3);
 }
 
-/* 좋아요 버튼: JS가 btn-danger ↔ btn-outline-danger 를 토글 → 두 상태 모두 스타일 */
-.btn-outline-danger {
-    --bs-btn-color: #D6455D;
-    --bs-btn-border-color: #E7B9C1;
-    --bs-btn-hover-bg: #D6455D;
-    --bs-btn-hover-border-color: #D6455D;
+.btn-outline-primary, .btn-reset {
+    background-color: transparent !important;
+    color: var(--brand) !important;
+    border: 1px solid var(--brand) !important;
 }
-.btn-danger {
-    --bs-btn-bg: #D6455D;
-    --bs-btn-border-color: #D6455D;
-    --bs-btn-hover-bg: #bf3a50;
-    --bs-btn-hover-border-color: #bf3a50;
+.btn-outline-primary:hover, .btn-reset:hover {
+    background-color: var(--brand-soft) !important;
 }
 
-/* ===== Badges — 통일 ===== */
+.btn-success { background-color: #5B8C5A !important; color: #fff !important; }
+.btn-danger { background-color: #D6455D !important; color: #fff !important; }
+
+/* ===== Forms & Inputs ===== */
+.form-control, .form-select, .search-input {
+    border-radius: 0.5rem !important;
+    border: 1px solid var(--line) !important;
+    padding: 0.75rem 1rem !important;
+    background-color: var(--surface) !important;
+    color: var(--ink) !important;
+    font-size: 1rem;
+}
+.form-control:focus, .form-select:focus, .search-input:focus {
+    border-color: var(--brand) !important;
+    box-shadow: 0 0 0 .2rem rgba(232, 98, 61, .15) !important;
+    outline: none;
+}
+.form-check-input:checked, .custom-check:checked {
+    background-color: var(--brand) !important;
+    border-color: var(--brand) !important;
+}
+
+/* ===== Badges & Tags ===== */
 .badge {
-    font-weight: 600;
-    padding: .42em .72em;
-    border-radius: 999px;
+    font-weight: 500;
+    padding: .4em .8em;
+    border-radius: 6px !important;
     letter-spacing: -.01em;
 }
-.badge.text-bg-light {
-    color: var(--muted) !important;
-    background: #F4EDE4 !important;
-    border-color: var(--line) !important;
+.badge-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 12px;
 }
+.tag-cuisine, .text-bg-secondary { background-color: var(--line) !important; color: var(--ink) !important; }
+.tag-course, .text-bg-light { background-color: var(--surface) !important; color: var(--muted) !important; border: 1px solid var(--line) !important; }
+.tag-time.아침 { background-color: #6FA3EF !important; color: white !important; }
+.tag-time.점심, .text-bg-info { background-color: var(--brand) !important; color: white !important; }
+.tag-time.저녁 { background-color: var(--ink) !important; color: white !important; }
+.allergy-badge { background-color: #D6455D !important; color: #fff !important; }
 
-/* ===== Forms ===== */
-.form-control, .form-select {
-    border-radius: .6rem;
-    border-color: var(--line);
-}
-.form-control:focus, .form-select:focus, .form-check-input:focus {
-    border-color: var(--brand);
-    box-shadow: 0 0 0 .2rem rgba(232, 98, 61, .18);
-}
-.form-check-input:checked {
-    background-color: var(--brand);
-    border-color: var(--brand);
+/* ===== Rating Box ===== */
+.rating-box { color: var(--accent) !important; font-weight: bold; }
+.review-count { color: var(--muted) !important; font-size: 0.9rem; }
+
+/* ===== Alerts (알림창) ===== */
+.alert, .empty-alert {
+    border-radius: var(--radius) !important;
+    border: 1px solid var(--brand-soft) !important;
+    background-color: var(--surface) !important;
+    color: var(--ink) !important;
+    padding: 1.5rem !important;
+    box-shadow: var(--shadow-sm);
 }
 
 /* ===== Pagination ===== */
-.pagination {
-    --bs-pagination-color: var(--brand-dark);
-    --bs-pagination-hover-color: var(--brand-dark);
-    --bs-pagination-hover-bg: var(--brand-soft);
-    --bs-pagination-active-bg: var(--brand);
-    --bs-pagination-active-border-color: var(--brand);
-    --bs-pagination-focus-box-shadow: 0 0 0 .2rem rgba(232, 98, 61, .18);
-    --bs-pagination-border-color: var(--line);
+.pagination .page-link {
+    color: var(--ink) !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 8px !important;
+    margin: 0 4px;
+    transition: all 0.2s;
 }
-
-/* ===== Alerts / Breadcrumb ===== */
-.alert { border-radius: var(--radius); }
-.breadcrumb a { color: var(--brand-dark); text-decoration: none; }
-.breadcrumb a:hover { text-decoration: underline; }
-
-/* ===== 모바일 미세 조정 ===== */
-@media (max-width: 575.98px) {
-    main.container { padding-top: 1.25rem; }
-    .card-body { padding: 1rem; }
-    .detail-img-placeholder { font-size: 3.4rem; }
+.pagination .page-item.active .page-link {
+    background-color: var(--brand) !important;
+    color: #fff !important;
+    border-color: var(--brand) !important;
+}
+.pagination .page-link:hover {
+    background-color: var(--brand-soft) !important;
+    color: var(--brand) !important;
+    border-color: var(--brand-soft) !important;
 }

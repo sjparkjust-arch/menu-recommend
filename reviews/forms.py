@@ -1,20 +1,28 @@
 from django import forms
-
-from reviews.models import Review
-
+from .models import Review
 
 class ReviewForm(forms.ModelForm):
-    """후기 작성/수정 폼. 평점은 템플릿에서 별점(라디오)으로 렌더한다."""
-
     class Meta:
         model = Review
-        fields = ['rating', 'content', 'image']
+        fields = ['category', 'title', 'content', 'rating' , 'image']
         widgets = {
-            'rating': forms.NumberInput(attrs={'min': 1, 'max': 5}),
-            'content': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 4,
-                'placeholder': '메뉴는 어떠셨나요?',
-            }),
-            'image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'category': forms.Select(attrs={'class': 'form-select'}),
+            'title': forms.TextInput(attrs={'class': 'form-control search-input', 'placeholder': '제목을 적어주세요'}),
+            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': '자세한 후기를 남겨주세요'}),
+            'rating': forms.Select(choices=[(i, f"{i}점") for i in range(1, 6)], attrs={'class': 'form-select'}),
+            
+        }
+
+class ReviewGeneralForm(forms.ModelForm):
+    """메뉴 선택이 포함된 폼"""
+    class Meta:
+        model = Review
+        fields = ['menu', 'category', 'title', 'content', 'rating' , 'image']
+        widgets = {
+            'menu': forms.Select(attrs={'class': 'form-select'}),
+            'category': forms.Select(attrs={'class': 'form-select'}),
+            'title': forms.TextInput(attrs={'class': 'form-control search-input', 'placeholder': '제목을 적어주세요'}),
+            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': '자세한 후기를 남겨주세요'}),
+            'rating': forms.Select(choices=[(i, f"{i}점") for i in range(1, 6)], attrs={'class': 'form-select'}),
+            'image': forms.FileInput(attrs={'class': 'form-control'}),
         }

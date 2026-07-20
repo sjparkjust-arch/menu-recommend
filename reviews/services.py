@@ -4,8 +4,7 @@
 """
 
 from django.db.models import Count
-
-from reviews.models import Review, ReviewLike
+from reviews.models import Review
 
 SORT_LATEST = 'latest'
 SORT_LIKES = 'likes'

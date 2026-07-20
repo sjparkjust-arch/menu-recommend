@@ -1,84 +1,141 @@
+{% extends "base.html" %}
+
 {% load static %}
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <title>밥픽 - 식사 히스토리</title>
-    <link rel="stylesheet" href="{% static 'records/history.css' %}">
-</head>
-<body>
 
-    <div class="history-container">
-        <!-- 헤더 영역 -->
-        <div class="history-header">
-            <h1 class="page-title">🕒 식사 히스토리</h1>
-            <div class="header-buttons">
-                <button type="button" class="open-modal-btn" onclick="toggleModal(true)">오늘 뭐 먹었어? 🍚</button>
-                <a href="{% url 'accounts:profile' %}" class="to-profile-btn">마이페이지로</a>
-            </div>
-        </div>
+{% block title %}식사 히스토리 · 밥픽{% endblock %}
 
-        <!-- 타임라인 리스트 메인 영역 -->
-        <div class="timeline-board">
-            {% if records %}
-                <div class="timeline-line"></div>
-                {% for record in records %}
-                    <div class="timeline-card">
-                        <div class="badge {{ record.meal_type|lower }}">
-                            {{ record.get_meal_type_display }}
-                        </div>
-                        <div class="card-content">
-                            <h3 class="food-title">{{ record.food_name }}</h3>
-                            <div class="rating-stars">
-                                {% if record.rating == 5 %}⭐⭐⭐⭐⭐
-                                {% elif record.rating == 4 %}⭐⭐⭐⭐
-                                {% elif record.rating == 3 %}⭐⭐⭐
-                                {% elif record.rating == 2 %}⭐⭐
-                                {% else %}⭐{% endif %}
-                            </div>
-                            {% if record.comment %}
-                                <p class="food-comment">" {{ record.comment }} "</p>
-                            {% endif %}
-                            <span class="record-time">{{ record.created_at|date:"Y-m-d H:i" }}</span>
-                        </div>
-                    </div>
-                {% endfor %}
-            {% else %}
-                <div class="empty-history">
-                    아직 기록된 식사가 없습니다.<br>
-                    위 버튼을 눌러 오늘 먹은 첫 음식을 기록해 보세요! 🍙
-                </div>
-            {% endif %}
+{% block content %}
+<div class="container" style="max-width: 800px; margin: 0 auto;">
+    
+    <!-- 상단 헤더 및 이동 버튼 영역 (레이아웃 깨짐 복구) -->
+    <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
+        <h3 class="fw-bold m-0" style="color: var(--ink);">🕒 식사 히스토리</h3>
+        <div class="d-flex gap-2">
+            <!-- 💡 모달 창 띄우기 버튼 -->
+            <button type="button" class="btn btn-primary fw-bold px-3" data-bs-toggle="modal" data-bs-target="#addRecordModal">
+                + 오늘 뭐 먹었어?
+            </button>
+            <a href="{% url 'menus:dashboard' %}" class="btn btn-outline-secondary fw-bold px-3">
+                메인으로
+            </a>
+            <a href="{% url 'accounts:profile' %}" class="btn btn-outline-dark fw-bold px-3">
+                마이페이지
+            </a>
         </div>
     </div>
 
-    <!--1번 기능: 오늘의 식사 등록 팝업 모달창 창포함-->
-    <div id="mealModal" class="modal-overlay">
-        <div class="modal-window">
-            <div class="modal-header">
-                <h2>🍚 오늘 먹은 음식 기록하기</h2>
-                <button class="close-x-btn" onclick="toggleModal(false)">&times;</button>
+    <!-- 식사 기록 리스트 영역 -->
+    {% if records %}
+        <div class="d-flex flex-column gap-3">
+            {% for record in records %}
+            <div class="card shadow-sm border-0" style="background-color: #fcfcfc;">
+                <div class="card-body p-4 position-relative">
+                    
+                    <!-- 삭제 버튼 (우측 상단 고정) -->
+                    <form action="{% url 'records:delete' record.pk %}" method="post" class="position-absolute top-0 end-0 m-3">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('이 식사 기록을 정말 삭제하시겠습니까?');">
+                            삭제
+                        </button>
+                    </form>
+
+                    <!-- 식사 구분 뱃지 (점심, 저녁 등) -->
+                    {% if record.meal_type == 'LUNCH' %}
+                        <span class="badge mb-2" style="background-color: #E8623D;">점심</span>
+                    {% elif record.meal_type == 'DINNER' %}
+                        <span class="badge mb-2" style="background-color: #2C2118;">저녁</span>
+                    {% elif record.meal_type == 'BREAKFAST' %}
+                        <span class="badge mb-2" style="background-color: #6FA3EF;">아침</span>
+                    {% else %}
+                        <span class="badge mb-2 bg-secondary">{{ record.get_meal_type_display }}</span>
+                    {% endif %}
+
+                    <!-- 음식 이름 -->
+                    <h5 class="fw-bold mb-2" style="color: var(--ink);">{{ record.food_name }}</h5>
+                    
+                    <!-- 만족도 (별점) -->
+                    <div class="text-warning mb-2" style="font-size: 0.9rem;">
+                        {% if record.rating == 5 %}⭐⭐⭐⭐⭐
+                        {% elif record.rating == 4 %}⭐⭐⭐⭐
+                        {% elif record.rating == 3 %}⭐⭐⭐
+                        {% elif record.rating == 2 %}⭐⭐
+                        {% elif record.rating == 1 %}⭐
+                        {% endif %}
+                    </div>
+
+                    <!-- 한줄평 -->
+                    {% if record.comment %}
+                    <div class="p-3 rounded mb-2" style="background-color: white; border: 1px solid var(--line); color: var(--ink);">
+                        " {{ record.comment }} "
+                    </div>
+                    {% endif %}
+
+                    <!-- 날짜 및 시간 -->
+                    <div class="text-muted small mt-2">
+                        {{ record.created_at|date:"Y-m-d H:i" }}
+                    </div>
+
+                </div>
             </div>
-            <form method="post" action="{% url 'records:create' %}">
-                {% csrf_token %}
-                <div class="form-group">
-                    <label>식사 구분</label>
-                    <div class="radio-group">
-                        <label><input type="radio" name="meal_type" value="BREAKFAST"> 아침</label>
-                        <label><input type="radio" name="meal_type" value="LUNCH" checked> 점심</label>
-                        <label><input type="radio" name="meal_type" value="DINNER"> 저녁</label>
-                        <label><input type="radio" name="meal_type" value="SNACK"> 간식</label>
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- 기록이 없을 때 빈 화면 안내 -->
+        <div class="text-center py-5 my-5 rounded shadow-sm" style="background-color: white; border: 1px solid var(--line);">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🍽️</div>
+            <h5 class="fw-bold" style="color: var(--ink);">아직 기록된 식사가 없어요</h5>
+            <p class="text-muted mb-4">메인 화면에서 맛있는 식사를 추천받고 기록을 남겨보세요!</p>
+            <a href="{% url 'menus:dashboard' %}" class="btn btn-primary px-4 fw-bold">메인으로 가기</a>
+        </div>
+    {% endif %}
+
+</div>
+
+{# ── 기록 추가 모달 (히스토리 화면에서도 달력 날짜 지정 가능하게) ──── #}
+{% if user.is_authenticated %}
+<div class="modal fade" id="addRecordModal" tabindex="-1" aria-labelledby="addRecordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="post" action="{% url 'records:create' %}" class="modal-content">
+            {% csrf_token %}
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="addRecordModalLabel">🍚 오늘 먹은 음식 기록하기</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- 💡 날짜 선택 추가 -->
+                <div class="mb-3">
+                    <label for="record_date" class="form-label fw-semibold">식사 날짜</label>
+                    <input type="date" id="record_date" name="record_date" class="form-control" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">식사 구분</label>
+                    <div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="meal_type" value="BREAKFAST" id="mealBreakfast">
+                            <label class="form-check-label" for="mealBreakfast">아침</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="meal_type" value="LUNCH" id="mealLunch" checked>
+                            <label class="form-check-label" for="mealLunch">점심</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="meal_type" value="DINNER" id="mealDinner">
+                            <label class="form-check-label" for="mealDinner">저녁</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="meal_type" value="SNACK" id="mealSnack">
+                            <label class="form-check-label" for="mealSnack">간식</label>
+                        </div>
                     </div>
                 </div>
-
-                <div class="form-group">
-                    <label for="food_name">음식 이름</label>
+                <div class="mb-3">
+                    <label for="food_name" class="form-label fw-semibold">음식 이름</label>
                     <input type="text" id="food_name" name="food_name" class="form-control" placeholder="예: 돈가스, 김치찌개" required autocomplete="off">
                 </div>
-
-                <div class="form-group">
-                    <label for="rating">만족도 (별점)</label>
-                    <select id="rating" name="rating" class="form-control-select">
+                <div class="mb-3">
+                    <label for="rating" class="form-label fw-semibold">만족도</label>
+                    <select id="rating" name="rating" class="form-select">
                         <option value="5">⭐⭐⭐⭐⭐ (최고였어요!)</option>
                         <option value="4">⭐⭐⭐⭐ (맛있어요)</option>
                         <option value="3">⭐⭐⭐ (무난해요)</option>
@@ -86,30 +143,31 @@
                         <option value="1">⭐ (별로예요)</option>
                     </select>
                 </div>
-
-                <div class="form-group">
-                    <label for="comment">한줄평</label>
-                    <textarea id="comment" name="comment" class="form-control-textarea" placeholder="맛이나 식당 정보 등 가벼운 메모를 남겨보세요." rows="3"></textarea>
+                <div class="mb-3">
+                    <label for="comment" class="form-label fw-semibold">한줄평</label>
+                    <textarea id="comment" name="comment" class="form-control" rows="3" placeholder="맛이나 식당 정보 등 가벼운 메모를 남겨보세요."></textarea>
                 </div>
-
-                <div class="modal-footer">
-                    <button type="submit" class="submit-record-btn">기록 완료</button>
-                    <button type="button" class="cancel-record-btn" onclick="toggleModal(false)">취소</button>
-                </div>
-            </form>
-        </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="submit" class="btn btn-primary">기록 완료</button>
+            </div>
+        </form>
     </div>
+</div>
+{% endif %}
 
-    <!-- 팝업 제어용 가벼운 스크립트 -->
-    <script>
-        function toggleModal(show) {
-            const modal = document.getElementById('mealModal');
-            if (show) {
-                modal.classList.add('active');
-            } else {
-                modal.classList.remove('active');
-            }
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 모달 창 열릴 때 기본으로 오늘 날짜 세팅
+        var today = new Date().toLocaleDateString('en-CA');
+        var dateInput = document.getElementById('record_date');
+        if (dateInput) {
+            dateInput.value = today;
         }
-    </script>
-</body>
-</html>
+    });
+</script>
+{% endblock %}

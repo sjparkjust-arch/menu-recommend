@@ -6,4 +6,5 @@ app_name = 'records'
 urlpatterns = [
     path('history/', views.history_view, name='history'),
     path('create/', views.create_record, name='create'),
+    path('<int:pk>/delete/', views.delete_record, name='delete'),
 ]
