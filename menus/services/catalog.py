@@ -4,37 +4,79 @@
 필터/검색/평점 집계/알러지 매칭 같은 쿼리는 전부 이 모듈에 모은다.
 """
 
-from django.db.models import Avg, Count
+from datetime import timedelta
+
+from django.db.models import Avg, Count, Q
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 
-from menus.models import Menu, MenuAllergy
+from menus.models import Menu, MenuAllergy, MenuLike
+
+RANKING_PERIODS = {'today', 'week', 'month'}
 
 
-def menu_list_queryset(cuisine_ids=None, course_ids=None, search=None):
+def menu_list_queryset(cuisine_ids=None, search=None, main_only=False):
     """목록 페이지용 메뉴 QuerySet.
 
-    cuisine/course 다중 선택 필터 + 이름 검색을 적용하고,
-    평균 평점/후기 수를 annotate 한다. (카드 렌더용으로 관계도 미리 로드)
+    cuisine 다중 선택 필터 + 이름 검색을 적용하고,
+    평균 평점/후기 수/좋아요 수를 annotate 한다. (카드 렌더용으로 관계도 미리 로드)
+    main_only=True면 '메인' 코스만 (사이드/디저트/음료 제외).
     """
     qs = (
         Menu.objects
         .select_related('cuisine', 'course')
         .prefetch_related('allergens')
     )
+    if main_only:
+        qs = qs.filter(course__name='메인')
     if cuisine_ids:
         qs = qs.filter(cuisine_id__in=cuisine_ids)
-    if course_ids:
-        qs = qs.filter(course_id__in=course_ids)
     if search:
         qs = qs.filter(name__icontains=search)
     return qs.annotate(
         avg_rating=Avg('reviews__rating'),
         review_count=Count('reviews', distinct=True),
+        like_count=Count('likes', distinct=True),
     ).order_by('name')
 
 
+def ranking_queryset(limit=10, period=None):
+    """후기 평점 기준 랭킹. '메인' 코스 + 후기 1개 이상인 메뉴만, 평균 평점 -> 후기 수 순 정렬.
+
+    period: None(전체 기간) | 'today' | 'week' | 'month'.
+    지정하면 그 기간에 작성된 후기만 집계 대상으로 삼는다(다른 메뉴 정보에는 영향 없음).
+    """
+    review_filter = Q()
+    since = _period_start(period)
+    if since:
+        review_filter = Q(reviews__created_at__gte=since)
+    return (
+        Menu.objects
+        .filter(course__name='메인')
+        .select_related('cuisine', 'course')
+        .annotate(
+            avg_rating=Avg('reviews__rating', filter=review_filter),
+            review_count=Count('reviews', filter=review_filter, distinct=True),
+        )
+        .filter(review_count__gt=0)
+        .order_by('-avg_rating', '-review_count', 'name')[:limit]
+    )
+
+
+def _period_start(period):
+    """랭킹 기간 필터의 시작 시각. period가 없거나 잘못된 값이면 None(전체 기간)."""
+    if period not in RANKING_PERIODS:
+        return None
+    now = timezone.now()
+    if period == 'today':
+        return now.replace(hour=0, minute=0, second=0, microsecond=0)
+    if period == 'week':
+        return now - timedelta(days=7)
+    return now - timedelta(days=30)  # 'month'
+
+
 def get_menu_with_stats(pk):
-    """상세 페이지용 단건 조회. 평균 평점/후기 수 포함. 없으면 404."""
+    """상세 페이지용 단건 조회. 평균 평점/후기 수/좋아요 수 포함. 없으면 404."""
     qs = (
         Menu.objects
         .select_related('cuisine', 'course')
@@ -42,6 +84,7 @@ def get_menu_with_stats(pk):
         .annotate(
             avg_rating=Avg('reviews__rating'),
             review_count=Count('reviews', distinct=True),
+            like_count=Count('likes', distinct=True),
         )
     )
     return get_object_or_404(qs, pk=pk)
@@ -71,6 +114,33 @@ def allergy_hit_menu_ids(user, menus):
         .filter(menu_id__in=menu_ids, allergy_id__in=allergy_ids)
         .values_list('menu_id', flat=True)
     )
+
+
+def liked_menu_ids(user, menus):
+    """주어진 메뉴들 중 user가 좋아요한 menu id 집합. 좋아요 버튼 상태 표시용."""
+    if not user.is_authenticated:
+        return set()
+    menu_ids = [m.pk for m in menus]
+    if not menu_ids:
+        return set()
+    return set(
+        MenuLike.objects
+        .filter(user=user, menu_id__in=menu_ids)
+        .values_list('menu_id', flat=True)
+    )
+
+
+def liked_menus(user, limit=None):
+    """user가 좋아요한 메뉴 목록(MY밥픽). 최근 좋아요 순. 비로그인이면 빈 QuerySet."""
+    if not user.is_authenticated:
+        return Menu.objects.none()
+    qs = (
+        Menu.objects
+        .filter(likes__user=user)
+        .select_related('cuisine', 'course')
+        .order_by('-likes__created_at')
+    )
+    return qs[:limit] if limit else qs
 
 
 def overlapping_allergens(user, menu):

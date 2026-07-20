@@ -67,3 +67,36 @@ class ReviewLike(models.Model):
 
     def __str__(self):
         return f'{self.user} ♥ {self.review_id}'
+
+
+class ReviewView(models.Model):
+    """User ↔ Review. 사용자가 조회(방문)한 다른 사람 후기 기록 ("최근 본 후기" 용).
+
+    같은 후기를 다시 보면 viewed_at만 갱신한다(행이 늘어나지 않음).
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='review_views',
+    )
+    review = models.ForeignKey(
+        Review,
+        on_delete=models.CASCADE,
+        related_name='views',
+    )
+    viewed_at = models.DateTimeField('조회 시각', auto_now=True)
+
+    class Meta:
+        verbose_name = '후기 조회 기록'
+        verbose_name_plural = '후기 조회 기록'
+        ordering = ['-viewed_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'review'],
+                name='uniq_user_review_view',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.user} 👁 {self.review_id}'

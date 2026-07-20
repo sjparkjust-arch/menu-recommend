@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 
@@ -100,3 +101,32 @@ class MenuAllergy(models.Model):
 
     def __str__(self):
         return f'{self.menu} - {self.allergy}'
+
+
+class MenuLike(models.Model):
+    """User ↔ Menu (M:N). 사용자가 좋아요한 메뉴."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='menu_likes',
+    )
+    menu = models.ForeignKey(
+        Menu,
+        on_delete=models.CASCADE,
+        related_name='likes',
+    )
+    created_at = models.DateTimeField('좋아요한 시각', auto_now_add=True)
+
+    class Meta:
+        verbose_name = '메뉴 좋아요'
+        verbose_name_plural = '메뉴 좋아요'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'menu'],
+                name='uniq_user_menu_like',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.user} ♥ {self.menu}'

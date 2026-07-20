@@ -1,0 +1,19 @@
+{# 대시보드 추천 카드 partial. 필요한 컨텍스트: menu(또는 None), head(제목), variant(색상). #}
+<div class="rec-box rec-box-{{ variant }}">
+    <div class="rec-box-head">{{ head }}</div>
+    {% if menu %}
+    <a href="{% url 'menus:detail' menu.pk %}" class="rec-box-body text-decoration-none">
+        {% if menu.image %}
+        <img src="{{ menu.image.url }}" class="rec-box-img" alt="{{ menu.name }}">
+        {% else %}
+        <div class="rec-box-img rec-box-placeholder">🍚</div>
+        {% endif %}
+        <div class="rec-box-info">
+            <div class="rec-box-name">{{ menu.name }}</div>
+            <span class="badge text-bg-secondary">{{ menu.cuisine.name }}</span>
+        </div>
+    </a>
+    {% else %}
+    <div class="rec-box-empty">추천할 메뉴가 없어요.<br><small>(알러지·최근 먹은 메뉴는 제외됩니다.)</small></div>
+    {% endif %}
+</div>

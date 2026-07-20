@@ -2,143 +2,251 @@
 
 뷰에는 비즈니스 로직을 넣지 않는다(CLAUDE.md 코드 스타일). 추천은 이 모듈에서만.
 
-파이프라인 (recommend / recommend_dessert 공통):
-    1. 사용자 알러지 포함 메뉴 무조건 제외 (하드 필터, CLAUDE.md 절대원칙 5)
-    2. 최근 7일 내 먹은 메뉴 제외
-    3. meal_time 필터 (해당 끼니 + '무관')
-    4. 남은 후보에 UserPreference 점수로 가중치를 줘 확률적으로 상위 limit개 추출
+recommend_dashboard()는 대시보드에 보여줄 5개 카드를 서로 다른 방식으로 각 1개씩 뽑는다:
+    1. 점심 랜덤        — 점심 후보 중 무작위
+    2. 저녁 랜덤        — 저녁 후보 중 무작위
+    3. 오늘의 BEST     — 평균 평점이 높은(잘 검증된) 메뉴
+    4. 지금 인기 있는  — 좋아요가 많은 메뉴
+    5. 당신의 취향을 담은 — 협업(나와 취향 겹치는 사용자) + 요리종류 선호도 개인화
 
-recommend()는 '메인' 코스만 대상으로 하고(사이드/음료/디저트 제외),
-디저트는 recommend_dessert()로 따로 뽑아 대시보드에 별도 섹션으로 보여준다.
+모두 '메인' 코스만 대상으로 하고, 하드 제외(알러지·최근 먹은 메뉴·이미 좋아요)는 항상 적용한다.
+알러지는 사용자가 끌 수 없는 하드 제외 조건이다(CLAUDE.md 절대원칙 5).
+5개 카드끼리는 같은 메뉴가 중복되지 않게 뽑는다.
 """
 
 import logging
 import random
 from datetime import timedelta
 
+from django.db.models import Avg, Count
 from django.utils import timezone
 
-from menus.models import Menu
+from menus.models import Menu, MenuLike
 from menus.services import catalog
+from reviews.models import Review
 
 logger = logging.getLogger(__name__)
 
-# 알러지는 사용자가 끌 수 없는 하드 제외 조건이라 필터 인자로 받지 않는다(절대원칙 5).
 RECENT_DAYS = 7
-# 선호도 조사 결과가 없는 요리 종류에 부여할 중립 가중치(척도 1~5의 중앙값).
-NEUTRAL_SCORE = 3
-
+HIGH_RATING = 4  # 이 평점 이상이면 '고평점'으로 보고 협업 신호에 포함
 MAIN_COURSE_NAME = '메인'
-DESSERT_COURSE_NAME = '디저트'
+# '지금 인기 있는 메뉴'는 최근 이 시간 내 좋아요만 집계(실시간). 그 안에 없으면 전체 좋아요로 폴백.
+POPULAR_HOURS = 6
+
+# '당신의 취향' 카드 점수 가중치 (협업 > 선호).
+W_COLLAB = 3.0
+W_PREF = 1.0
+BASE_WEIGHT = 0.05  # 신호가 0이어도 뽑히게 하는 최소 가중치
 
 
-def recommend(user, meal_time, cuisine_ids=None, course_ids=None, limit=3):
-    """user에게 '메인' 코스 메뉴를 추천한다 (사이드/음료/디저트는 제외).
+def recommend_dashboard(user):
+    """대시보드용 5개 카드 추천. 각기 다른 방식, 서로 중복 없음.
 
-    디저트는 recommend_dessert()에서 별도로 추천한다.
-    비로그인(AnonymousUser)이면 알러지 필터·최근 제외·선호도 가중치는
-    적용하지 않고 meal_time/cuisine/course 필터만으로 추천한다.
-
-    Args:
-        user: 추천 대상 User 인스턴스 (AnonymousUser 가능).
-        meal_time: 이번 끼니 (Menu.MealTime 값, 예: 'lunch' / 'dinner').
-        cuisine_ids: 선택. 이 요리 종류들로만 후보를 좁힌다.
-        course_ids: 선택. 이 코스들로만 후보를 좁힌다(단, '메인' 범위 내에서만).
-        limit: 추천 개수.
+    BEST/인기는 데이터 그대로 반영하는 '결정적' 카드(새로고침해도 안 바뀜)이므로
+    먼저 뽑아 진짜 1위를 확정하고, 그다음 랜덤/취향 카드가 이들을 피해서 뽑는다.
 
     Returns:
-        list[Menu]: 최대 limit개. 후보가 없으면 빈 리스트.
+        dict: {'lunch','dinner','best','popular','taste'} → 각 Menu 또는 None.
     """
-    qs = Menu.objects.filter(course__name=MAIN_COURSE_NAME)
+    used = set()
 
-    # cuisine / course 필터 (지정 시에만) -----------------------------------
-    if cuisine_ids:
-        qs = qs.filter(cuisine_id__in=cuisine_ids)
-    if course_ids:
-        qs = qs.filter(course_id__in=course_ids)
+    def take(menu):
+        if menu is not None:
+            used.add(menu.id)
+        return menu
 
-    return _recommend_from_queryset(user, qs, meal_time, limit, tag='recommend')
+    best = take(_pick_best(user, used))
+    popular = take(_pick_popular(user, used))
+    lunch = take(_pick_random(user, Menu.MealTime.LUNCH, used))
+    dinner = take(_pick_random(user, Menu.MealTime.DINNER, used))
+    taste = take(_pick_taste(user, used))
 
-
-def recommend_dessert(user, meal_time, limit=3):
-    """user에게 '디저트' 코스 메뉴를 추천한다. 파이프라인은 recommend()와 동일."""
-    qs = Menu.objects.filter(course__name=DESSERT_COURSE_NAME)
-    return _recommend_from_queryset(user, qs, meal_time, limit, tag='recommend_dessert')
-
-
-def _recommend_from_queryset(user, qs, meal_time, limit, tag):
-    """알러지 하드 필터 -> 최근 제외 -> meal_time 필터 -> 선호도 가중 추출."""
-    total = qs.count()
-
-    # 1. 알러지 하드 필터 (로그인 사용자만 적용 가능) ------------------------
-    allergy_ids = list(catalog.user_allergy_ids(user))
-    if allergy_ids:
-        qs = qs.exclude(menu_allergies__allergy_id__in=allergy_ids)
-    after_allergy = qs.count()
+    picks = {
+        'lunch': lunch, 'dinner': dinner,
+        'best': best, 'popular': popular, 'taste': taste,
+    }
     logger.info(
-        '[%s] user=%s 알러지 필터: %d개 제외 (알러지 %d종) -> %d개',
-        tag, user.pk, total - after_allergy, len(allergy_ids), after_allergy,
+        '[recommend_dashboard] user=%s -> %s',
+        getattr(user, 'pk', None),
+        {k: (v.name if v else None) for k, v in picks.items()},
     )
+    return picks
 
-    # 2. 최근 7일 내 먹은 메뉴 제외 (로그인 사용자만) ------------------------
-    # records.MealRecord는 menus.Menu를 FK로 참조하지 않고 food_name을 자유
-    # 텍스트로 저장한다. 따라서 이름 일치로 근사한다(오타·표기 차이는 놓칠 수 있음).
-    recent_food_names = []
-    if user.is_authenticated:
-        since = timezone.now() - timedelta(days=RECENT_DAYS)
-        recent_food_names = list(
-            user.meal_records.filter(created_at__gte=since)
-            .values_list('food_name', flat=True)
-        )
-    if recent_food_names:
-        qs = qs.exclude(name__in=recent_food_names)
-    after_recent = qs.count()
-    logger.info(
-        '[%s] 최근 %d일 중복 필터: %d개 제외 -> %d개',
-        tag, RECENT_DAYS, after_allergy - after_recent, after_recent,
-    )
 
-    # 3. meal_time 필터 (해당 끼니 + 무관) ---------------------------------
-    qs = qs.filter(meal_time__in=[meal_time, Menu.MealTime.ANY])
-    after_mealtime = qs.count()
-    logger.info(
-        '[%s] meal_time=%s 필터: %d개 제외 -> %d개',
-        tag, meal_time, after_recent - after_mealtime, after_mealtime,
-    )
+def _pick_random(user, meal_time, used):
+    """해당 끼니 후보 중 무작위 1개(새로고침마다 바뀜)."""
+    pool = [m for m in _candidates(user, meal_time) if m.id not in used]
+    return random.choice(pool) if pool else None
 
-    candidates = list(qs.select_related('cuisine', 'course'))
 
-    # 후보 0개 처리 --------------------------------------------------------
-    if not candidates:
-        logger.warning(
-            '[%s] user=%s 후보 0개 — 추천할 메뉴가 없음 (meal_time=%s)',
-            tag, user.pk, meal_time,
-        )
-        return []
+def _pick_best(user, used):
+    """오늘의 BEST: 평균 평점이 가장 높은 메뉴 1개(결정적, 하루 종일 고정).
 
-    # 4. 선호도 가중 확률 추출 (로그인 사용자만, 비로그인은 전부 중립 가중치) --
-    scores = (
+    동점이면 후기 수 많은 순 → 이름 순으로 안정적으로 정한다. 후기가 하나도 없으면 None.
+    """
+    pool = [m for m in _candidates(user, None) if m.id not in used]
+    if not pool:
+        return None
+    stats = _rating_stats([m.id for m in pool])  # {menu_id: (avg, count)}
+    rated = [m for m in pool if m.id in stats]
+    if not rated:
+        return None
+    rated.sort(key=lambda m: (-stats[m.id][0], -stats[m.id][1], m.name))
+    return rated[0]
+
+
+def _pick_popular(user, used):
+    """지금 인기: 최근 POPULAR_HOURS시간 내 좋아요가 가장 많은 메뉴 1개(결정적, 실시간).
+
+    그 시간 내 좋아요가 없으면 전체 기간 좋아요 최다로 폴백. 동점이면 이름 순.
+    """
+    pool = [m for m in _candidates(user, None) if m.id not in used]
+    if not pool:
+        return None
+    ids = [m.id for m in pool]
+
+    since = timezone.now() - timedelta(hours=POPULAR_HOURS)
+    counts = {
+        row['menu_id']: row['c']
+        for row in MenuLike.objects.filter(menu_id__in=ids, created_at__gte=since)
+        .values('menu_id').annotate(c=Count('id'))
+    }
+    if not counts:  # 최근 시간창에 좋아요 없음 → 전체 기간으로 폴백
+        counts = _like_counts(ids)
+    if not counts:
+        return None
+
+    by_id = {m.id: m for m in pool}
+    top_id = sorted(counts, key=lambda mid: (-counts[mid], by_id[mid].name))[0]
+    return by_id[top_id]
+
+
+def _pick_taste(user, used):
+    """당신의 취향을 담은 메뉴 1개. 협업(피어 좋아요/고평점) + 요리종류 선호도."""
+    pool = [m for m in _candidates(user, None) if m.id not in used]
+    if not pool:
+        return None
+
+    collab_counts = _collab_counts(user, [m.id for m in pool])
+    max_collab = max(collab_counts.values(), default=0)
+    pref_scores = (
         dict(user.preferences.values_list('cuisine_id', 'score'))
         if user.is_authenticated else {}
     )
-    weighted = [
-        (menu, scores.get(menu.cuisine_id, NEUTRAL_SCORE))
-        for menu in candidates
-    ]
-    picked = _weighted_sample(weighted, limit)
-    logger.info(
-        '[%s] user=%s 후보 %d개에서 %d개 추천: %s',
-        tag, user.pk, len(candidates), len(picked),
-        [m.name for m in picked],
+
+    weighted = []
+    for m in pool:
+        collab_norm = (collab_counts.get(m.id, 0) / max_collab) if max_collab else 0.0
+        pref_norm = (pref_scores.get(m.cuisine_id, 3) - 1) / 4.0  # 1~5 → 0~1, 기본 중립 3
+        weighted.append((m, W_COLLAB * collab_norm + W_PREF * pref_norm + BASE_WEIGHT))
+    return _weighted_one(weighted)
+
+
+# ── 후보/신호 헬퍼 ─────────────────────────────────────────────────────────
+
+def _candidates(user, meal_time):
+    """하드 제외를 적용한 후보 메뉴 리스트('메인' 코스; meal_time 주면 해당 끼니+'무관')."""
+    qs = (
+        Menu.objects
+        .filter(course__name=MAIN_COURSE_NAME)
+        .select_related('cuisine', 'course')
     )
-    return picked
+    if meal_time:
+        qs = qs.filter(meal_time__in=[meal_time, Menu.MealTime.ANY])
+
+    allergy_ids = list(catalog.user_allergy_ids(user))
+    if allergy_ids:
+        qs = qs.exclude(menu_allergies__allergy_id__in=allergy_ids)
+
+    if user.is_authenticated:
+        liked_ids = set(user.menu_likes.values_list('menu_id', flat=True))
+        if liked_ids:
+            qs = qs.exclude(id__in=liked_ids)  # 이미 좋아요 → 발견성 위해 제외
+        since = timezone.now() - timedelta(days=RECENT_DAYS)
+        recent_names = list(
+            user.meal_records.filter(created_at__gte=since)
+            .values_list('food_name', flat=True)
+        )
+        if recent_names:
+            qs = qs.exclude(name__in=recent_names)  # 최근 먹은 메뉴(이름 근사)
+
+    return list(qs)
+
+
+def _collab_counts(user, cand_ids):
+    """나와 취향이 겹치는 피어들이 좋아요/고평점한 후보 메뉴별 신호 합. {menu_id: count}."""
+    if not user.is_authenticated:
+        return {}
+    interest_ids = _my_interest_ids(user)
+    if not interest_ids:
+        return {}
+
+    peer_ids = set(
+        MenuLike.objects.filter(menu_id__in=interest_ids)
+        .exclude(user=user).values_list('user_id', flat=True)
+    )
+    peer_ids |= set(
+        Review.objects.filter(menu_id__in=interest_ids, rating__gte=HIGH_RATING)
+        .exclude(user=user).values_list('user_id', flat=True)
+    )
+    if not peer_ids:
+        return {}
+
+    counts = {}
+    like_rows = (
+        MenuLike.objects.filter(user_id__in=peer_ids, menu_id__in=cand_ids)
+        .values('menu_id').annotate(c=Count('id'))
+    )
+    for row in like_rows:
+        counts[row['menu_id']] = counts.get(row['menu_id'], 0) + row['c']
+    review_rows = (
+        Review.objects
+        .filter(user_id__in=peer_ids, rating__gte=HIGH_RATING, menu_id__in=cand_ids)
+        .values('menu_id').annotate(c=Count('id'))
+    )
+    for row in review_rows:
+        counts[row['menu_id']] = counts.get(row['menu_id'], 0) + row['c']
+    return counts
+
+
+def _my_interest_ids(user):
+    """내가 관심 있는 메뉴 id 집합: 좋아요 + 후기 + 먹은 것(이름 근사)."""
+    liked = set(user.menu_likes.values_list('menu_id', flat=True))
+    reviewed = set(user.reviews.values_list('menu_id', flat=True))
+    eaten_names = list(user.meal_records.values_list('food_name', flat=True))
+    eaten = set(Menu.objects.filter(name__in=eaten_names).values_list('id', flat=True))
+    return liked | reviewed | eaten
+
+
+def _like_counts(cand_ids):
+    """후보 메뉴별 전역 좋아요 수. {menu_id: count}."""
+    rows = (
+        MenuLike.objects.filter(menu_id__in=cand_ids)
+        .values('menu_id').annotate(c=Count('id'))
+    )
+    return {row['menu_id']: row['c'] for row in rows}
+
+
+def _rating_stats(cand_ids):
+    """후보 메뉴별 (평균 평점, 후기 수). 후기 없는 메뉴는 키에 없음. {menu_id: (avg, count)}."""
+    rows = (
+        Review.objects.filter(menu_id__in=cand_ids)
+        .values('menu_id').annotate(a=Avg('rating'), c=Count('id'))
+    )
+    return {row['menu_id']: (row['a'], row['c']) for row in rows}
+
+
+def _weighted_one(weighted_items):
+    """가중치 확률로 1개만 뽑는다."""
+    picked = _weighted_sample(weighted_items, 1)
+    return picked[0] if picked else None
 
 
 def _weighted_sample(weighted_items, k):
     """가중치 비복원 추출 (Efraimidis-Spirakis A-Res).
 
     각 항목에 key = U^(1/weight) (U는 0~1 균등난수)를 부여하고 key가 큰 순으로
-    상위 k개를 뽑는다. weight가 클수록(선호도 높을수록) 뽑힐 확률이 커진다.
+    상위 k개를 뽑는다. weight가 클수록(점수가 높을수록) 뽑힐 확률이 커진다.
     """
     keyed = []
     for item, weight in weighted_items:

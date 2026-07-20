@@ -3,15 +3,26 @@
 {% block title %}후기 · 메뉴 추천{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
     <h3 class="mb-0">후기</h3>
     <div class="btn-group" role="group" aria-label="정렬">
-        <a href="?sort=latest"
+        <a href="?sort=latest{% if search %}&q={{ search|urlencode }}{% endif %}"
            class="btn btn-sm {% if sort == 'latest' %}btn-primary{% else %}btn-outline-primary{% endif %}">최신순</a>
-        <a href="?sort=likes"
+        <a href="?sort=likes{% if search %}&q={{ search|urlencode }}{% endif %}"
            class="btn btn-sm {% if sort == 'likes' %}btn-primary{% else %}btn-outline-primary{% endif %}">좋아요순</a>
     </div>
 </div>
+
+{# 메뉴 이름/후기 내용 검색 (GET, 정렬 유지) #}
+<form method="get" class="d-flex gap-2 mb-3">
+    <input type="hidden" name="sort" value="{{ sort }}">
+    <input type="text" name="q" value="{{ search }}" class="form-control"
+           placeholder="메뉴 이름이나 후기 내용으로 검색">
+    <button type="submit" class="btn btn-primary px-4">검색</button>
+    {% if search %}
+    <a href="?sort={{ sort }}" class="btn btn-outline-secondary">초기화</a>
+    {% endif %}
+</form>
 
 {# 좋아요 AJAX용 CSRF 쿠키 보장 #}
 {% csrf_token %}
@@ -26,19 +37,19 @@
         <ul class="pagination justify-content-center">
             {% if page_obj.has_previous %}
             <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&sort={{ sort }}">이전</a>
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&sort={{ sort }}{% if search %}&q={{ search|urlencode }}{% endif %}">이전</a>
             </li>
             {% else %}
             <li class="page-item disabled"><span class="page-link">이전</span></li>
             {% endif %}
             {% for num in page_obj.paginator.page_range %}
             <li class="page-item {% if num == page_obj.number %}active{% endif %}">
-                <a class="page-link" href="?page={{ num }}&sort={{ sort }}">{{ num }}</a>
+                <a class="page-link" href="?page={{ num }}&sort={{ sort }}{% if search %}&q={{ search|urlencode }}{% endif %}">{{ num }}</a>
             </li>
             {% endfor %}
             {% if page_obj.has_next %}
             <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.next_page_number }}&sort={{ sort }}">다음</a>
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}&sort={{ sort }}{% if search %}&q={{ search|urlencode }}{% endif %}">다음</a>
             </li>
             {% else %}
             <li class="page-item disabled"><span class="page-link">다음</span></li>
@@ -47,7 +58,9 @@
     </nav>
     {% endif %}
 {% else %}
-    <div class="alert alert-secondary">아직 후기가 없습니다.</div>
+    <div class="alert alert-secondary">
+        {% if search %}"{{ search }}"에 대한 검색 결과가 없습니다.{% else %}아직 후기가 없습니다.{% endif %}
+    </div>
 {% endif %}
 {% endblock %}
 

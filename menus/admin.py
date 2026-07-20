@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Course, Cuisine, Menu, MenuAllergy
+from .models import Course, Cuisine, Menu, MenuAllergy, MenuLike
 
 
 @admin.register(Cuisine)
@@ -35,3 +35,10 @@ class MenuAllergyAdmin(admin.ModelAdmin):
     list_filter = ['allergy']
     search_fields = ['menu__name', 'allergy__name']
     autocomplete_fields = ['menu']
+
+
+@admin.register(MenuLike)
+class MenuLikeAdmin(admin.ModelAdmin):
+    list_display = ['id', 'user', 'menu', 'created_at']
+    search_fields = ['user__username', 'menu__name']
+    autocomplete_fields = ['user', 'menu']

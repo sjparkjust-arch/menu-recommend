@@ -5,6 +5,8 @@ from django.contrib.auth import get_user_model, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login as auth_login
 from records.models import MealRecord
+from records import services as record_services
+from reviews import services as review_services
 
 User = get_user_model()
 
@@ -294,8 +296,15 @@ def profile(request):
     # 로그인한 사용자의 식사 기록 중 최신 5개만 가져옵니다.
     # records모델에서 데이터를 가져옴
     recent_records = MealRecord.objects.filter(user=request.user).order_by('-created_at')[:5]
-    
+
+    recent_viewed_reviews = review_services.recently_viewed_reviews(request.user, limit=5)
+
     context = {
         'meal_records': recent_records, # 템플릿의 {% for record in meal_records %} 와 매핑됩니다. / # 여기에 식사 기록 데이터 바인딩
+        'my_allergies': request.user.allergies.all(),
+        'my_preferences': request.user.preferences.select_related('cuisine').order_by('-score'),
+        'recent_viewed_reviews': recent_viewed_reviews,
+        'liked_ids': review_services.liked_review_ids(request.user, recent_viewed_reviews),
+        'food_stats': record_services.food_count_stats(request.user),
     }
     return render(request, 'accounts/profile.html', context)

@@ -22,19 +22,24 @@ class ReviewListView(ListView):
     paginate_by = PAGE_SIZE
 
     def get_queryset(self):
-        return services.review_queryset(self._sort())
+        return services.review_queryset(self._sort(), search=self._search())
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['sort'] = self._sort()
+        ctx['search'] = self._search()
         ctx['liked_ids'] = services.liked_review_ids(
             self.request.user, ctx['page_obj'].object_list
         )
+        services.record_reviews_viewed(self.request.user, ctx['page_obj'].object_list)
         return ctx
 
     def _sort(self):
         sort = self.request.GET.get('sort')
         return services.SORT_LIKES if sort == services.SORT_LIKES else services.SORT_LATEST
+
+    def _search(self):
+        return self.request.GET.get('q', '').strip()
 
 
 class ReviewCreateView(LoginRequiredMixin, CreateView):
