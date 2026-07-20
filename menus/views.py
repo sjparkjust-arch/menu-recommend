@@ -1,7 +1,8 @@
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from menus.models import Cuisine, Menu, MenuLike
@@ -12,18 +13,57 @@ from reviews import services as review_services
 
 PAGE_SIZE = 12
 RANKING_LIMIT = 10
-RANKING_PREVIEW_LIMIT = 3
 MY_BOBPICK_LIMIT = 10
 FOOD_STATS_LIMIT = 5
+POPULAR_RANK_LIMIT = 3
+REC_SLOTS = ('lunch', 'dinner', 'taste')  # 확률적이라 세션에 고정하는 슬롯
 
 
 def dashboard(request):
     """메인 대시보드. 비로그인도 열람 가능(알러지 필터·최근 기록은 로그인 사용자에게만).
 
     추천 로직은 recommender.recommend_dashboard() 에만 있다(CLAUDE.md 코드 스타일).
-    점심랜덤/저녁랜덤 + 오늘의BEST/지금인기/당신의취향 5개 카드를 보여준다.
+    점심/저녁/오늘의BEST/지금인기/당신의취향 5카드 + 하단 실시간 인기 순위.
+    점심/저녁/취향은 세션(Redis)에 고정 → 새로고침해도 유지, ?reroll=<slot> 이나
+    국가별 필터 변경 시에만 재추첨.
     """
-    recs = recommend_dashboard(request.user)
+    cuisine_ids = _as_int_list(request.GET.getlist('cuisine'))
+    filter_sig = ','.join(str(c) for c in sorted(cuisine_ids))
+    reroll = request.GET.get('reroll')
+    reroll_set = {reroll} if reroll in REC_SLOTS else set()
+
+    # 세션에 저장된 이전 선택(핀). 필터가 바뀌었으면 무효화(핀 버림).
+    stored = request.session.get('rec_picks') or {}
+    if stored.get('sig') == filter_sig:
+        pinned = {s: stored[s] for s in REC_SLOTS if stored.get(s)}
+    else:
+        pinned = {}
+
+    recs = recommend_dashboard(request.user, cuisine_ids=cuisine_ids or None,
+                               pinned=pinned, reroll=reroll_set)
+
+    # 결과를 세션에 다시 저장(다음 새로고침 때 유지).
+    request.session['rec_picks'] = {
+        'sig': filter_sig,
+        **{s: (recs[s].id if recs[s] else None) for s in REC_SLOTS},
+    }
+
+    # 리롤 버튼이 현재 필터를 유지하도록 querystring 조각.
+    cuisine_qs = ''.join(f'&cuisine={c}' for c in cuisine_ids)
+
+    # 리롤은 1회성: 세션에 새 결과를 저장한 뒤 reroll 파라미터를 뺀 깨끗한 URL로
+    # 리다이렉트한다(PRG). 안 그러면 리롤 후 새로고침 때마다 계속 재추첨된다.
+    if reroll_set:
+        clean = reverse('menus:dashboard')
+        if cuisine_ids:
+            clean += '?' + '&'.join(f'cuisine={c}' for c in cuisine_ids)
+        return redirect(clean)
+
+    popular_ranking = catalog.recent_popular_menus(limit=POPULAR_RANK_LIMIT)
+    # 순위 옆에 그 메뉴의 대표 후기(좋아요 top3 중 랜덤 1개) 붙이기
+    review_samples = review_services.sample_reviews_for_menus([m.id for m in popular_ranking])
+    for m in popular_ranking:
+        m.sample_review = review_samples.get(m.id)
 
     if request.user.is_authenticated:
         my_bobpick = catalog.liked_menus(request.user, limit=MY_BOBPICK_LIMIT)
@@ -41,13 +81,14 @@ def dashboard(request):
         food_stats_max = 0
         meal_calendar = None
 
-    ranking_preview = catalog.ranking_queryset(limit=RANKING_PREVIEW_LIMIT, period='week')
-
     context = {
         'recs': recs,
+        'cuisines': Cuisine.objects.all(),
+        'selected_cuisines': cuisine_ids,
+        'cuisine_qs': cuisine_qs,
+        'popular_ranking': popular_ranking,
         'meal_calendar': meal_calendar,
         'my_bobpick': my_bobpick,
-        'ranking_preview': ranking_preview,
         'food_stats': food_stats,
         'food_stats_max': food_stats_max,
     }

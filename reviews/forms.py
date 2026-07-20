@@ -8,8 +8,9 @@ class ReviewForm(forms.ModelForm):
 
     class Meta:
         model = Review
-        fields = ['rating', 'content', 'image']
+        fields = ['review_type', 'rating', 'content', 'image']
         widgets = {
+            'review_type': forms.RadioSelect(attrs={'class': 'form-check-input'}),
             'rating': forms.NumberInput(attrs={'min': 1, 'max': 5}),
             'content': forms.Textarea(attrs={
                 'class': 'form-control',

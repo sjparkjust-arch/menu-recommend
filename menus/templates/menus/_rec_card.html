@@ -1,6 +1,14 @@
-{# 대시보드 추천 카드 partial. 필요한 컨텍스트: menu(또는 None), head(제목), variant(색상). #}
+{% comment %}
+대시보드 추천 카드 partial. 컨텍스트: menu(또는 None), head(제목), variant(색상),
+reroll_url(선택 — 있으면 헤더에 '다시 추천받기' 버튼 표시).
+{% endcomment %}
 <div class="rec-box rec-box-{{ variant }}">
-    <div class="rec-box-head">{{ head }}</div>
+    <div class="rec-box-head d-flex justify-content-between align-items-center">
+        <span>{{ head }}</span>
+        {% if reroll_url %}
+        <a href="{{ reroll_url }}" class="rec-box-reroll" title="다시 추천받기">🔄</a>
+        {% endif %}
+    </div>
     {% if menu %}
     <a href="{% url 'menus:detail' menu.pk %}" class="rec-box-body text-decoration-none">
         {% if menu.image %}

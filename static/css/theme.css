@@ -335,6 +335,35 @@ h5 {
     border-color: var(--brand);
 }
 
+/* ===== 메뉴 목록 카드 이미지 위 좋아요 버튼 (분홍 하트) ===== */
+/* stretched-link(::after z-index:1) 위에 오도록 z-index 상향 — 안 그러면 클릭 가로챔 */
+.like-btn-float {
+    z-index: 2;
+    border-radius: 999px;
+    font-weight: 700;
+    box-shadow: var(--shadow-sm);
+}
+/* 미좋아요: 흰 배경 + 분홍 하트 (JS가 btn-outline-danger를 토글) */
+.like-btn-float.btn-outline-danger {
+    --bs-btn-color: #EC4899;
+    --bs-btn-border-color: #F7B6D2;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #EC4899;
+    --bs-btn-hover-border-color: #EC4899;
+    --bs-btn-active-bg: #EC4899;
+    --bs-btn-active-border-color: #EC4899;
+    background: #fff;
+}
+/* 좋아요: 분홍 배경 + 흰 하트 (JS가 btn-danger를 토글) */
+.like-btn-float.btn-danger {
+    --bs-btn-bg: #EC4899;
+    --bs-btn-border-color: #EC4899;
+    --bs-btn-hover-bg: #DB2777;
+    --bs-btn-hover-border-color: #DB2777;
+}
+/* '몇 명이 좋아합니다' 텍스트 — 하트색(분홍)에 맞춤 */
+.like-count-text { color: #EC4899; }
+
 /* ===== 대시보드 추천 카드 (제목 헤더 + 메뉴 1개) ===== */
 .rec-box {
     height: 100%;
@@ -361,6 +390,16 @@ h5 {
 .rec-box-best    .rec-box-head { background: linear-gradient(90deg, #C99700, #E9A23B); }
 .rec-box-popular .rec-box-head { background: linear-gradient(90deg, #D6455D, #F0865A); }
 .rec-box-taste   .rec-box-head { background: linear-gradient(90deg, var(--brand-dark), var(--brand)); }
+.rec-box-reroll {
+    text-decoration: none;
+    font-size: .95rem;
+    line-height: 1;
+    padding: .15rem .35rem;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, .2);
+    transition: background-color .12s ease, transform .12s ease;
+}
+.rec-box-reroll:hover { background: rgba(255, 255, 255, .38); transform: rotate(90deg); }
 .rec-box-body {
     display: flex;
     flex-direction: column;

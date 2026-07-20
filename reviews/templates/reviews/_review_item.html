@@ -1,9 +1,12 @@
-{# 후기 카드 partial. 필요한 컨텍스트: review(like_count annotate), liked_ids, user.
-   show_menu=True 면 어느 메뉴 후기인지 함께 표시(목록용). #}
+{% comment %}
+후기 카드 partial. 필요한 컨텍스트: review(like_count annotate), liked_ids, user.
+show_menu=True 면 어느 메뉴 후기인지 함께 표시(목록용).
+{% endcomment %}
 <div class="card mb-3 shadow-sm">
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-start">
             <div>
+                <span class="badge {% if review.review_type == 'place' %}text-bg-info{% else %}text-bg-secondary{% endif %} me-1">{{ review.get_review_type_display }}</span>
                 <span class="fw-semibold">{{ review.user.username }}</span>
                 <span class="text-warning ms-1">
                     {% for n in "12345"|make_list %}{% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}{% endfor %}
