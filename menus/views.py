@@ -12,10 +12,8 @@ from reviews import services as review_services
 
 PAGE_SIZE = 12
 RANKING_LIMIT = 10
-RANKING_PREVIEW_LIMIT = 3
 MY_BOBPICK_LIMIT = 10
 FOOD_STATS_LIMIT = 5
-
 
 def dashboard(request):
     """메인 대시보드. 비로그인도 열람 가능(알러지 필터·최근 기록은 로그인 사용자에게만).
@@ -41,13 +39,10 @@ def dashboard(request):
         food_stats_max = 0
         meal_calendar = None
 
-    ranking_preview = catalog.ranking_queryset(limit=RANKING_PREVIEW_LIMIT, period='week')
-
     context = {
         'recs': recs,
         'meal_calendar': meal_calendar,
         'my_bobpick': my_bobpick,
-        'ranking_preview': ranking_preview,
         'food_stats': food_stats,
         'food_stats_max': food_stats_max,
     }

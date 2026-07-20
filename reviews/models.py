@@ -20,6 +20,8 @@ class Review(models.Model):
         '평점',
         validators=[MinValueValidator(1), MaxValueValidator(5)],
     )
+    title = models.CharField(max_length=100, null=True, blank=True)
+    category = models.CharField(max_length=50, null=True, blank=True)
     content = models.TextField('내용', blank=True)
     # 저장 백엔드는 django-storages가 담당한다(CLAUDE.md 절대원칙 2). 경로 하드코딩 금지.
     image = models.ImageField('이미지', upload_to='reviews/', blank=True)

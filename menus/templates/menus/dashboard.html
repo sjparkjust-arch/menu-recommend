@@ -49,10 +49,11 @@
         </div>
     </div>
 
-    {# ── 우측: 최근 먹은 음식 (달력형) ──────────────────── #}
+{# ── 우측: 최근 먹은 음식 (달력형) ──────────────────── #}
     <div class="col-lg-4">
-        <div class="card shadow-sm">
-            <div class="card-header d-flex justify-content-between align-items-center">
+        <!-- 💡 카드 전체 배경을 흰색으로 강제 고정 -->
+        <div class="card shadow-sm" style="background-color: #ffffff !important;">
+            <div class="card-header d-flex justify-content-between align-items-center" style="background-color: #ffffff !important;">
                 {% if user.is_authenticated %}
                 <div class="d-flex align-items-center gap-2">
                     <a href="?cal_year={{ meal_calendar.prev_year }}&cal_month={{ meal_calendar.prev_month }}"
@@ -71,47 +72,50 @@
             {% if user.is_authenticated %}
                 {{ meal_calendar.records_by_day|json_script:"cal-records" }}
                 <div class="card-body p-2">
-                    <table class="table table-sm table-borderless mb-0 meal-calendar">
-                        <thead>
-                            <tr>
-                                <th>일</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for week in meal_calendar.weeks %}
-                            <tr>
-                                {% for cell in week %}
-                                <td>
-                                    {% if cell %}
-                                        {% if cell.count %}
-                                        <button type="button" class="cal-clickable" data-day="{{ cell.day }}"
-                                                data-date="{{ meal_calendar.year }}년 {{ meal_calendar.month }}월 {{ cell.day }}일">
-                                            <span class="cal-day {% if meal_calendar.today and cell.day == meal_calendar.today.day %}cal-day-today{% endif %}">{{ cell.day }}</span>
-                                            <span class="cal-dot">{{ cell.count }}</span>
-                                        </button>
-                                        {% else %}
-                                        <span class="cal-day {% if meal_calendar.today and cell.day == meal_calendar.today.day %}cal-day-today{% endif %}">{{ cell.day }}</span>
-                                        {% endif %}
-                                    {% endif %}
-                                </td>
-                                {% endfor %}
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                    <!-- 💡 테이블 테두리(bordered) 추가 및 바탕색 흰색 강제 고정 -->
+                    <table class="table table-sm table-bordered mb-0 meal-calendar" style="background-color: #ffffff !important; text-align: center; table-layout: fixed;">
+    <thead style="background-color: #fcfcfc !important;">
+        <tr>
+            <th>일</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for week in meal_calendar.weeks %}
+        <tr>
+            {% for cell in week %}
+            <td style="background-color: #ffffff !important; height: 90px; vertical-align: top; padding: 4px;">
+    {% if cell %}
+        <div class="cal-cell-content h-100 d-flex flex-column align-items-center" data-day="{{ cell.day }}" data-date="{{ meal_calendar.year }}년 {{ meal_calendar.month }}월 {{ cell.day }}일" style="cursor: pointer;">
+            
+            <!-- 💡 1. white-space: nowrap; 추가 (줄바꿈 방지) -->
+            <!-- 💡 2. text-danger 삭제 및 text-dark 추가 (오늘 날짜 진한 검정색으로 변경) -->
+            <span class="cal-day {% if meal_calendar.today and cell.day == meal_calendar.today.day %}fw-bold text-dark{% endif %}" style="font-size: 0.85rem; white-space: nowrap;">
+                {{ cell.day }}일
+            </span>
+            
+            <div class="meal-badges d-flex flex-wrap justify-content-center gap-1 mt-1 w-100"></div>
+        </div>
+    {% endif %}
+</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
                 </div>
-                <div class="card-body border-top small text-muted py-2 d-flex justify-content-between">
+                <div class="card-body border-top small text-muted py-2 d-flex justify-content-between" style="background-color: #ffffff !important;">
                     <span>이번 달 총 <strong>{{ meal_calendar.total }}</strong>끼 기록</span>
                     <span class="text-muted">날짜를 눌러 상세 보기</span>
                 </div>
             {% else %}
-                <div class="card-body text-muted small">
+                <div class="card-body text-muted small" style="background-color: #ffffff !important;">
                     <a href="{% url 'accounts:login' %}">로그인</a>하면 식사 기록을 볼 수 있어요.
                 </div>
             {% endif %}
         </div>
 
         {# ── MY밥픽: 좋아요 누른 메뉴 + 많이 먹은 음식 그래프 ── #}
+        <!-- (MY밥픽 부분은 그대로 유지) -->
         <div class="card shadow-sm mt-3">
             <div class="card-header fw-semibold">🧡 MY밥픽</div>
             {% if user.is_authenticated %}
@@ -132,7 +136,6 @@
                 </div>
                 {% endif %}
 
-                {# 많이 먹은 음식 — 가로 막대 그래프 (단일 시리즈 magnitude) #}
                 <div class="card-body border-top">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <span class="small fw-semibold">📊 많이 먹은 음식</span>
@@ -160,45 +163,28 @@
                 </div>
             {% endif %}
         </div>
-
-        {# ── 이번주 인기 메뉴 (랭킹 미리보기) ────────────── #}
-        <div class="card shadow-sm mt-3">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <span class="fw-semibold">🏆 이번주 인기 메뉴</span>
-                <a href="{% url 'menus:ranking' %}" class="small text-decoration-none">전체 랭킹 &gt;</a>
-            </div>
-            {% if ranking_preview %}
-            <ul class="list-group list-group-flush">
-                {% for menu in ranking_preview %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <div>
-                        <span class="ranking-rank {% if forloop.counter <= 3 %}ranking-rank-top{% endif %}"
-                              style="width:1.6rem;height:1.6rem;font-size:.8rem;">{{ forloop.counter }}</span>
-                        <a href="{% url 'menus:detail' menu.pk %}" class="text-decoration-none text-body ms-1">{{ menu.name }}</a>
-                    </div>
-                    <span class="small text-muted">⭐ {{ menu.avg_rating|floatformat:1 }}</span>
-                </li>
-                {% endfor %}
-            </ul>
-            {% else %}
-            <div class="card-body text-muted small">이번주에 작성된 후기가 아직 없습니다.</div>
-            {% endif %}
-        </div>
     </div>
-
 </div>
 
-{# ── 기록 추가 모달 (records:create로 POST, 로그인 사용자만) ──── #}
+{# ── 기록 추가 모달 ──── #}
 {% if user.is_authenticated %}
 <div class="modal fade" id="addRecordModal" tabindex="-1" aria-labelledby="addRecordModalLabel" aria-hidden="true">
     <div class="modal-dialog">
-        <form method="post" action="{% url 'records:create' %}" class="modal-content">
+        <!-- 💡 모달 바탕색 흰색 강제 고정 -->
+        <form method="post" action="{% url 'records:create' %}" class="modal-content" style="background-color: #ffffff !important;">
             {% csrf_token %}
             <div class="modal-header">
                 <h5 class="modal-title" id="addRecordModalLabel">🍚 오늘 먹은 음식 기록하기</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
+                
+                <!-- 💡 1. 날짜 입력칸 추가 -->
+                <div class="mb-3">
+                    <label for="record_date" class="form-label fw-semibold">식사 날짜</label>
+                    <input type="date" id="record_date" name="record_date" class="form-control" style="background-color: #ffffff !important;" required>
+                </div>
+
                 <div class="mb-3">
                     <label class="form-label fw-semibold">식사 구분</label>
                     <div>
@@ -220,13 +206,14 @@
                         </div>
                     </div>
                 </div>
+                <!-- 💡 입력칸들(input, select, textarea) 배경색 흰색 강제 고정 -->
                 <div class="mb-3">
                     <label for="food_name" class="form-label fw-semibold">음식 이름</label>
-                    <input type="text" id="food_name" name="food_name" class="form-control" placeholder="예: 돈가스, 김치찌개" required autocomplete="off">
+                    <input type="text" id="food_name" name="food_name" class="form-control" style="background-color: #ffffff !important;" placeholder="예: 돈가스, 김치찌개" required autocomplete="off">
                 </div>
                 <div class="mb-3">
                     <label for="rating" class="form-label fw-semibold">만족도</label>
-                    <select id="rating" name="rating" class="form-select">
+                    <select id="rating" name="rating" class="form-select" style="background-color: #ffffff !important;">
                         <option value="5">⭐⭐⭐⭐⭐ (최고였어요!)</option>
                         <option value="4">⭐⭐⭐⭐ (맛있어요)</option>
                         <option value="3">⭐⭐⭐ (무난해요)</option>
@@ -236,7 +223,7 @@
                 </div>
                 <div class="mb-3">
                     <label for="comment" class="form-label fw-semibold">한줄평</label>
-                    <textarea id="comment" name="comment" class="form-control" rows="3" placeholder="맛이나 식당 정보 등 가벼운 메모를 남겨보세요."></textarea>
+                    <textarea id="comment" name="comment" class="form-control" rows="3" style="background-color: #ffffff !important;" placeholder="맛이나 식당 정보 등 가벼운 메모를 남겨보세요."></textarea>
                 </div>
             </div>
             <div class="modal-footer">
@@ -250,7 +237,8 @@
 {# ── 날짜 상세 모달 (달력 날짜 클릭 시) ──────────────── #}
 <div class="modal fade" id="dayDetailModal" tabindex="-1" aria-labelledby="dayDetailTitle" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
+        <!-- 💡 상세 모달 바탕색 흰색 강제 고정 -->
+        <div class="modal-content" style="background-color: #ffffff !important;">
             <div class="modal-header">
                 <h5 class="modal-title" id="dayDetailTitle">식사 기록</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -274,26 +262,59 @@
     var bodyEl = document.getElementById('dayDetailBody');
     var mealBadge = { '아침': 'text-bg-warning', '점심': 'text-bg-primary', '저녁': 'text-bg-dark', '간식': 'text-bg-info' };
 
-    document.querySelectorAll('.cal-clickable').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            var day = btn.getAttribute('data-day');
-            var list = records[day] || [];
-            titleEl.textContent = btn.getAttribute('data-date') + ' 식사 기록';
-            if (!list.length) {
-                bodyEl.innerHTML = '<p class="text-muted mb-0">이 날은 기록이 없어요.</p>';
-            } else {
+    document.querySelectorAll('.cal-cell-content').forEach(function (cell) {
+        var day = cell.getAttribute('data-day');
+        var list = records[day] || [];
+        
+        // 💡 1. 정렬 로직: 아침->점심->저녁->간식 순서로 정렬 (점심이 무조건 먼저 나옴)
+        var mealOrder = { '아침': 1, '점심': 2, '저녁': 3, '간식': 4 };
+        list.sort(function(a, b) {
+            return mealOrder[a.meal] - mealOrder[b.meal];
+        });
+
+        // 💡 2. 달력 셀 안에 뱃지 그리기 (점 대신 글자 뱃지 삽입)
+        var badgesContainer = cell.querySelector('.meal-badges');
+        if (list.length > 0) {
+            list.forEach(function(r) {
+                var badgeClass = mealBadge[r.meal] || 'text-bg-secondary';
+                // flex-wrap 덕분에 2개면 양옆(왼쪽 점심, 오른쪽 저녁), 1개면 가운데 정렬됩니다.
+                badgesContainer.innerHTML += '<span class="badge ' + badgeClass + '" style="font-size: 0.65rem; padding: 3px 4px; flex: 1 1 40%; max-width: 90%;">' + r.meal + '</span>';
+            });
+
+            // 기록이 있는 날짜 클릭 시 상세 모달창 띄우기
+            cell.addEventListener('click', function () {
+                titleEl.textContent = cell.getAttribute('data-date') + ' 식사 기록';
                 bodyEl.innerHTML = list.map(function (r) {
                     var stars = '⭐'.repeat(r.rating);
-                    var badge = mealBadge[r.meal] || 'text-bg-secondary';
+                    var badgeClass = mealBadge[r.meal] || 'text-bg-secondary';
                     return '<div class="d-flex justify-content-between align-items-center py-2 border-bottom">'
-                        + '<div><span class="badge ' + badge + ' me-2">' + r.meal + '</span>'
+                        + '<div><span class="badge ' + badgeClass + ' me-2">' + r.meal + '</span>'
                         + '<span class="fw-semibold">' + r.food + '</span></div>'
                         + '<span class="text-warning small">' + stars + '</span></div>';
                 }).join('');
-            }
-            bootstrap.Modal.getOrCreateInstance(modalEl).show();
-        });
+                bootstrap.Modal.getOrCreateInstance(modalEl).show();
+            });
+        } else {
+            // 💡 보너스 기능: 빈 칸(기록 없는 날짜)을 누르면 바로 그 날짜가 세팅된 입력창 띄우기
+            cell.addEventListener('click', function() {
+                var recordDateInput = document.getElementById('record_date');
+                if (recordDateInput) {
+                    var y = "{{ meal_calendar.year }}";
+                    var m = String("{{ meal_calendar.month }}").padStart(2, '0');
+                    var d = String(day).padStart(2, '0');
+                    recordDateInput.value = y + '-' + m + '-' + d;
+                }
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('addRecordModal')).show();
+            });
+        }
     });
+
+    // 화면 우측 상단 '오늘 뭐 먹었어?' 버튼을 위한 기본 오늘 날짜 세팅
+    var today = new Date().toLocaleDateString('en-CA');
+    var dateInput = document.getElementById('record_date');
+    if (dateInput && !dateInput.value) {
+        dateInput.value = today;
+    }
 })();
 </script>
 {% endif %}

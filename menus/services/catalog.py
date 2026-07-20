@@ -136,12 +136,11 @@ def liked_menus(user, limit=None):
         return Menu.objects.none()
     qs = (
         Menu.objects
-        .filter(likes__user=user)
+        .filter(menu_likes__user=user)  # 수정됨: likes -> menu_likes
         .select_related('cuisine', 'course')
-        .order_by('-likes__created_at')
+        .order_by('-menu_likes__created_at')  # 수정됨: likes -> menu_likes
     )
     return qs[:limit] if limit else qs
-
 
 def overlapping_allergens(user, menu):
     """상세 페이지에서, menu의 알러지 재료 중 user의 알러지와 겹치는 것들의 리스트."""

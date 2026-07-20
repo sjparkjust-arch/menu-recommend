@@ -124,7 +124,7 @@ class MenuLike(models.Model):
     menu = models.ForeignKey(
         Menu,
         on_delete=models.CASCADE,
-        related_name='likes',
+        related_name='menu_likes',
     )
     created_at = models.DateTimeField('좋아요한 시각', auto_now_add=True)
 
