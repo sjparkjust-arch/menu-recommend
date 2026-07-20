@@ -1,0 +1,285 @@
+/* records/static/records/history.css */
+
+body {
+    background-color: #f2f5f1; /* 마이페이지와 통일된 말차 크림 배경 */
+    margin: 0;
+    padding: 40px 20px;
+    font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    display: flex;
+    justify-content: center;
+}
+
+.history-container {
+    width: 100%;
+    max-width: 750px;
+}
+
+/* 상단 헤더 섹션 */
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 35px;
+    border-bottom: 2px solid #2d4a30;
+    padding-bottom: 20px;
+}
+
+.page-title {
+    font-size: 26px;
+    color: #1f3622;
+    margin: 0;
+    font-weight: 800;
+}
+
+.header-buttons {
+    display: flex;
+    gap: 12px;
+}
+
+/* 등록 버튼 (주황색 포인트) */
+.open-modal-btn {
+    background-color: #F37943;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.open-modal-btn:hover {
+    background-color: #de632e;
+}
+
+.to-profile-btn {
+    background-color: white;
+    color: #2d4a30;
+    border: 2px solid #2d4a30;
+    padding: 10px 20px;
+    border-radius: 30px;
+    font-weight: bold;
+    text-decoration: none;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.to-profile-btn:hover {
+    background-color: #2d4a30;
+    color: white;
+}
+
+/* 타임라인 메인 보드 */
+.timeline-board {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    padding-left: 20px;
+}
+
+/* 세로 정렬선 */
+.timeline-line {
+    position: absolute;
+    left: 0;
+    top: 10px;
+    bottom: 10px;
+    width: 4px;
+    background-color: #d5e2d3;
+    border-radius: 2px;
+}
+
+/* 카드 컴포넌트 */
+.timeline-card {
+    background-color: white;
+    border-radius: 16px;
+    padding: 22px;
+    box-shadow: 0 4px 15px rgba(44, 62, 41, 0.04);
+    border: 1px solid #e1ebe0;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* 시간대 뱃지 */
+.badge {
+    align-self: flex-start;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    color: white;
+}
+.badge.breakfast { background-color: #6FA3EF; }
+.badge.lunch { background-color: #F37943; }
+.badge.dinner { background-color: #556b52; }
+.badge.snack { background-color: #9cb099; }
+
+.food-title {
+    margin: 0;
+    font-size: 20px;
+    color: #1f3622;
+    font-weight: bold;
+}
+
+.rating-stars {
+    font-size: 13px;
+    margin-top: 4px;
+}
+
+.food-comment {
+    margin: 5px 0 0 0;
+    color: #556b52;
+    font-style: italic;
+    font-size: 14px;
+    background-color: #fcfdfe;
+    padding: 10px;
+    border-left: 3px solid #d5e2d3;
+    border-radius: 4px;
+}
+
+.record-time {
+    font-size: 12px;
+    color: #9cb099;
+    align-self: flex-end;
+}
+
+.empty-history {
+    text-align: center;
+    color: #556b52;
+    padding: 60px 0;
+    line-height: 1.8;
+    font-size: 16px;
+}
+
+/* ==========================================================================
+   [1번 기능: 팝업창 모달 전용 설계 스타일]
+   ========================================================================== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 999;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal-window {
+    background-color: white;
+    width: 100%;
+    max-width: 460px;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+    transform: translateY(-20px);
+    transition: transform 0.3s ease;
+}
+
+.modal-overlay.active .modal-window {
+    transform: translateY(0);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #f2f5f1;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+.modal-header h2 {
+    font-size: 18px;
+    margin: 0;
+    color: #1f3622;
+}
+
+.close-x-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #9cb099;
+    cursor: pointer;
+}
+
+.form-group {
+    margin-bottom: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-size: 14px;
+    font-weight: bold;
+    color: #556b52;
+}
+
+.radio-group {
+    display: flex;
+    gap: 15px;
+}
+
+.radio-group label {
+    font-weight: normal;
+    color: #333;
+    cursor: pointer;
+}
+
+.form-control, .form-control-select, .form-control-textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #d5e2d3;
+    border-radius: 8px;
+    font-size: 14px;
+    box-sizing: border-box;
+    outline: none;
+}
+
+.form-control:focus, .form-control-select:focus, .form-control-textarea:focus {
+    border-color: #F37943;
+}
+
+.modal-footer {
+    display: flex;
+    gap: 10px;
+    margin-top: 25px;
+}
+
+.submit-record-btn {
+    flex: 1;
+    background-color: #2d4a30;
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.submit-record-btn:hover {
+    background-color: #1f3622;
+}
+
+.cancel-record-btn {
+    padding: 14px 20px;
+    background-color: white;
+    color: #8c756a;
+    border: 1px solid #d5e2d3;
+    border-radius: 8px;
+    cursor: pointer;
+}
