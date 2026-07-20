@@ -17,21 +17,54 @@
         </div>
         {% endif %}
 
-        {# 새로고침 #}
-        <div class="d-flex justify-content-end mb-4">
-            <a href="{% url 'menus:dashboard' %}" class="btn btn-success">
-                🔄 다시 추천받기
-            </a>
+        {# 실시간 인기 순위 TOP 3 (좋아요 기반) — 최상단 #}
+        {% if popular_ranking %}
+        <h5 class="mb-2">🔥 실시간 인기 순위</h5>
+        <div class="card shadow-sm mb-3">
+            <ul class="list-group list-group-flush">
+                {% for menu in popular_ranking %}
+                <li class="list-group-item d-flex align-items-center gap-2">
+                    <span class="ranking-rank {% if forloop.counter <= 3 %}ranking-rank-top{% endif %}"
+                          style="width:1.6rem;height:1.6rem;font-size:.8rem;">{{ forloop.counter }}</span>
+                    <a href="{% url 'menus:detail' menu.pk %}" class="text-decoration-none text-body flex-shrink-0">{{ menu.name }}</a>
+                    <span class="badge text-bg-light border flex-shrink-0">{{ menu.cuisine.name }}</span>
+                    {% if menu.sample_review %}
+                    <span class="small text-muted text-truncate ms-1">
+                        💬 {% if menu.sample_review.content %}{{ menu.sample_review.content|truncatechars:24 }}{% else %}⭐ {{ menu.sample_review.rating }}점 후기{% endif %}
+                    </span>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
         </div>
+        {% endif %}
 
-        {# 위: 점심 랜덤 / 저녁 랜덤 #}
-        <div class="eyebrow-label">오늘의 메뉴</div>
+        {# 국가별 필터 (GET, 선택 유지) — 점심/저녁/취향 추천에 적용 #}
+        <form method="get" class="card card-body py-2 mb-3 shadow-sm">
+            <div class="d-flex align-items-center flex-wrap gap-2">
+                <span class="small fw-semibold me-1">국가별</span>
+                {% for c in cuisines %}
+                <div class="form-check form-check-inline m-0">
+                    <input class="form-check-input" type="checkbox" name="cuisine"
+                           value="{{ c.id }}" id="fcuisine{{ c.id }}"
+                           {% if c.id in selected_cuisines %}checked{% endif %}>
+                    <label class="form-check-label small" for="fcuisine{{ c.id }}">{{ c.name }}</label>
+                </div>
+                {% endfor %}
+                <button type="submit" class="btn btn-sm btn-primary ms-auto">적용</button>
+                {% if selected_cuisines %}
+                <a href="{% url 'menus:dashboard' %}" class="btn btn-sm btn-outline-secondary">초기화</a>
+                {% endif %}
+            </div>
+        </form>
+
+        {# 위: 점심 / 저녁 (각각 다시 추천받기) #}
         <div class="row g-3 mb-3">
             <div class="col-md-6">
-                {% include "menus/_rec_card.html" with menu=recs.lunch head="☀️ 점심 랜덤" variant="lunch" %}
+                {% include "menus/_rec_card.html" with menu=recs.lunch head="☀️ 점심 추천" variant="lunch" reroll_url="?reroll=lunch"|add:cuisine_qs %}
             </div>
             <div class="col-md-6">
-                {% include "menus/_rec_card.html" with menu=recs.dinner head="🌙 저녁 랜덤" variant="dinner" %}
+                {% include "menus/_rec_card.html" with menu=recs.dinner head="🌙 저녁 추천" variant="dinner" reroll_url="?reroll=dinner"|add:cuisine_qs %}
             </div>
         </div>
 
@@ -44,7 +77,7 @@
                 {% include "menus/_rec_card.html" with menu=recs.popular head="🔥 지금 인기 있는 메뉴" variant="popular" %}
             </div>
             <div class="col-md-4">
-                {% include "menus/_rec_card.html" with menu=recs.taste head="🎯 당신의 취향을 담은" variant="taste" %}
+                {% include "menus/_rec_card.html" with menu=recs.taste head="🎯 당신의 취향을 담은" variant="taste" reroll_url="?reroll=taste"|add:cuisine_qs %}
             </div>
         </div>
     </div>

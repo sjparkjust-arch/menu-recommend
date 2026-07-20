@@ -138,3 +138,25 @@
 
 - **(버그 수정) 달력이 항상 비어 보이던 문제 — `created_at__month` 시간대 이슈**
   `records/services.meal_calendar()`가 `created_at__year=…, __month=…`로 필터했는데, MariaDB 시간대 테이블 미적재 상태에서 `__month`가 `CONVERT_TZ` NULL로 0건을 반환해 달력이 늘 비어 있었음. 로컬 기준 한 달 datetime 범위(`created_at__gte/__lt`, 단순 비교)로 교체해 해결. 자세한 원인/추적은 `docs/troubleshooting.md` 참고.
+
+## 2026-07-20
+
+- **추천 영역: 국가별 필터 + 카드별 다시추천 + 새로고침 유지 + 하단 실시간 인기 순위**
+  대시보드 "오늘의 메뉴"에 국가별(한/중/일/양) 체크박스 필터 추가(점심/저녁/취향에만 적용). 점심/저녁/취향 카드에 각각 "🔄 다시 추천받기" 버튼(헤더). **추천이 새로고침해도 안 바뀌고, 버튼(또는 필터 변경) 눌러야만 바뀌게** — 확률적 슬롯(lunch/dinner/taste)을 세션(Redis)에 고정(핀). `recommend_dashboard(user, cuisine_ids, pinned, reroll)`로 확장(핀 유효하면 유지, reroll 슬롯/필터변경 시 재추첨), `_pick_meal`/`_pick_taste`에 `preferred_id`·cuisine 인자. BEST/지금인기는 이미 결정적이라 그대로. 픽 순서를 핀 슬롯 먼저 → BEST/인기 나중으로 바꿔 핀 안정성 보장. 5카드 아래 "🔥 실시간 인기 순위" 리스트 추가 — `catalog.recent_popular_menus()`(최근 6시간 좋아요 우선 정렬, 부족하면 전체 인기로 채워 top5 유지, 총 좋아요 수 표시). `menus/views.py` dashboard가 세션 핀 읽기/쓰기 + cuisine/reroll 파싱. `_rec_card.html`에 `reroll_url` 인자, `theme.css`에 리롤 버튼 스타일.
+
+- **메뉴 목록: 좋아요를 사진 위로, 별점은 상세에만**
+  `menu_list.html`에서 좋아요 버튼을 카드 이미지 우측 상단(`position-absolute top-0 end-0`, `like-btn-float` z-index로 stretched-link 위에)으로 이동해 목록에서 바로 클릭. 기존 별점/좋아요 flex row 제거하고 카드 하단에 "❤️ N명이 좋아합니다" 텍스트. 별점(⭐)은 목록에서 빼고 상세 페이지에만 유지(상세는 기존대로). 좋아요 토글 JS/엔드포인트는 그대로(클래스/속성 유지).
+
+- **후기 분류: 음식 후기 / 음식점 후기**
+  `Review.review_type` CharField(choices food/place, default food) 추가 + 마이그레이션 `0003`(기존 후기는 '음식 후기'로). `ReviewForm`에 라디오, `services.review_queryset(..., review_type)` 필터, `ReviewListView`가 `?type=` 파싱(정렬·검색과 함께 유지), `review_list.html`에 탭(전체/음식/음식점), `review_form.html`에 종류 선택, `_review_item.html`에 종류 배지.
+
+- **(분업 메모)** 이번 작업은 `feature/template-update-sang`. 캘린더(우측 달력 카드·JS) 및 상단 네비 게임 셀은 미변경(캘린더=팀원 담당, 게임=다음 세션 `menus:games`로 돌림판/사다리/음식 이상형 월드컵 예정).
+
+- **대시보드/목록/후기 UI 다듬기 (같은 날 후속)**
+  실시간 인기 순위를 TOP 3로 줄이고 추천 영역 최상단(필터 위)으로 이동. "오늘의 메뉴"·"실시간" 점선 라벨(eyebrow) 제거, 우측 "이번주 인기 메뉴" 카드 제거(하단 순위와 중복). 메뉴 목록 좋아요 하트를 분홍색(#EC4899)으로(미좋아요=흰 배경+분홍 하트, 좋아요=분홍 배경), "N명이 좋아합니다" 텍스트도 하트색에 맞춤. 여러 줄 `{# #}` 주석이 그대로 렌더되던 문제(`_rec_card.html`·`_review_item.html`)를 `{% comment %}`로 교체. 세로로 겹쳐 보이던 메뉴/후기 검색폼을 Bootstrap `input-group`으로 바꿔 가로 정렬 고정.
+
+- **리롤 후 새로고침 재추첨 버그 수정 + 순위 표시 정리**
+  "다시 추천받기"를 누르면 URL에 `?reroll=<slot>`이 남아 새로고침마다 계속 재추첨되던 문제를 PRG(리롤 처리 후 세션 저장 → 필터만 남긴 깨끗한 URL로 302 리다이렉트)로 수정 — 이제 리롤은 1회성, 이후 새로고침은 고정. 실시간 인기 순위에서 우측 ❤️ 좋아요 수 표시를 제거하고, 순위 숫자(1·2·3) 아래로 줄바꿈되던 메뉴 이름을 `d-flex` 한 줄 배치로 숫자 오른쪽에 붙임.
+
+- **실시간 인기 순위 옆 대표 후기 + 후기 탭 상호전환 버그 수정**
+  실시간 인기 순위의 각 메뉴 옆에 그 메뉴의 대표 후기(좋아요 top3 중 랜덤 1개, 내용 없으면 별점)를 표시. `reviews/services.sample_reviews_for_menus(menu_ids, pool=3)` 추가, `dashboard` 뷰가 순위 메뉴에 `sample_review` 부착, 템플릿에 💬 후기 노출(후기 없으면 생략). 후기 탭에서 음식↔음식점 전환이 안 되던 버그 수정 — 탭 링크에 `type` 파라미터가 중복으로 붙어(`?type=place&...&type=food`) Django가 마지막 값을 읽던 문제(이전 페이지네이션 일괄치환이 탭 링크까지 건드린 부작용)를 제거.

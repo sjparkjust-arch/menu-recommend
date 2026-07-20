@@ -6,6 +6,10 @@ from django.db import models
 class Review(models.Model):
     """메뉴 리뷰."""
 
+    class ReviewType(models.TextChoices):
+        FOOD = 'food', '음식 후기'
+        PLACE = 'place', '음식점 후기'
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -15,6 +19,12 @@ class Review(models.Model):
         'menus.Menu',
         on_delete=models.CASCADE,
         related_name='reviews',
+    )
+    review_type = models.CharField(
+        '후기 종류',
+        max_length=10,
+        choices=ReviewType.choices,
+        default=ReviewType.FOOD,
     )
     rating = models.PositiveSmallIntegerField(
         '평점',

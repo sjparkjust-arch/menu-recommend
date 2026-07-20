@@ -3,6 +3,8 @@
 정렬/집계/좋아요 매칭 같은 쿼리를 여기 모아 뷰를 얇게 유지한다.
 """
 
+import random
+
 from django.db.models import Count, Q
 
 from reviews.models import Review, ReviewLike, ReviewView
@@ -11,13 +13,32 @@ SORT_LATEST = 'latest'
 SORT_LIKES = 'likes'
 
 
-def review_queryset(sort=SORT_LATEST, search=None):
-    """후기 목록용. 좋아요 수를 annotate 하고, 메뉴 이름/후기 내용으로 검색한 뒤 정렬한다."""
+def sample_reviews_for_menus(menu_ids, pool=3):
+    """각 메뉴의 후기 중 좋아요 많은 상위 pool개를 뽑아 그 안에서 랜덤 1개.
+
+    반환: {menu_id: Review 또는 None}. (실시간 인기 순위 옆 대표 후기용)
+    """
+    result = {}
+    for mid in menu_ids:
+        top = list(
+            Review.objects
+            .filter(menu_id=mid)
+            .annotate(like_count=Count('likes'))
+            .order_by('-like_count', '-created_at')[:pool]
+        )
+        result[mid] = random.choice(top) if top else None
+    return result
+
+
+def review_queryset(sort=SORT_LATEST, search=None, review_type=None):
+    """후기 목록용. 좋아요 수 annotate + 검색(메뉴명/내용) + 종류(음식/음식점) 필터 후 정렬."""
     qs = (
         Review.objects
         .select_related('user', 'menu')
         .annotate(like_count=Count('likes'))
     )
+    if review_type in (Review.ReviewType.FOOD, Review.ReviewType.PLACE):
+        qs = qs.filter(review_type=review_type)
     if search:
         qs = qs.filter(
             Q(content__icontains=search) | Q(menu__name__icontains=search)

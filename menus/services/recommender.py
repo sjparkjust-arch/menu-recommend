@@ -39,15 +39,22 @@ W_PREF = 1.0
 BASE_WEIGHT = 0.05  # 신호가 0이어도 뽑히게 하는 최소 가중치
 
 
-def recommend_dashboard(user):
+def recommend_dashboard(user, cuisine_ids=None, pinned=None, reroll=None):
     """대시보드용 5개 카드 추천. 각기 다른 방식, 서로 중복 없음.
 
-    BEST/인기는 데이터 그대로 반영하는 '결정적' 카드(새로고침해도 안 바뀜)이므로
-    먼저 뽑아 진짜 1위를 확정하고, 그다음 랜덤/취향 카드가 이들을 피해서 뽑는다.
+    점심/저녁/취향(확률적)은 pinned(세션에 저장된 이전 선택)이 여전히 유효 후보면
+    그대로 유지 → 새로고침해도 안 바뀜. reroll 슬롯이거나 pin이 무효면 새로 뽑는다.
+    cuisine_ids(국가별 필터)는 점심/저녁/취향에만 적용. BEST/인기는 전역·결정적이라
+    필터/핀 없이 데이터 그대로(안정적). 확률/핀 카드를 먼저 확정하고 BEST/인기가 그걸 피한다.
+
+    Args:
+        cuisine_ids: 국가별 필터(선택). pinned: {slot: menu_id}. reroll: 재추첨할 슬롯 집합.
 
     Returns:
         dict: {'lunch','dinner','best','popular','taste'} → 각 Menu 또는 None.
     """
+    pinned = pinned or {}
+    reroll = reroll or set()
     used = set()
 
     def take(menu):
@@ -55,28 +62,37 @@ def recommend_dashboard(user):
             used.add(menu.id)
         return menu
 
+    def pin(slot):
+        return None if slot in reroll else pinned.get(slot)
+
+    lunch = take(_pick_meal(user, Menu.MealTime.LUNCH, cuisine_ids, used, pin('lunch')))
+    dinner = take(_pick_meal(user, Menu.MealTime.DINNER, cuisine_ids, used, pin('dinner')))
+    taste = take(_pick_taste(user, cuisine_ids, used, pin('taste')))
     best = take(_pick_best(user, used))
     popular = take(_pick_popular(user, used))
-    lunch = take(_pick_random(user, Menu.MealTime.LUNCH, used))
-    dinner = take(_pick_random(user, Menu.MealTime.DINNER, used))
-    taste = take(_pick_taste(user, used))
 
     picks = {
         'lunch': lunch, 'dinner': dinner,
         'best': best, 'popular': popular, 'taste': taste,
     }
     logger.info(
-        '[recommend_dashboard] user=%s -> %s',
-        getattr(user, 'pk', None),
+        '[recommend_dashboard] user=%s cuisine=%s reroll=%s -> %s',
+        getattr(user, 'pk', None), cuisine_ids, reroll,
         {k: (v.name if v else None) for k, v in picks.items()},
     )
     return picks
 
 
-def _pick_random(user, meal_time, used):
-    """해당 끼니 후보 중 무작위 1개(새로고침마다 바뀜)."""
-    pool = [m for m in _candidates(user, meal_time) if m.id not in used]
-    return random.choice(pool) if pool else None
+def _pick_meal(user, meal_time, cuisine_ids, used, preferred_id=None):
+    """해당 끼니 후보 중 1개. preferred_id가 아직 유효 후보면 그대로, 아니면 무작위."""
+    pool = [m for m in _candidates(user, meal_time, cuisine_ids) if m.id not in used]
+    if not pool:
+        return None
+    if preferred_id is not None:
+        for m in pool:
+            if m.id == preferred_id:
+                return m
+    return random.choice(pool)
 
 
 def _pick_best(user, used):
@@ -121,11 +137,18 @@ def _pick_popular(user, used):
     return by_id[top_id]
 
 
-def _pick_taste(user, used):
-    """당신의 취향을 담은 메뉴 1개. 협업(피어 좋아요/고평점) + 요리종류 선호도."""
-    pool = [m for m in _candidates(user, None) if m.id not in used]
+def _pick_taste(user, cuisine_ids, used, preferred_id=None):
+    """당신의 취향을 담은 메뉴 1개. 협업(피어 좋아요/고평점) + 요리종류 선호도.
+
+    preferred_id가 아직 유효 후보면 그대로 유지(새로고침 안정성).
+    """
+    pool = [m for m in _candidates(user, None, cuisine_ids) if m.id not in used]
     if not pool:
         return None
+    if preferred_id is not None:
+        for m in pool:
+            if m.id == preferred_id:
+                return m
 
     collab_counts = _collab_counts(user, [m.id for m in pool])
     max_collab = max(collab_counts.values(), default=0)
@@ -144,8 +167,9 @@ def _pick_taste(user, used):
 
 # ── 후보/신호 헬퍼 ─────────────────────────────────────────────────────────
 
-def _candidates(user, meal_time):
-    """하드 제외를 적용한 후보 메뉴 리스트('메인' 코스; meal_time 주면 해당 끼니+'무관')."""
+def _candidates(user, meal_time, cuisine_ids=None):
+    """하드 제외를 적용한 후보 메뉴 리스트('메인' 코스; meal_time 주면 해당 끼니+'무관';
+    cuisine_ids 주면 그 국가만)."""
     qs = (
         Menu.objects
         .filter(course__name=MAIN_COURSE_NAME)
@@ -153,6 +177,8 @@ def _candidates(user, meal_time):
     )
     if meal_time:
         qs = qs.filter(meal_time__in=[meal_time, Menu.MealTime.ANY])
+    if cuisine_ids:
+        qs = qs.filter(cuisine_id__in=cuisine_ids)
 
     allergy_ids = list(catalog.user_allergy_ids(user))
     if allergy_ids:

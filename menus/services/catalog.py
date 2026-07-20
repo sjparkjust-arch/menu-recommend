@@ -13,6 +13,41 @@ from django.utils import timezone
 from menus.models import Menu, MenuAllergy, MenuLike
 
 RANKING_PERIODS = {'today', 'week', 'month'}
+# 실시간 인기 순위: 최근 이 시간 내 좋아요만 집계(없으면 전체로 폴백).
+POPULAR_RECENT_HOURS = 6
+
+
+def recent_popular_menus(limit=5, hours=POPULAR_RECENT_HOURS):
+    """실시간 인기 순위: 최근 hours시간 내 좋아요를 우선 반영하되 목록은 항상 채운다.
+
+    정렬 = (최근 좋아요 수 desc → 전체 좋아요 수 desc → 이름). 최근에 눌린 메뉴가 위로 뜨고,
+    최근 활동이 적어도 전체 인기로 채워 top limit개를 유지한다. 표시는 전체 좋아요 수(like_count).
+    데이터 그대로 반영(새로고침 안정적, 좋아요 생기면 순위에 반영).
+    """
+    since = timezone.now() - timedelta(hours=hours)
+    recent = dict(
+        MenuLike.objects
+        .filter(menu__course__name='메인', created_at__gte=since)
+        .values('menu_id').annotate(c=Count('id')).values_list('menu_id', 'c')
+    )
+    total = dict(
+        MenuLike.objects
+        .filter(menu__course__name='메인')
+        .values('menu_id').annotate(c=Count('id')).values_list('menu_id', 'c')
+    )
+    if not total:
+        return []
+    menus = {m.id: m for m in Menu.objects.filter(id__in=list(total)).select_related('cuisine')}
+    ordered_ids = sorted(
+        total,
+        key=lambda mid: (-recent.get(mid, 0), -total[mid], menus[mid].name),
+    )[:limit]
+    result = []
+    for mid in ordered_ids:
+        m = menus[mid]
+        m.like_count = total[mid]  # 표시는 전체 좋아요 수
+        result.append(m)
+    return result
 
 
 def menu_list_queryset(cuisine_ids=None, search=None, main_only=False):

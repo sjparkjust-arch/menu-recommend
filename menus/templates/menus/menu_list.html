@@ -25,10 +25,10 @@
 
     <hr>
 
-    <div class="d-flex gap-2">
+    <div class="input-group">
         <input type="text" name="q" value="{{ search }}" class="form-control"
                placeholder="메뉴 이름 검색">
-        <button type="submit" class="btn btn-primary px-4">검색</button>
+        <button type="submit" class="btn btn-primary">검색</button>
         <a href="{% url 'menus:list' %}" class="btn btn-outline-secondary">초기화</a>
     </div>
 </form>
@@ -45,10 +45,18 @@
     <div class="col">
         <div class="card h-100 shadow-sm position-relative">
             {% if menu.pk in allergy_hits %}
-            <span class="badge text-bg-danger position-absolute top-0 start-0 m-2">
+            <span class="badge text-bg-danger position-absolute top-0 start-0 m-2" style="z-index:2;">
                 ⚠️ 알러지 주의
             </span>
             {% endif %}
+
+            {# 좋아요 버튼 — 이미지 위 우측 상단. stretched-link 위에 오도록 z-index. #}
+            <button type="button"
+                    class="btn btn-sm like-btn like-btn-float position-absolute top-0 end-0 m-2 {% if menu.pk in liked_menu_ids %}btn-danger{% else %}btn-outline-danger{% endif %}"
+                    data-url="{% url 'menus:like' menu.pk %}"
+                    {% if not user.is_authenticated %}data-login-required="1"{% endif %}>
+                ♥ <span class="like-count">{{ menu.like_count }}</span>
+            </button>
 
             {% if menu.image %}
             <img src="{{ menu.image.url }}" class="card-img-top" alt="{{ menu.name }}">
@@ -68,20 +76,8 @@
                     <span class="badge text-bg-info">{{ menu.get_meal_time_display }}</span>
                     {% endif %}
                 </div>
-                <div class="d-flex justify-content-between align-items-center mt-2">
-                    {% if menu.review_count %}
-                    <div class="small text-muted">
-                        ⭐ {{ menu.avg_rating|floatformat:1 }} ({{ menu.review_count }})
-                    </div>
-                    {% else %}
-                    <div></div>
-                    {% endif %}
-                    <button type="button"
-                            class="btn btn-sm position-relative like-btn {% if menu.pk in liked_menu_ids %}btn-danger{% else %}btn-outline-danger{% endif %}"
-                            data-url="{% url 'menus:like' menu.pk %}"
-                            {% if not user.is_authenticated %}data-login-required="1"{% endif %}>
-                        ♥ <span class="like-count">{{ menu.like_count }}</span>
-                    </button>
+                <div class="small mt-2 like-count-text">
+                    ❤️ {{ menu.like_count }}명이 좋아합니다
                 </div>
             </div>
         </div>
