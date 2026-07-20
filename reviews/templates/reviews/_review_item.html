@@ -1,93 +1,72 @@
-{% extends "base.html" %}
+{% comment %}
+후기 카드 partial. 필요한 컨텍스트: review(like_count annotate), liked_ids, user.
+show_menu=True 면 어느 메뉴 후기인지 함께 표시(목록용).
+{% endcomment %}
+<div class="card mb-3 shadow-sm">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <span class="badge {% if review.review_type == 'place' %}text-bg-info{% else %}text-bg-secondary{% endif %} me-1">{{ review.get_review_type_display }}</span>
+                {% if review.review_type == 'place' and review.title %}
+                <span class="fw-bold">{{ review.title }}</span>
+                <span class="text-muted small">· {{ review.user.username }}</span>
+                {% else %}
+                <span class="fw-semibold">{{ review.user.username }}</span>
+                {% endif %}
+                <span class="text-warning ms-1">
+                    {% for n in "12345"|make_list %}{% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}{% endfor %}
+                </span>
+                {% if show_menu %}
+                <span class="text-muted">· <a href="{% url 'menus:detail' review.menu_id %}"
+                    class="text-decoration-none">{{ review.menu.name }}</a></span>
+                {% endif %}
+            </div>
+            <small class="text-muted">{{ review.created_at|date:"Y-m-d H:i" }}</small>
+        </div>
 
-{% block title %}후기 · 메뉴 추천{% endblock %}
-
-{% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h3 class="m-0">후기</h3>
-    {# 후기 작성하기 버튼을 레이아웃 우측 상단으로 깨끗하게 분리 #}
-    <a href="{% url 'reviews:review_create_general' %}" class="btn btn-primary" style="background-color: #ff6b4a; border: none;">
-        ✏️ 후기 작성하기
-    </a>
-</div>
-
-{# 종류 탭 (전체/음식/음식점) — 정렬·검색 유지 #}
-<ul class="nav nav-tabs mb-3">
-    <li class="nav-item">
-        <a class="nav-link {% if not review_type %}active{% endif %}"
-           href="?sort={{ sort }}{% if search %}&q={{ search|urlencode }}{% endif %}">전체</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link {% if review_type == 'food' %}active{% endif %}"
-           href="?type=food&sort={{ sort }}{% if search %}&q={{ search|urlencode }}{% endif %}">🍚 음식 후기</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link {% if review_type == 'place' %}active{% endif %}"
-           href="?type=place&sort={{ sort }}{% if search %}&q={{ search|urlencode }}{% endif %}">🏠 음식점 후기</a>
-    </li>
-</ul>
-
-<div class="d-flex justify-content-end mb-3">
-    <div class="btn-group" role="group" aria-label="정렬">
-        <a href="?sort=latest{% if review_type %}&type={{ review_type }}{% endif %}{% if search %}&q={{ search|urlencode }}{% endif %}"
-           class="btn btn-sm {% if sort == 'latest' %}btn-primary{% else %}btn-outline-primary{% endif %}">최신순</a>
-        <a href="?sort=likes{% if review_type %}&type={{ review_type }}{% endif %}{% if search %}&q={{ search|urlencode }}{% endif %}"
-           class="btn btn-sm {% if sort == 'likes' %}btn-primary{% else %}btn-outline-primary{% endif %}">좋아요순</a>
-    </div>
-</div>
-
-{# 메뉴 이름/후기 내용 검색 (GET, 정렬·종류 유지) #}
-<form method="get" class="mb-3">
-    <input type="hidden" name="sort" value="{{ sort }}">
-    {% if review_type %}<input type="hidden" name="type" value="{{ review_type }}">{% endif %}
-    <div class="input-group">
-        <input type="text" name="q" value="{{ search }}" class="form-control"
-               placeholder="메뉴 이름이나 후기 내용으로 검색">
-        <button type="submit" class="btn btn-primary">검색</button>
-        {% if search %}
-        <a href="?sort={{ sort }}{% if review_type %}&type={{ review_type }}{% endif %}" class="btn btn-outline-secondary">초기화</a>
+        {% if review.content %}
+        <p class="mt-2 mb-2">{{ review.content|linebreaksbr }}</p>
         {% endif %}
+        {% if review.image %}
+        <img src="{{ review.image.url }}" class="img-fluid rounded mb-2" style="max-height:220px;"
+             alt="후기 이미지">
+        {% endif %}
+
+        <div class="d-flex align-items-center gap-2">
+            <button type="button"
+                    class="btn btn-sm like-btn {% if review.pk in liked_ids %}btn-danger{% else %}btn-outline-danger{% endif %}"
+                    data-url="{% url 'reviews:like_toggle' review.pk %}"
+                    {% if not user.is_authenticated %}data-login-required="1"{% endif %}>
+                ♥ <span class="like-count">{{ review.like_count }}</span>
+            </button>
+
+            {% if review.user == user %}
+            <a href="{% url 'reviews:review_update' review.pk %}" class="btn btn-sm btn-outline-secondary">수정</a>
+            <button type="button" class="btn btn-sm btn-outline-secondary"
+                    data-bs-toggle="modal" data-bs-target="#deleteModal{{ review.pk }}">삭제</button>
+            {% endif %}
+        </div>
     </div>
-</form>
 
-{# 좋아요 AJAX용 CSRF 쿠키 보장 #}
-{% csrf_token %}
-
-{% if page_obj.object_list %}
-    {% for review in page_obj %}
-        {% include "reviews/_review_item.html" with show_menu=True %}
-    {% endfor %}
-
-    {% if page_obj.has_other_pages %}
-    <nav class="mt-4" aria-label="후기 페이지">
-        <ul class="pagination justify-content-center">
-            {% if page_obj.has_previous %}
-            <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&sort={{ sort }}{% if review_type %}&type={{ review_type }}{% endif %}{% if search %}&q={{ search|urlencode }}{% endif %}">이전</a>
-            </li>
-            {% else %}
-            <li class="page-item disabled"><span class="page-link">이전</span></li>
-            {% endif %}
-            {% for num in page_obj.paginator.page_range %}
-            <li class="page-item {% if num == page_obj.number %}active{% endif %}">
-                <a class="page-link" href="?page={{ num }}&sort={{ sort }}{% if review_type %}&type={{ review_type }}{% endif %}{% if search %}&q={{ search|urlencode }}{% endif %}">{{ num }}</a>
-            </li>
-            {% endfor %}
-            {% if page_obj.has_next %}
-            <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.next_page_number }}&sort={{ sort }}{% if review_type %}&type={{ review_type }}{% endif %}{% if search %}&q={{ search|urlencode }}{% endif %}">다음</a>
-            </li>
-            {% else %}
-            <li class="page-item disabled"><span class="page-link">다음</span></li>
-            {% endif %}
-        </ul>
-    </nav>
+    {% if review.user == user %}
+    {# 삭제 확인 모달 #}
+    <div class="modal fade" id="deleteModal{{ review.pk }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">후기 삭제</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+                </div>
+                <div class="modal-body">이 후기를 삭제할까요? 되돌릴 수 없습니다.</div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <form method="post" action="{% url 'reviews:review_delete' review.pk %}" class="m-0">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">삭제</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
     {% endif %}
-{% else %}
-    <div class="alert alert-secondary">
-        {% if search %}"{{ search }}"에 대한 검색 결과가 없습니다.{% else %}아직 후기가 없습니다.{% endif %}
-    </div>
-{% endif %}
-{% endblock %}
-
-{% block extra_js %}{% include "reviews/_like_script.html" %}{% endblock %}
+</div>

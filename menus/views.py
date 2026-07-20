@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
@@ -17,6 +18,32 @@ MY_BOBPICK_LIMIT = 10
 FOOD_STATS_LIMIT = 5
 POPULAR_RANK_LIMIT = 3
 REC_SLOTS = ('lunch', 'dinner', 'taste')  # 확률적이라 세션에 고정하는 슬롯
+# 재추첨(AJAX) 가능한 슬롯의 카드 제목/색상 variant (lunch/dinner는 끼니 구분 없는 일반 추천)
+SLOT_META = {
+    'lunch': ('🍽️ 오늘의 추천', 'lunch'),
+    'dinner': ('🎲 또 다른 추천', 'dinner'),
+    'taste': ('🎯 당신의 취향을 담은', 'taste'),
+}
+
+
+def _resolve_recs(request, cuisine_ids, reroll_set):
+    """세션(Redis)에 고정된 추천 핀을 읽고/갱신해 최종 추천 dict를 반환.
+
+    dashboard()와 reroll_slot()이 공유한다. 필터 시그니처가 바뀌면 핀을 버린다.
+    """
+    filter_sig = ','.join(str(c) for c in sorted(cuisine_ids))
+    stored = request.session.get('rec_picks') or {}
+    if stored.get('sig') == filter_sig:
+        pinned = {s: stored[s] for s in REC_SLOTS if stored.get(s)}
+    else:
+        pinned = {}
+    recs = recommend_dashboard(request.user, cuisine_ids=cuisine_ids or None,
+                               pinned=pinned, reroll=reroll_set)
+    request.session['rec_picks'] = {
+        'sig': filter_sig,
+        **{s: (recs[s].id if recs[s] else None) for s in REC_SLOTS},
+    }
+    return recs
 
 def dashboard(request):
     """메인 대시보드. 비로그인도 열람 가능(알러지 필터·최근 기록은 로그인 사용자에게만).
@@ -27,25 +54,11 @@ def dashboard(request):
     국가별 필터 변경 시에만 재추첨.
     """
     cuisine_ids = _as_int_list(request.GET.getlist('cuisine'))
-    filter_sig = ','.join(str(c) for c in sorted(cuisine_ids))
     reroll = request.GET.get('reroll')
     reroll_set = {reroll} if reroll in REC_SLOTS else set()
 
-    # 세션에 저장된 이전 선택(핀). 필터가 바뀌었으면 무효화(핀 버림).
-    stored = request.session.get('rec_picks') or {}
-    if stored.get('sig') == filter_sig:
-        pinned = {s: stored[s] for s in REC_SLOTS if stored.get(s)}
-    else:
-        pinned = {}
-
-    recs = recommend_dashboard(request.user, cuisine_ids=cuisine_ids or None,
-                               pinned=pinned, reroll=reroll_set)
-
-    # 결과를 세션에 다시 저장(다음 새로고침 때 유지).
-    request.session['rec_picks'] = {
-        'sig': filter_sig,
-        **{s: (recs[s].id if recs[s] else None) for s in REC_SLOTS},
-    }
+    # 세션 핀을 읽고/갱신해 추천 확정(로직은 _resolve_recs에 공유).
+    recs = _resolve_recs(request, cuisine_ids, reroll_set)
 
     # 리롤 버튼이 현재 필터를 유지하도록 querystring 조각.
     cuisine_qs = ''.join(f'&cuisine={c}' for c in cuisine_ids)
@@ -64,6 +77,9 @@ def dashboard(request):
     for m in popular_ranking:
         m.sample_review = review_samples.get(m.id)
 
+    # '지금 인기' 카드 자리를 대체할 음식 후기 카드용(일간/주간 탭)
+    food_reviews = review_services.recent_food_reviews()
+
     if request.user.is_authenticated:
         my_bobpick = catalog.liked_menus(request.user, limit=MY_BOBPICK_LIMIT)
         food_stats = record_services.food_count_stats(request.user, limit=FOOD_STATS_LIMIT)
@@ -74,11 +90,13 @@ def dashboard(request):
             year=_as_int_or_none(request.GET.get('cal_year')),
             month=_as_int_or_none(request.GET.get('cal_month')),
         )
+        food_candidates = record_services.food_name_candidates(request.user)
     else:
         my_bobpick = None
         food_stats = None
         food_stats_max = 0
         meal_calendar = None
+        food_candidates = None
 
     context = {
         'recs': recs,
@@ -86,18 +104,43 @@ def dashboard(request):
         'selected_cuisines': cuisine_ids,
         'cuisine_qs': cuisine_qs,
         'popular_ranking': popular_ranking,
+        'food_reviews': food_reviews,
         'meal_calendar': meal_calendar,
         'my_bobpick': my_bobpick,
         'food_stats': food_stats,
         'food_stats_max': food_stats_max,
+        'food_candidates': food_candidates,
     }
     return render(request, 'menus/dashboard.html', context)
+
+
+def reroll_slot(request):
+    """추천 카드 1개만 재추첨하고 그 카드 partial HTML을 JSON으로 반환(AJAX).
+
+    페이지 전체 새로고침 없이 카드만 교체하기 위한 엔드포인트 — 링크 이동이 아니라
+    fetch로 호출되므로 화면이 상단으로 튀지 않는다. JS가 꺼져 있으면 카드의
+    a[href]('?reroll=<slot>') 폴백이 그대로 동작한다(기존 PRG 경로).
+    """
+    slot = request.GET.get('slot')
+    if slot not in SLOT_META:
+        return JsonResponse({'error': 'invalid slot'}, status=400)
+    cuisine_ids = _as_int_list(request.GET.getlist('cuisine'))
+    recs = _resolve_recs(request, cuisine_ids, {slot})
+    head, variant = SLOT_META[slot]
+    cuisine_qs = ''.join(f'&cuisine={c}' for c in cuisine_ids)
+    html = render_to_string('menus/_rec_card.html', {
+        'menu': recs[slot],
+        'head': head,
+        'variant': variant,
+        'reroll_url': f'?reroll={slot}{cuisine_qs}',
+    }, request=request)
+    return JsonResponse({'html': html})
 
 
 def menu_list(request):
     """메뉴 목록. cuisine 다중 필터 + 이름 검색 + 12개 페이지네이션.
 
-    '메인' 코스만 보여준다(사이드/디저트/음료 제외). 쿼리 로직은 catalog 서비스에 있다.
+    '메인' 코스만 보여준다(사이드 제외). 쿼리 로직은 catalog 서비스에 있다.
     비로그인도 열람 가능하며, 알러지 경고는 로그인 사용자에게만 표시한다(숨기지 않음).
     """
     cuisine_ids = _as_int_list(request.GET.getlist('cuisine'))
@@ -164,7 +207,9 @@ def menu_like_toggle(request, pk):
         like.delete()
     return JsonResponse({
         'liked': created,
-        'like_count': menu.likes.count(),
+        # 좋아요 실제 행은 MenuLike(through)에 있다. menu.likes(자동 M2M)가 아니라
+        # menu_likes(MenuLike 역참조)로 세야 토글이 쓴 값과 일치한다.
+        'like_count': menu.menu_likes.count(),
     })
 
 

@@ -55,7 +55,7 @@ def menu_list_queryset(cuisine_ids=None, search=None, main_only=False):
 
     cuisine 다중 선택 필터 + 이름 검색을 적용하고,
     평균 평점/후기 수/좋아요 수를 annotate 한다. (카드 렌더용으로 관계도 미리 로드)
-    main_only=True면 '메인' 코스만 (사이드/디저트/음료 제외).
+    main_only=True면 '메인' 코스만 (사이드 제외).
     """
     qs = (
         Menu.objects

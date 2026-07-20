@@ -58,26 +58,54 @@
             </div>
         </form>
 
-        {# 위: 점심 / 저녁 (각각 다시 추천받기) #}
+        {# 위: 오늘의 추천 / 또 다른 추천 (끼니 구분 없이 각각 랜덤 + 다시 추천받기) #}
         <div class="row g-3 mb-3">
             <div class="col-md-6">
-                {% include "menus/_rec_card.html" with menu=recs.lunch head="☀️ 점심 추천" variant="lunch" reroll_url="?reroll=lunch"|add:cuisine_qs %}
+                {% include "menus/_rec_card.html" with menu=recs.lunch head="🍽️ 오늘의 추천" variant="lunch" reroll_url="?reroll=lunch"|add:cuisine_qs %}
             </div>
             <div class="col-md-6">
-                {% include "menus/_rec_card.html" with menu=recs.dinner head="🌙 저녁 추천" variant="dinner" reroll_url="?reroll=dinner"|add:cuisine_qs %}
+                {% include "menus/_rec_card.html" with menu=recs.dinner head="🎲 또 다른 추천" variant="dinner" reroll_url="?reroll=dinner"|add:cuisine_qs %}
             </div>
         </div>
 
-        {# 아래: 오늘의 BEST / 지금 인기 / 당신의 취향 #}
+        {# 아래: 오늘의 BEST / 당신의 취향 / 음식 후기(일간·주간) #}
         <div class="row g-3">
             <div class="col-md-4">
                 {% include "menus/_rec_card.html" with menu=recs.best head="🏆 오늘의 BEST 메뉴" variant="best" %}
             </div>
             <div class="col-md-4">
-                {% include "menus/_rec_card.html" with menu=recs.popular head="🔥 지금 인기 있는 메뉴" variant="popular" %}
+                {% include "menus/_rec_card.html" with menu=recs.taste head="🎯 당신의 취향을 담은" variant="taste" reroll_url="?reroll=taste"|add:cuisine_qs %}
             </div>
             <div class="col-md-4">
-                {% include "menus/_rec_card.html" with menu=recs.taste head="🎯 당신의 취향을 담은" variant="taste" reroll_url="?reroll=taste"|add:cuisine_qs %}
+                {# '지금 인기' 자리를 대체하는 음식 후기 카드 — 우상단 일간/주간 탭 #}
+                <div class="rec-box rec-box-review">
+                    <div class="rec-box-head d-flex justify-content-between align-items-center">
+                        <span>💬 음식 후기</span>
+                        <div class="btn-group btn-group-sm" role="group" aria-label="기간">
+                            <button type="button" class="btn btn-sm btn-light active" data-review-range="daily">일간</button>
+                            <button type="button" class="btn btn-sm btn-light" data-review-range="weekly">주간</button>
+                        </div>
+                    </div>
+                    <div class="rec-box-review-body">
+                        {% for range_key, range_reviews in food_reviews.items %}
+                        <div class="review-range" data-range="{{ range_key }}" {% if range_key != 'daily' %}style="display:none;"{% endif %}>
+                            {% for r in range_reviews %}
+                            <a href="{% url 'menus:detail' r.menu_id %}" class="review-mini text-decoration-none">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="review-mini-menu">{{ r.menu.name }}</span>
+                                    <span class="text-warning small">{% for n in "12345"|make_list %}{% if forloop.counter <= r.rating %}★{% else %}☆{% endif %}{% endfor %}</span>
+                                </div>
+                                {% if r.content %}<div class="review-mini-text text-muted">{{ r.content|truncatechars:36 }}</div>{% endif %}
+                            </a>
+                            {% empty %}
+                            <div class="rec-box-empty">
+                                {% if range_key == 'daily' %}오늘 올라온 음식 후기가 아직 없어요.{% else %}이번 주 음식 후기가 아직 없어요.{% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -240,10 +268,7 @@
                     </div>
                 </div>
                 <!-- 💡 입력칸들(input, select, textarea) 배경색 흰색 강제 고정 -->
-                <div class="mb-3">
-                    <label for="food_name" class="form-label fw-semibold">음식 이름</label>
-                    <input type="text" id="food_name" name="food_name" class="form-control" style="background-color: #ffffff !important;" placeholder="예: 돈가스, 김치찌개" required autocomplete="off">
-                </div>
+                {% include "records/_food_combobox.html" %}
                 <div class="mb-3">
                     <label for="rating" class="form-label fw-semibold">만족도</label>
                     <select id="rating" name="rating" class="form-select" style="background-color: #ffffff !important;">
@@ -277,6 +302,11 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="dayDetailBody"></div>
+            <div class="modal-footer">
+                <a href="{% url 'records:history' %}" class="btn btn-outline-secondary btn-sm fw-semibold">
+                    📋 식사 히스토리 전체보기
+                </a>
+            </div>
         </div>
     </div>
 </div>
@@ -294,6 +324,11 @@
     var titleEl = document.getElementById('dayDetailTitle');
     var bodyEl = document.getElementById('dayDetailBody');
     var mealBadge = { '아침': 'text-bg-warning', '점심': 'text-bg-primary', '저녁': 'text-bg-dark', '간식': 'text-bg-info' };
+    function esc(s) {
+        return (s || '').replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
 
     document.querySelectorAll('.cal-cell-content').forEach(function (cell) {
         var day = cell.getAttribute('data-day');
@@ -320,10 +355,17 @@
                 bodyEl.innerHTML = list.map(function (r) {
                     var stars = '⭐'.repeat(r.rating);
                     var badgeClass = mealBadge[r.meal] || 'text-bg-secondary';
-                    return '<div class="d-flex justify-content-between align-items-center py-2 border-bottom">'
+                    // 한줄평(comment)이 있으면 음식이름/별점 줄 아래에 인용구로 표시
+                    var commentHtml = r.comment
+                        ? '<div class="text-muted small mt-1 ps-2" style="border-left: 3px solid var(--line);">“ ' + esc(r.comment) + ' ”</div>'
+                        : '';
+                    return '<div class="py-2 border-bottom">'
+                        + '<div class="d-flex justify-content-between align-items-center">'
                         + '<div><span class="badge ' + badgeClass + ' me-2">' + r.meal + '</span>'
-                        + '<span class="fw-semibold">' + r.food + '</span></div>'
-                        + '<span class="text-warning small">' + stars + '</span></div>';
+                        + '<span class="fw-semibold">' + esc(r.food) + '</span></div>'
+                        + '<span class="text-warning small">' + stars + '</span></div>'
+                        + commentHtml
+                        + '</div>';
                 }).join('');
                 bootstrap.Modal.getOrCreateInstance(modalEl).show();
             });
@@ -351,4 +393,59 @@
 })();
 </script>
 {% endif %}
+
+{# 추천 카드 새로고침(AJAX) — 카드만 교체해 화면이 상단으로 튀지 않게. 비로그인도 동작. #}
+<script>
+(function () {
+    var endpoint = "{% url 'menus:reroll' %}";
+
+    function currentCuisineQS() {
+        var params = new URLSearchParams(window.location.search);
+        var qs = new URLSearchParams();
+        params.getAll('cuisine').forEach(function (c) { qs.append('cuisine', c); });
+        return qs;
+    }
+
+    function bind(btn) {
+        if (!btn) return;
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            var slot = btn.getAttribute('data-reroll-slot');
+            var box = btn.closest('.rec-box');
+            var qs = currentCuisineQS();
+            qs.set('slot', slot);
+            btn.textContent = '…';
+            fetch(endpoint + '?' + qs.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (!data.html) throw new Error('no html');
+                    var tmp = document.createElement('div');
+                    tmp.innerHTML = data.html.trim();
+                    var newBox = tmp.firstElementChild;
+                    box.replaceWith(newBox);
+                    bind(newBox.querySelector('.rec-box-reroll'));  // 교체된 카드의 버튼 재바인딩
+                })
+                .catch(function () { window.location.href = btn.getAttribute('href'); });  // 폴백: 링크 이동
+        });
+    }
+
+    document.querySelectorAll('.rec-box-reroll').forEach(bind);
+})();
+</script>
+
+{# 음식 후기 카드: 일간/주간 탭 클라이언트 토글 #}
+<script>
+(function () {
+    var buttons = document.querySelectorAll('[data-review-range]');
+    buttons.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var range = btn.getAttribute('data-review-range');
+            buttons.forEach(function (b) { b.classList.toggle('active', b === btn); });
+            document.querySelectorAll('.review-range').forEach(function (panel) {
+                panel.style.display = (panel.getAttribute('data-range') === range) ? '' : 'none';
+            });
+        });
+    });
+})();
+</script>
 {% endblock %}

@@ -139,4 +139,7 @@ class ReviewCreateGeneralView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         # 현재 로그인한 사용자를 작성자로 주입합니다.
         form.instance.user = self.request.user
+        # menu 필드는 get_form에서 동적으로 추가한 것이라 Meta.fields에 없어
+        # construct_instance()가 인스턴스에 넣어주지 않는다. 여기서 직접 세팅.
+        form.instance.menu = form.cleaned_data['menu']
         return super().form_valid(form)

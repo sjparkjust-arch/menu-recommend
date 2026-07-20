@@ -506,3 +506,142 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 **배운 것**
 - `USE_TZ=True` + MySQL/MariaDB에서 **`__month`/`__day`/`__date`/`__week_day` 룩업은 시간대 테이블이 없으면 조용히 0건**을 낸다(에러도 없음). 날짜 부분 추출 대신 **datetime 범위 비교(`__gte`/`__lt`)로 쓰는 게 안전**하다.
 - "필터가 0건"일 때 `__year`만 따로 떼서 되는지 보면 시간대 변환 문제인지 금방 갈린다.
+
+---
+
+## [2026-07-20 | 식사 기록 완료·대시보드 500 — `reviews_review.title` 컬럼 없음 (또 마이그레이션↔DB 드리프트)]
+
+**증상**
+- 캘린더에서 "오늘 먹은 음식 기록하기" → "기록 완료"를 누르면 500. 기록 자체는 `records`에 저장되는데, 저장 후 대시보드(`/`)로 리다이렉트되는 지점에서 터졌다.
+- `/`(대시보드)를 직접 열어도 500.
+
+**시도한 것 (원인 추적 과정)**
+1. `manage.py shell` + `Client(raise_request_exception=True)`로 `sjpark1999`로 로그인해 `/` 재현 → 트레이스백 원문 확보:
+   ```
+   django.db.utils.OperationalError: (1054, "Unknown column 'reviews_review.title' in 'SELECT'")
+     File "menus/views.py", line 63, in dashboard
+       review_samples = review_services.sample_reviews_for_menus([m.id for m in popular_ranking])
+   ```
+   → 대시보드가 실시간 인기 순위 옆 대표 후기를 뽑느라 `reviews_review`를 SELECT하는데 `title` 컬럼이 없다.
+2. `reviews/models.py`엔 `title = CharField(max_length=100, null=True, blank=True)`, `category = CharField(max_length=50, null=True, blank=True)`가 이미 정의돼 있음(팀원 추가분).
+3. `showmigrations reviews` → `[X] 0001_initial` 하나뿐. `makemigrations reviews --dry-run` → **"No changes detected"**. 즉 모델 == 마이그레이션 상태(둘 다 title/category 있음)라 새 마이그레이션이 안 생긴다.
+4. 실제 DB 컬럼 확인(`SHOW COLUMNS FROM reviews_review`):
+   ```
+   id, rating, content, image, created_at, menu_id, user_id, review_type
+   ```
+   → `title`, `category`가 **DB에만 없음**. `0001_initial.py`(오늘 04:23 재생성됨)는 두 컬럼을 포함하지만, 테이블은 그 이전 버전으로 만들어져 있었고 마이그레이션은 이미 `[X]`라 재적용 안 됨.
+
+**원인**
+- 07-15 records 사건과 **동일한 마이그레이션↔DB 드리프트**. `0001_initial` 파일 내용이 나중에 (title/category 추가된 채로) 재생성됐는데, 그 마이그레이션은 이미 적용됨으로 기록돼 있어 실제 테이블엔 컬럼이 추가되지 않았다. Django는 마이그레이션을 이름으로만 추적하므로 `makemigrations`는 "변경 없음"이라고 속인다.
+
+**해결**
+- 테이블을 마이그레이션(0001_initial)에 맞춰 두 컬럼만 보정:
+  ```sql
+  ALTER TABLE reviews_review
+    ADD COLUMN title varchar(100) NULL,
+    ADD COLUMN category varchar(50) NULL;
+  ```
+- 재검증: 대시보드/히스토리 200, 식사 기록 완료(POST→대시보드 리다이렉트) 302. (새로 배포하는 환경/AWS는 0001_initial이 처음부터 두 컬럼을 만들므로, 드리프트가 난 이 기존 DB만 보정하면 됨.)
+
+**배운 것**
+- "**기록 완료 눌렀더니 500**"이 반드시 그 기록(records) 쪽 버그는 아니다 — POST 성공 후 **리다이렉트 대상 페이지(대시보드)**가 터진 것이었다. 저장은 됐는데 도착지가 500이면 착시가 생긴다. 리다이렉트 체인의 끝까지 재현해봐야 한다.
+- 마이그레이션↔DB 드리프트는 이 프로젝트에서 재발한다(records 07-15, reviews 07-20). `showmigrations`가 `[X]`여도, `makemigrations`가 "변경 없음"이어도 **실제 컬럼(`SHOW COLUMNS`)과 대조하기 전엔 스키마 일치를 믿지 않는다.** 특히 병합 후 첫 실행에서.
+
+---
+
+## [2026-07-20 | 후기 목록 500 — partial이 자기 자신을 include (`RecursionError`)]
+
+**증상**
+- `/reviews/`(후기 목록) 전부 500. `?type=food`/`?type=place`도 동일.
+
+**시도한 것 (원인 추적 과정)**
+1. `Client(raise_request_exception=True)`로 `/reviews/` 재현 → 트레이스백 원문:
+   ```
+   RecursionError: maximum recursion depth exceeded
+   ```
+   앱 프레임이 안 보이고 `render_annotated`/`render`가 수백 번 반복됨 → **템플릿 렌더링 무한재귀**로 판단.
+2. include/extends 순환 의심 → `grep -rn "extends|include"`:
+   ```
+   review_list.html:59:  {% include "reviews/_review_item.html" %}
+   _review_item.html:1:  {% extends "base.html" %}
+   _review_item.html:58: {% include "reviews/_review_item.html" %}   ← 자기 자신을 include
+   ```
+   `_review_item.html`(후기 카드 partial)이 `review_list.html`의 복사본으로 덮어써져 있었다 — base.html을 extends하고 자기 자신을 include.
+3. `git log -- _review_item.html` → 팀원 커밋 `19675ce`에서 깨짐(self-include=1). 직전 `a8c4e08`(내 커밋)엔 정상(자기참조 없는 67줄 partial).
+
+**원인**
+- partial(`_review_item.html`)이 목록 템플릿 내용으로 통째 덮어써져, 목록이 그 partial을 include→partial이 또 자기를 include→무한재귀. 병합/편집 중 파일을 잘못 복사한 것으로 추정.
+
+**해결**
+- `a8c4e08`의 정상 partial로 복구하되, 그새 바뀐 URL 이름에 맞춰 수정: `reviews:like`→`like_toggle`, `reviews:edit`→`review_update`, `reviews:delete`→`review_delete`. (옛 이름 그대로 복구했으면 이번엔 `NoReverseMatch`가 났을 것.)
+- 재검증: `/reviews/`, `?type=food`, `?type=place`, `/reviews/write/` 모두 200.
+
+**배운 것**
+- **`{% include %}` 대상이 자기 자신이면 즉사(RecursionError).** partial 파일이 통째로 다른 내용으로 바뀌지 않았는지, 특히 병합 직후엔 `grep`으로 self-include를 먼저 확인한다.
+- 트레이스백에 앱 코드 프레임이 안 보이고 `render_annotated`만 수백 줄 반복되면 **템플릿 재귀**다. include/extends 그래프부터 본다.
+- **파일을 git에서 복구할 땐 그 사이 바뀐 참조(URL 이름 등)를 반드시 재확인**한다. 옛 버전 그대로 되살리면 다른 에러로 옮겨갈 뿐이다.
+
+---
+
+## [2026-07-20 | 후기 게시판 글쓰기 저장 실패 — `Column 'menu_id' cannot be null` (동적 폼 필드가 인스턴스에 반영 안 됨)]
+
+**증상**
+- 후기 목록의 "✏️ 후기 작성하기"(게시판에서 바로 쓰기, `/reviews/write/`)에서 메뉴를 골라 제출하면 500. 메뉴를 분명히 선택했는데도 저장이 안 됨.
+
+**시도한 것 (원인 추적 과정)**
+1. `Client`로 `menu`, `review_type`, `rating`, `content`를 채워 POST 재현 → 원문:
+   ```
+   django.db.utils.IntegrityError: (1048, "Column 'menu_id' cannot be null")
+     File "reviews/views.py", line 142, in form_valid  → super().form_valid(form) → form.save()
+   ```
+2. `ReviewCreateGeneralView.get_form()`이 `form.fields['menu'] = forms.ModelChoiceField(...)`로 **런타임에 menu 필드를 추가**하는 구조. 그런데 `ReviewForm.Meta.fields`엔 `menu`가 없다.
+3. Django `construct_instance()`(ModelForm.save 내부)는 **`form._meta.fields`에 있는 모델 필드만** 인스턴스에 세팅한다. 동적으로 붙인 `menu`는 `Meta.fields` 밖이라 `cleaned_data`엔 있어도 `instance.menu`에 반영되지 않는다 → 저장 시 null.
+
+**원인**
+- 폼 `Meta.fields`에 없는 필드를 `get_form()`에서 동적으로 추가하면, 유효성 검사는 되지만 `ModelForm.save()`가 그 값을 인스턴스에 넣지 않는다. `menu`가 세팅되지 않은 채 저장돼 NOT NULL 위반.
+
+**해결**
+- `ReviewCreateGeneralView.form_valid()`에서 명시적으로 세팅:
+  ```python
+  form.instance.menu = form.cleaned_data['menu']
+  ```
+- 재검증: `/reviews/write/`로 음식/음식점 후기 저장 시 302 + `menu_id` 정상 기록.
+
+**배운 것**
+- **`Meta.fields`에 없는 필드를 폼에 동적 추가하면 `ModelForm.save()`가 그 값을 저장하지 않는다.** `cleaned_data`엔 들어오므로 검증은 통과해 더 헷갈린다. 동적 필드는 `form_valid`(또는 `save(commit=False)` 후)에서 직접 `instance`에 세팅하거나, 아예 `Meta.fields`에 포함한 전용 폼을 쓴다.
+
+---
+
+## [2026-07-20 | 메뉴 목록 500 — `Table 'menudb.menus_menu_likes' doesn't exist` (또 마이그레이션↔DB 드리프트 + 좋아요 필드 중복)]
+
+**증상**
+- `/menus/`(메뉴 목록) 500. `/`(대시보드), `/reviews/` 등은 정상. 좋아요 토글 응답의 개수도 실제와 안 맞을 소지.
+
+**시도한 것 (원인 추적 과정)**
+1. `Client`로 `/menus/` 재현 → 원문:
+   ```
+   django.db.utils.ProgrammingError: (1146, "Table 'menudb.menus_menu_likes' doesn't exist")
+   ```
+2. `menus/models.py`를 보니 `Menu`에 좋아요가 **두 개** 공존:
+   - `MenuLike`(명시적 through 모델 → 테이블 `menus_menulike`, 존재함) — 토글·추천·통계 등 앱 전반이 이걸 씀.
+   - 팀원이 새로 추가한 `likes = ManyToManyField(User)` (through 없음 → Django 자동 조인테이블 `menus_menu_likes` 필요).
+3. `SHOW TABLES LIKE 'menus_%'` → `menus_menulike`는 있고 `menus_menu_likes`는 **없음**.
+4. `showmigrations menus` → `[X] 0001_initial`, `makemigrations menus --dry-run` → "No changes detected". 즉 `0001_initial`이 `likes` M2M(자동 테이블)을 이미 정의하는데 실제 DB엔 그 테이블만 안 만들어진 드리프트(reviews.title 건과 동일 패턴).
+5. `.likes`를 실제로 읽는 곳은 `menus/views.py`의 `menu.likes.count()` 딱 한 곳. 나머지는 전부 `MenuLike`/`menu_likes` 역참조 사용(catalog엔 이미 `# 수정됨: likes -> menu_likes` 흔적).
+
+**원인**
+- 좋아요 소스가 이원화됨(중복 필드). 토글은 `MenuLike`에 쓰는데, 목록/토글 응답 카운트는 자동 M2M(`menu.likes`)을 읽어 (a) 테이블이 없어 500, (b) 있었어도 토글이 안 쓰는 테이블이라 항상 0이 나올 구조.
+
+**해결**
+- 카운트를 authoritative한 through 역참조로: `menu.likes.count()` → `menu.menu_likes.count()` (토글이 실제 쓰는 `MenuLike` 기준).
+- 드리프트 정합: 커밋된 `0001_initial`이 요구하는 자동 조인테이블을 스키마 에디터로 생성(신규/AWS 배포는 0001이 처음부터 만들므로 이 드리프트 DB만 보정):
+  ```python
+  through = Menu._meta.get_field('likes').remote_field.through
+  with connection.schema_editor() as se:
+      se.create_model(through)   # menus_menu_likes 생성
+  ```
+- 재검증: `/menus/` 전체/필터/검색/2페이지 200, 좋아요 토글 2→1 정합.
+
+**배운 것**
+- **같은 관계를 through 모델 + 자동 M2M 둘로 만들면** 읽는 쪽/쓰는 쪽이 갈려 카운트가 어긋나거나 없는 테이블을 참조한다. 하나로 통일한다(가능하면 `likes`도 `through='MenuLike'`로). 지금은 팀원 소유 모델이라 최소 수정(카운트 소스 교정 + 누락 테이블 보정)으로 막고, 필드 일원화는 후속 과제로 남김.
+- 드리프트는 컬럼뿐 아니라 **M2M 자동 조인테이블 단위로도** 난다. `SHOW TABLES`로 실제 테이블 목록까지 대조한다. (이번 세션에서만 reviews.title, menus_menu_likes 두 번.)

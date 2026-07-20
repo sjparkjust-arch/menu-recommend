@@ -1,0 +1,168 @@
+{% comment %}
+음식 이름 검색형 콤보박스 partial. 컨텍스트: food_candidates(list of {name, menu_id, source, count?}).
+- 입력하면 후보(카탈로그 메뉴 + 내 과거 기록)가 필터돼 목록으로 뜨고, 골라야 확정(hidden menu_id 세팅).
+- 목록에 없으면 그대로 새 이름으로 기록 가능.
+- 제출 시 자유입력이면 records:check_food로 근사매칭 되물음("혹시 X?").
+페이지당 1회만 include(고정 id 사용). 기존 datalist 방식을 대체.
+{% endcomment %}
+<div class="mb-3 food-combobox position-relative">
+    <label for="food_name" class="form-label fw-semibold">음식 이름</label>
+    <input type="text" id="food_name" name="food_name" class="form-control"
+           placeholder="예: 돈카츠, 김치찌개" autocomplete="off" required
+           aria-describedby="foodHelp" aria-expanded="false" role="combobox">
+    <input type="hidden" id="food_menu_id" name="menu_id" value="">
+    <ul class="food-combobox-list list-group shadow-sm" id="foodComboList" role="listbox" hidden></ul>
+    <div class="form-text" id="foodHelp">이미 있는 이름이 뜨면 골라 주세요 (같은 음식은 같은 이름으로).</div>
+
+    {# 근사매칭 되물음(제출 시 채워짐) #}
+    <div class="alert alert-warning py-2 px-3 mt-2 mb-0" id="foodSuggestBox" hidden>
+        <span id="foodSuggestText"></span>
+        <div class="mt-2 d-flex gap-2">
+            <button type="button" class="btn btn-sm btn-warning" id="foodSuggestAccept">그걸로 기록</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="foodSuggestKeep">입력한 대로</button>
+        </div>
+    </div>
+
+    {{ food_candidates|json_script:"food-candidates" }}
+</div>
+
+<script>
+(function () {
+    var dataEl = document.getElementById('food-candidates');
+    if (!dataEl) return;
+    var candidates = JSON.parse(dataEl.textContent || '[]');
+    var input = document.getElementById('food_name');
+    var hidden = document.getElementById('food_menu_id');
+    var listEl = document.getElementById('foodComboList');
+    var form = input.closest('form');
+    var checkUrl = "{% url 'records:check_food' %}";
+    var activeIdx = -1;
+    var filtered = [];
+
+    function esc(s) {
+        return (s || '').replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
+
+    function closeList() {
+        listEl.hidden = true;
+        listEl.innerHTML = '';
+        activeIdx = -1;
+        input.setAttribute('aria-expanded', 'false');
+    }
+
+    function render(q) {
+        var query = q.trim().toLowerCase();
+        // 입력이 비면 목록 숨김
+        if (!query) { closeList(); return; }
+        filtered = candidates.filter(function (c) {
+            return c.name.toLowerCase().indexOf(query) !== -1;
+        }).slice(0, 8);
+
+        var html = filtered.map(function (c, i) {
+            var badge = c.source === 'menu'
+                ? '<span class="badge text-bg-secondary ms-2">메뉴</span>'
+                : '<span class="badge text-bg-light border ms-2">내 기록' + (c.count ? ' ' + c.count + '회' : '') + '</span>';
+            return '<li class="list-group-item list-group-item-action food-combo-item d-flex justify-content-between align-items-center" '
+                + 'role="option" data-idx="' + i + '">'
+                + '<span>' + esc(c.name) + '</span>' + badge + '</li>';
+        });
+        // 정확히 같은 후보가 없으면 "새 이름으로 추가" 안내 행
+        var exact = candidates.some(function (c) { return c.name.toLowerCase() === query; });
+        if (!exact) {
+            html.push('<li class="list-group-item text-muted small food-combo-new">＋ "' + esc(q.trim()) + '" 새 이름으로 기록</li>');
+        }
+        listEl.innerHTML = html.join('');
+        listEl.hidden = false;
+        input.setAttribute('aria-expanded', 'true');
+        activeIdx = -1;
+    }
+
+    function choose(c) {
+        input.value = c.name;
+        hidden.value = c.menu_id || '';  // 메뉴면 id, 내기록/신규면 빈값(서버가 정확일치 자동링크)
+        closeList();
+    }
+
+    function highlight() {
+        var items = listEl.querySelectorAll('.food-combo-item');
+        items.forEach(function (el, i) {
+            el.classList.toggle('active', i === activeIdx);
+        });
+    }
+
+    input.addEventListener('input', function () {
+        hidden.value = '';  // 다시 타이핑하면 이전 메뉴 선택 해제
+        render(input.value);
+    });
+
+    input.addEventListener('keydown', function (e) {
+        if (listEl.hidden) return;
+        var items = listEl.querySelectorAll('.food-combo-item');
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            activeIdx = Math.min(activeIdx + 1, items.length - 1); highlight();
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            activeIdx = Math.max(activeIdx - 1, 0); highlight();
+        } else if (e.key === 'Enter') {
+            if (activeIdx >= 0 && filtered[activeIdx]) {
+                e.preventDefault();  // 목록에서 고르는 중이면 폼 제출 대신 선택
+                choose(filtered[activeIdx]);
+            }
+        } else if (e.key === 'Escape') {
+            closeList();
+        }
+    });
+
+    listEl.addEventListener('mousedown', function (e) {
+        // mousedown(=blur보다 먼저)으로 처리해 클릭이 씹히지 않게
+        var item = e.target.closest('.food-combo-item');
+        if (item) {
+            e.preventDefault();
+            choose(filtered[parseInt(item.getAttribute('data-idx'), 10)]);
+        } else if (e.target.closest('.food-combo-new')) {
+            e.preventDefault();
+            closeList();  // 입력값 그대로 새 이름으로 기록
+        }
+    });
+
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.food-combobox')) closeList();
+    });
+
+    // ── 제출 시 근사매칭 되물음 ──────────────────────────────
+    var suggestBox = document.getElementById('foodSuggestBox');
+    var suggestText = document.getElementById('foodSuggestText');
+    var confirmed = false;
+
+    if (form) {
+        form.addEventListener('submit', function (e) {
+            // 이미 확정했거나 메뉴를 골랐으면(hidden 있음) 그대로 제출
+            if (confirmed || hidden.value) return;
+            var name = input.value.trim();
+            if (!name) return;  // required가 막음
+            e.preventDefault();
+            fetch(checkUrl + '?name=' + encodeURIComponent(name), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (!data.suggestion) { confirmed = true; form.requestSubmit ? form.requestSubmit() : form.submit(); return; }
+                    suggestText.textContent = '혹시 ‘' + data.suggestion + '’ 인가요? 같은 음식이면 표기를 맞춰 주세요.';
+                    suggestBox.hidden = false;
+                    document.getElementById('foodSuggestAccept').onclick = function () {
+                        input.value = data.suggestion;
+                        hidden.value = data.menu_id || '';
+                        confirmed = true; suggestBox.hidden = true;
+                        form.requestSubmit ? form.requestSubmit() : form.submit();
+                    };
+                    document.getElementById('foodSuggestKeep').onclick = function () {
+                        confirmed = true; suggestBox.hidden = true;
+                        form.requestSubmit ? form.requestSubmit() : form.submit();
+                    };
+                })
+                .catch(function () { confirmed = true; form.submit(); });  // 실패해도 막지 않음
+        });
+    }
+})();
+</script>

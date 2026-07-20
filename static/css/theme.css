@@ -390,16 +390,25 @@ h5 {
 .rec-box-best    .rec-box-head { background: linear-gradient(90deg, #C99700, #E9A23B); }
 .rec-box-popular .rec-box-head { background: linear-gradient(90deg, #D6455D, #F0865A); }
 .rec-box-taste   .rec-box-head { background: linear-gradient(90deg, var(--brand-dark), var(--brand)); }
+.rec-box-review .rec-box-head { background: linear-gradient(90deg, #D6455D, #F0865A); }
+/* 새로고침: 카드 하단 우측 텍스트 버튼(아이콘 아님, 가독성 우선) */
+.rec-box-foot {
+    display: flex;
+    justify-content: flex-end;
+    padding: .45rem .8rem .7rem;
+}
 .rec-box-reroll {
     text-decoration: none;
-    font-size: .95rem;
+    font-size: .82rem;
+    font-weight: 600;
     line-height: 1;
-    padding: .15rem .35rem;
-    border-radius: 6px;
-    background: rgba(255, 255, 255, .2);
-    transition: background-color .12s ease, transform .12s ease;
+    padding: .35rem .8rem;
+    border-radius: 999px;
+    color: var(--brand-dark);
+    background: var(--brand-soft);
+    transition: background-color .12s ease, color .12s ease;
 }
-.rec-box-reroll:hover { background: rgba(255, 255, 255, .38); transform: rotate(90deg); }
+.rec-box-reroll:hover { background: var(--brand); color: #fff; }
 .rec-box-body {
     display: flex;
     flex-direction: column;
@@ -440,6 +449,40 @@ h5 {
     color: var(--muted);
     font-size: .9rem;
 }
+
+/* 음식 후기 카드(일간/주간) — '지금 인기' 자리 대체 */
+.rec-box-review-body {
+    flex: 1;
+    padding: .5rem .8rem .8rem;
+    overflow-y: auto;
+    max-height: 220px;
+}
+.review-mini {
+    display: block;
+    padding: .5rem .3rem;
+    border-bottom: 1px solid var(--line);
+    color: var(--ink);
+}
+.review-mini:last-child { border-bottom: none; }
+.review-mini:hover { background: var(--brand-soft); }
+.review-mini-menu { font-weight: 600; font-size: .9rem; }
+.review-mini-text { font-size: .8rem; margin-top: .15rem; }
+
+/* ===== 음식 이름 검색형 콤보박스 ===== */
+.food-combobox-list {
+    position: absolute;
+    left: 0;
+    right: 0;
+    z-index: 20;                 /* 모달 내 뒤따르는 필드 위로 겹치게 */
+    max-height: 240px;
+    overflow-y: auto;
+    margin-top: 2px;
+    border-radius: 8px;
+}
+.food-combo-item { cursor: pointer; }
+.food-combo-item.active,
+.food-combo-item:hover { background: var(--brand-soft); }
+.food-combo-new { cursor: pointer; }
 
 /* ===== 대시보드 식사 기록 달력 ===== */
 .meal-calendar {

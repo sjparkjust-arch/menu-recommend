@@ -72,9 +72,6 @@
                 </h6>
                 <div>
                     <span class="badge text-bg-secondary">{{ menu.cuisine.name }}</span>
-                    {% if menu.meal_time != 'any' %}
-                    <span class="badge text-bg-info">{{ menu.get_meal_time_display }}</span>
-                    {% endif %}
                 </div>
                 <div class="small mt-2 like-count-text">
                     ❤️ {{ menu.like_count }}명이 좋아합니다
