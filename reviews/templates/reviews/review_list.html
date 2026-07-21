@@ -3,7 +3,14 @@
 {% block title %}후기 · 메뉴 추천{% endblock %}
 
 {% block content %}
-<h3 class="mb-3">후기</h3>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="m-0">후기</h3>
+    {% if user.is_authenticated %}
+    <a href="{% url 'reviews:review_create_general' %}" class="btn btn-primary" style="background-color: #ff6b4a; border: none;">
+        ✏️ 후기 작성하기
+    </a>
+    {% endif %}
+</div>
 
 {# 종류 탭 (전체/음식/음식점) — 정렬·검색 유지 #}
 <ul class="nav nav-tabs mb-3">
@@ -41,14 +48,6 @@
         {% if search %}
         <a href="?sort={{ sort }}{% if review_type %}&type={{ review_type }}{% endif %}" class="btn btn-outline-secondary">초기화</a>
         {% endif %}
-        <div class="d-flex justify-content-end mb-3">
-        <div class="d-flex justify-content-end mb-3">
-    <a href="{% url 'reviews:review_create_general' %}" class="btn btn-primary" style="background-color: #ff6b4a; border: none;">
-        ✏️ 후기 작성하기
-    </a>
-</div>
-
-</div>
     </div>
 </form>
 
@@ -63,21 +62,21 @@
     {% if page_obj.has_other_pages %}
     <nav class="mt-4" aria-label="후기 페이지">
         <ul class="pagination justify-content-center">
-            {% if page_obj.has_previous %}
+            {% if has_prev_group %}
             <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&sort={{ sort }}{% if review_type %}&type={{ review_type }}{% endif %}{% if search %}&q={{ search|urlencode }}{% endif %}">이전</a>
+                <a class="page-link" href="?page={{ prev_group_page }}&sort={{ sort }}{% if review_type %}&type={{ review_type }}{% endif %}{% if search %}&q={{ search|urlencode }}{% endif %}">이전</a>
             </li>
             {% else %}
             <li class="page-item disabled"><span class="page-link">이전</span></li>
             {% endif %}
-            {% for num in page_obj.paginator.page_range %}
+            {% for num in window_pages %}
             <li class="page-item {% if num == page_obj.number %}active{% endif %}">
                 <a class="page-link" href="?page={{ num }}&sort={{ sort }}{% if review_type %}&type={{ review_type }}{% endif %}{% if search %}&q={{ search|urlencode }}{% endif %}">{{ num }}</a>
             </li>
             {% endfor %}
-            {% if page_obj.has_next %}
+            {% if has_next_group %}
             <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.next_page_number }}&sort={{ sort }}{% if review_type %}&type={{ review_type }}{% endif %}{% if search %}&q={{ search|urlencode }}{% endif %}">다음</a>
+                <a class="page-link" href="?page={{ next_group_page }}&sort={{ sort }}{% if review_type %}&type={{ review_type }}{% endif %}{% if search %}&q={{ search|urlencode }}{% endif %}">다음</a>
             </li>
             {% else %}
             <li class="page-item disabled"><span class="page-link">다음</span></li>

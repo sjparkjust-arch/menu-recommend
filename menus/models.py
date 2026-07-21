@@ -18,7 +18,7 @@ class Cuisine(models.Model):
 
 
 class Course(models.Model):
-    """코스 구분 (메인, 사이드, 디저트, 음료)."""
+    """코스 구분 (메인, 사이드). 디저트·음료는 서비스에서 제외."""
 
     name = models.CharField('코스', max_length=50, unique=True)
 

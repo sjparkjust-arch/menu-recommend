@@ -4,8 +4,10 @@
 """
 
 import random
+from datetime import datetime, timedelta
 
 from django.db.models import Count, Q
+from django.utils import timezone
 
 from reviews.models import Review, ReviewLike, ReviewView
 
@@ -28,6 +30,27 @@ def sample_reviews_for_menus(menu_ids, pool=3):
         )
         result[mid] = random.choice(top) if top else None
     return result
+
+
+def recent_food_reviews(daily_limit=5, weekly_limit=5):
+    """대시보드 '음식 후기' 카드용. 음식 후기만, 일간(오늘)/주간(최근 7일)으로 나눠 최신순.
+
+    반환: {'daily': [Review...], 'weekly': [Review...]}. (created_at 범위 비교라
+    시간대 테이블 없어도 안전 — docs/troubleshooting.md 시간대 룩업 이슈 참고.)
+    """
+    now = timezone.localtime()
+    day_start = timezone.make_aware(datetime(now.year, now.month, now.day))
+    week_start = now - timedelta(days=7)
+    base = (
+        Review.objects
+        .filter(review_type=Review.ReviewType.FOOD)
+        .select_related('user', 'menu')
+        .annotate(like_count=Count('likes'))
+    )
+    return {
+        'daily': list(base.filter(created_at__gte=day_start).order_by('-created_at')[:daily_limit]),
+        'weekly': list(base.filter(created_at__gte=week_start).order_by('-created_at')[:weekly_limit]),
+    }
 
 
 def review_queryset(sort=SORT_LATEST, search=None, review_type=None):

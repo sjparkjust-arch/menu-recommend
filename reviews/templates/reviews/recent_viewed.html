@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}최근 본 후기 · 밥픽{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 800px; margin: 0 auto;">
+
+    <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
+        <h3 class="fw-bold m-0" style="color: var(--ink);">👀 최근 본 후기</h3>
+        <div class="d-flex gap-2">
+            <a href="{% url 'reviews:review_list' %}" class="btn btn-outline-secondary fw-bold px-3">후기 전체</a>
+            <a href="{% url 'accounts:profile' %}" class="btn btn-outline-dark fw-bold px-3">마이페이지</a>
+        </div>
+    </div>
+
+    {% csrf_token %}
+    {% if page_obj.object_list %}
+        {% for review in page_obj %}
+            {% include "reviews/_review_item.html" with show_menu=True %}
+        {% endfor %}
+
+        {% if page_obj.has_other_pages %}
+        <nav class="mt-4" aria-label="최근 본 후기 페이지">
+            <ul class="pagination justify-content-center">
+                {% if has_prev_group %}
+                <li class="page-item"><a class="page-link" href="?page={{ prev_group_page }}">이전</a></li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">이전</span></li>
+                {% endif %}
+                {% for num in window_pages %}
+                <li class="page-item {% if num == page_obj.number %}active{% endif %}">
+                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                </li>
+                {% endfor %}
+                {% if has_next_group %}
+                <li class="page-item"><a class="page-link" href="?page={{ next_group_page }}">다음</a></li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">다음</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    {% else %}
+    <div class="text-center py-5 my-5 rounded shadow-sm" style="background-color: white; border: 1px solid var(--line);">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">👀</div>
+        <h5 class="fw-bold" style="color: var(--ink);">최근에 본 후기가 없어요</h5>
+        <p class="text-muted mb-4">다른 사람의 메뉴 후기를 구경해보세요.</p>
+        <a href="{% url 'reviews:review_list' %}" class="btn btn-primary px-4 fw-bold">후기 보러가기</a>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}{% include "reviews/_like_script.html" %}{% endblock %}

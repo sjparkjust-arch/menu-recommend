@@ -1,13 +1,11 @@
 {% comment %}
 대시보드 추천 카드 partial. 컨텍스트: menu(또는 None), head(제목), variant(색상),
-reroll_url(선택 — 있으면 헤더에 '다시 추천받기' 버튼 표시).
+reroll_url(선택 — 있으면 카드 하단 우측에 '새로고침' 버튼 표시).
+새로고침은 JS가 있으면 AJAX로 카드만 교체(data-reroll-slot), 없으면 href 폴백.
 {% endcomment %}
 <div class="rec-box rec-box-{{ variant }}">
-    <div class="rec-box-head d-flex justify-content-between align-items-center">
+    <div class="rec-box-head">
         <span>{{ head }}</span>
-        {% if reroll_url %}
-        <a href="{{ reroll_url }}" class="rec-box-reroll" title="다시 추천받기">🔄</a>
-        {% endif %}
     </div>
     {% if menu %}
     <a href="{% url 'menus:detail' menu.pk %}" class="rec-box-body text-decoration-none">
@@ -23,5 +21,10 @@ reroll_url(선택 — 있으면 헤더에 '다시 추천받기' 버튼 표시).
     </a>
     {% else %}
     <div class="rec-box-empty">추천할 메뉴가 없어요.<br><small>(알러지·최근 먹은 메뉴는 제외됩니다.)</small></div>
+    {% endif %}
+    {% if reroll_url %}
+    <div class="rec-box-foot">
+        <a href="{{ reroll_url }}" class="rec-box-reroll" data-reroll-slot="{{ variant }}">새로고침</a>
+    </div>
     {% endif %}
 </div>

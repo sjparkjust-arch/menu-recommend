@@ -5,27 +5,22 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-7">
-        <h4 class="mb-3">{{ menu.name }} 후기 {% if form.instance.pk %}수정{% else %}작성{% endif %}</h4>
+        <h4 class="mb-3">{% if menu %}{{ menu.name }} {% endif %}후기 {% if form.instance.pk %}수정{% else %}작성{% endif %}</h4>
 
-      
         <form method="post" enctype="multipart/form-data" class="card card-body shadow-sm">
             {% csrf_token %}
-            <div class="mb-3">
-                <label class="form-label fw-semibold" for="{{ form.category.id_for_label }}">말머리</label>
-                {{ form.category }}
-                {% if form.category.errors %}
-                <div class="text-danger small">{{ form.category.errors|striptags }}</div>
-                {% endif %}
-            </div>
 
-    
+            {# 게시판에서 바로 쓸 때(ReviewCreateGeneralView)만 메뉴 선택 필드가 있다 #}
+            {% if form.menu %}
             <div class="mb-3">
-                <label class="form-label fw-semibold" for="{{ form.title.id_for_label }}">제목</label>
-                {{ form.title }}
-                {% if form.title.errors %}
-                <div class="text-danger small">{{ form.title.errors|striptags }}</div>
+                <label class="form-label fw-semibold" for="{{ form.menu.id_for_label }}">메뉴 선택</label>
+                {{ form.menu }}
+                {% if form.menu.errors %}
+                <div class="text-danger small">{{ form.menu.errors|striptags }}</div>
                 {% endif %}
             </div>
+            {% endif %}
+
             <div class="mb-3">
                 <label class="form-label fw-semibold d-block">후기 종류</label>
                 <div class="d-flex gap-3">
@@ -38,6 +33,15 @@
                 </div>
                 {% if form.review_type.errors %}
                 <div class="text-danger small">{{ form.review_type.errors|striptags }}</div>
+                {% endif %}
+            </div>
+
+            {# 제목: '음식점 후기'를 골랐을 때만 노출(JS 토글). 초기 표시는 현재 선택값 기준. #}
+            <div class="mb-3" id="titleField" {% if form.review_type.value != 'place' %}style="display:none;"{% endif %}>
+                <label class="form-label fw-semibold" for="{{ form.title.id_for_label }}">제목 <span class="text-danger">*</span></label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                <div class="text-danger small">{{ form.title.errors|striptags }}</div>
                 {% endif %}
             </div>
 
@@ -89,4 +93,19 @@
     .star-rating label:hover,
     .star-rating label:hover ~ label { color: #ffc107; }
 </style>
+
+<script>
+(function () {
+    // '음식점 후기'(place)를 선택했을 때만 제목 입력칸을 보여준다.
+    var titleField = document.getElementById('titleField');
+    if (!titleField) return;
+    var radios = document.querySelectorAll('input[name="review_type"]');
+    function sync() {
+        var checked = document.querySelector('input[name="review_type"]:checked');
+        titleField.style.display = (checked && checked.value === 'place') ? '' : 'none';
+    }
+    radios.forEach(function (r) { r.addEventListener('change', sync); });
+    sync();
+})();
+</script>
 {% endblock %}

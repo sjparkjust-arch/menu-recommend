@@ -3,8 +3,8 @@
 뷰에는 비즈니스 로직을 넣지 않는다(CLAUDE.md 코드 스타일). 추천은 이 모듈에서만.
 
 recommend_dashboard()는 대시보드에 보여줄 5개 카드를 서로 다른 방식으로 각 1개씩 뽑는다:
-    1. 점심 랜덤        — 점심 후보 중 무작위
-    2. 저녁 랜덤        — 저녁 후보 중 무작위
+    1. 오늘의 추천      — 전체 메뉴 중 무작위 (끼니 구분 없음)
+    2. 또 다른 추천     — 전체 메뉴 중 무작위 (1번과 중복 없음)
     3. 오늘의 BEST     — 평균 평점이 높은(잘 검증된) 메뉴
     4. 지금 인기 있는  — 좋아요가 많은 메뉴
     5. 당신의 취향을 담은 — 협업(나와 취향 겹치는 사용자) + 요리종류 선호도 개인화
@@ -65,8 +65,9 @@ def recommend_dashboard(user, cuisine_ids=None, pinned=None, reroll=None):
     def pin(slot):
         return None if slot in reroll else pinned.get(slot)
 
-    lunch = take(_pick_meal(user, Menu.MealTime.LUNCH, cuisine_ids, used, pin('lunch')))
-    dinner = take(_pick_meal(user, Menu.MealTime.DINNER, cuisine_ids, used, pin('dinner')))
+    # 점심/저녁 구분 없이 둘 다 전체 메뉴에서 무작위(서로 중복 없음). 슬롯 키는 식별자로만 유지.
+    lunch = take(_pick_meal(user, None, cuisine_ids, used, pin('lunch')))
+    dinner = take(_pick_meal(user, None, cuisine_ids, used, pin('dinner')))
     taste = take(_pick_taste(user, cuisine_ids, used, pin('taste')))
     best = take(_pick_best(user, used))
     popular = take(_pick_popular(user, used))
@@ -84,7 +85,10 @@ def recommend_dashboard(user, cuisine_ids=None, pinned=None, reroll=None):
 
 
 def _pick_meal(user, meal_time, cuisine_ids, used, preferred_id=None):
-    """해당 끼니 후보 중 1개. preferred_id가 아직 유효 후보면 그대로, 아니면 무작위."""
+    """후보 중 1개. preferred_id가 아직 유효 후보면 그대로, 아니면 무작위.
+
+    meal_time=None이면 끼니 구분 없이 전체 '메인' 후보에서 뽑는다.
+    """
     pool = [m for m in _candidates(user, meal_time, cuisine_ids) if m.id not in used]
     if not pool:
         return None
@@ -189,12 +193,18 @@ def _candidates(user, meal_time, cuisine_ids=None):
         if liked_ids:
             qs = qs.exclude(id__in=liked_ids)  # 이미 좋아요 → 발견성 위해 제외
         since = timezone.now() - timedelta(days=RECENT_DAYS)
+        recent = user.meal_records.filter(created_at__gte=since)
+        # menu FK가 있는 기록은 id로 정확히 제외, 없는(레거시/카탈로그 밖) 것만 이름 근사.
+        recent_menu_ids = set(
+            recent.exclude(menu__isnull=True).values_list('menu_id', flat=True)
+        )
+        if recent_menu_ids:
+            qs = qs.exclude(id__in=recent_menu_ids)
         recent_names = list(
-            user.meal_records.filter(created_at__gte=since)
-            .values_list('food_name', flat=True)
+            recent.filter(menu__isnull=True).values_list('food_name', flat=True)
         )
         if recent_names:
-            qs = qs.exclude(name__in=recent_names)  # 최근 먹은 메뉴(이름 근사)
+            qs = qs.exclude(name__in=recent_names)
 
     return list(qs)
 
@@ -236,11 +246,16 @@ def _collab_counts(user, cand_ids):
 
 
 def _my_interest_ids(user):
-    """내가 관심 있는 메뉴 id 집합: 좋아요 + 후기 + 먹은 것(이름 근사)."""
+    """내가 관심 있는 메뉴 id 집합: 좋아요 + 후기 + 먹은 것(menu FK 우선, 없으면 이름 근사)."""
     liked = set(user.menu_likes.values_list('menu_id', flat=True))
     reviewed = set(user.reviews.values_list('menu_id', flat=True))
-    eaten_names = list(user.meal_records.values_list('food_name', flat=True))
-    eaten = set(Menu.objects.filter(name__in=eaten_names).values_list('id', flat=True))
+    eaten = set(
+        user.meal_records.exclude(menu__isnull=True).values_list('menu_id', flat=True)
+    )
+    eaten_names = list(
+        user.meal_records.filter(menu__isnull=True).values_list('food_name', flat=True)
+    )
+    eaten |= set(Menu.objects.filter(name__in=eaten_names).values_list('id', flat=True))
     return liked | reviewed | eaten
 
 
