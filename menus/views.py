@@ -7,6 +7,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from menus.models import Cuisine, Menu, MenuLike
+from menus.pagination import page_window
 from menus.services import catalog
 from menus.services.recommender import recommend_dashboard
 from records import services as record_services
@@ -81,7 +82,9 @@ def dashboard(request):
     food_reviews = review_services.recent_food_reviews()
 
     if request.user.is_authenticated:
-        my_bobpick = catalog.liked_menus(request.user, limit=MY_BOBPICK_LIMIT)
+        my_bobpick = list(catalog.liked_menus(request.user, limit=MY_BOBPICK_LIMIT))
+        # 찜한 메뉴 랜덤픽(클라 JS)용 직렬화 리스트
+        my_bobpick_json = [{'id': m.id, 'name': m.name} for m in my_bobpick]
         food_stats = record_services.food_count_stats(request.user, limit=FOOD_STATS_LIMIT)
         # 막대 그래프 폭 계산용 최댓값
         food_stats_max = food_stats[0]['count'] if food_stats else 0
@@ -91,12 +94,23 @@ def dashboard(request):
             month=_as_int_or_none(request.GET.get('cal_month')),
         )
         food_candidates = record_services.food_name_candidates(request.user)
+        # MY밥픽 개인 요약: 활동 수치 + 선호 요리종류 top3
+        my_likes_count = request.user.menu_likes.count()
+        my_records_count = request.user.meal_records.count()
+        my_reviews_count = request.user.reviews.count()
+        my_top_cuisines = [
+            p.cuisine for p in
+            request.user.preferences.select_related('cuisine').order_by('-score')[:3]
+        ]
     else:
         my_bobpick = None
+        my_bobpick_json = []
         food_stats = None
         food_stats_max = 0
         meal_calendar = None
         food_candidates = None
+        my_likes_count = my_records_count = my_reviews_count = 0
+        my_top_cuisines = None
 
     context = {
         'recs': recs,
@@ -107,9 +121,14 @@ def dashboard(request):
         'food_reviews': food_reviews,
         'meal_calendar': meal_calendar,
         'my_bobpick': my_bobpick,
+        'my_bobpick_json': my_bobpick_json,
         'food_stats': food_stats,
         'food_stats_max': food_stats_max,
         'food_candidates': food_candidates,
+        'my_likes_count': my_likes_count,
+        'my_records_count': my_records_count,
+        'my_reviews_count': my_reviews_count,
+        'my_top_cuisines': my_top_cuisines,
     }
     return render(request, 'menus/dashboard.html', context)
 
@@ -165,8 +184,20 @@ def menu_list(request):
         'allergy_hits': allergy_hits,
         'liked_menu_ids': liked_menu_ids,
         'filter_querystring': _filter_querystring(request),
+        **page_window(page_obj),  # 페이지 번호 10개씩 그룹 노출
     }
     return render(request, 'menus/menu_list.html', context)
+
+
+@login_required
+def liked_menus_view(request):
+    """찜한(좋아요한) 메뉴 전체보기 — 페이지 넘기며 열람."""
+    qs = catalog.liked_menus(request.user)
+    page_obj = Paginator(qs, PAGE_SIZE).get_page(request.GET.get('page'))
+    return render(request, 'menus/liked_menus.html', {
+        'page_obj': page_obj,
+        **page_window(page_obj),
+    })
 
 
 def ranking(request):

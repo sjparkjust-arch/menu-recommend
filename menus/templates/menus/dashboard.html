@@ -51,10 +51,12 @@
                     <label class="form-check-label small" for="fcuisine{{ c.id }}">{{ c.name }}</label>
                 </div>
                 {% endfor %}
-                <button type="submit" class="btn btn-sm btn-primary ms-auto">적용</button>
+                <button type="submit" class="btn btn-sm btn-primary">적용</button>
                 {% if selected_cuisines %}
                 <a href="{% url 'menus:dashboard' %}" class="btn btn-sm btn-outline-secondary">초기화</a>
                 {% endif %}
+                {# 추천 3개(오늘의 추천·또 다른 추천·당신의 취향) 동시 새로고침 — 우측 끝 #}
+                <button type="button" class="btn btn-sm btn-outline-primary ms-auto" id="rerollAll">🔄 전체 새로고침</button>
             </div>
         </form>
 
@@ -175,15 +177,35 @@
             {% endif %}
         </div>
 
-        {# ── MY밥픽: 좋아요 누른 메뉴 + 많이 먹은 음식 그래프 ── #}
-        <!-- (MY밥픽 부분은 그대로 유지) -->
+        {# ── MY밥픽: 개인 요약(통계·선호·찜한 메뉴·랜덤픽) + 많이 먹은 음식 그래프 ── #}
         <div class="card shadow-sm mt-3">
             <div class="card-header fw-semibold">🧡 MY밥픽</div>
             {% if user.is_authenticated %}
+                {# 미니 통계 + 선호 요리종류 #}
+                <div class="card-body pb-2">
+                    <div class="mybobpick-stats d-flex justify-content-around text-center mb-2">
+                        <div><div class="mybobpick-num">♥ {{ my_likes_count }}</div><div class="mybobpick-lbl">좋아요</div></div>
+                        <div><div class="mybobpick-num">🍽 {{ my_records_count }}</div><div class="mybobpick-lbl">기록</div></div>
+                        <div><div class="mybobpick-num">✍ {{ my_reviews_count }}</div><div class="mybobpick-lbl">후기</div></div>
+                    </div>
+                    {% if my_top_cuisines %}
+                    <div class="d-flex flex-wrap gap-1 justify-content-center">
+                        <span class="small text-muted me-1">선호</span>
+                        {% for cz in my_top_cuisines %}
+                        <span class="badge rounded-pill text-bg-warning">{{ cz.name }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+
                 {% if my_bobpick %}
+                <div class="px-3 d-flex justify-content-between align-items-center">
+                    <span class="small fw-semibold">찜한 메뉴</span>
+                    <a href="{% url 'accounts:profile' %}#liked-menus" class="small text-decoration-none">전체보기 &gt;</a>
+                </div>
                 <ul class="list-group list-group-flush">
                     {% for menu in my_bobpick %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <li class="list-group-item d-flex justify-content-between align-items-center py-2">
                         <a href="{% url 'menus:detail' menu.pk %}" class="text-decoration-none text-body">
                             {{ menu.name }}
                         </a>
@@ -191,8 +213,16 @@
                     </li>
                     {% endfor %}
                 </ul>
+                {# 찜한 메뉴 중 랜덤으로 하나 골라주는 버튼(클라 JS) #}
+                {{ my_bobpick_json|json_script:"mybobpick-data" }}
+                <div class="card-body py-2 border-top">
+                    <button type="button" class="btn btn-sm btn-outline-warning w-100 fw-semibold" id="mybobpickRandom">
+                        🎲 이 중에 랜덤으로 골라줌
+                    </button>
+                    <div id="mybobpickResult" class="text-center mt-2" hidden></div>
+                </div>
                 {% else %}
-                <div class="card-body text-muted small">
+                <div class="card-body text-muted small border-top">
                     아직 좋아요한 메뉴가 없습니다. 메뉴 카드의 ♥ 버튼을 눌러보세요.
                 </div>
                 {% endif %}
@@ -406,30 +436,48 @@
         return qs;
     }
 
-    function bind(btn) {
+    // 카드 하나 재추첨 → 카드 DOM 교체(교체된 카드의 버튼 재바인딩).
+    function reroll(box) {
+        var btn = box && box.querySelector('.rec-box-reroll');
+        if (!btn) return Promise.resolve();
+        var qs = currentCuisineQS();
+        qs.set('slot', btn.getAttribute('data-reroll-slot'));
+        btn.textContent = '…';
+        return fetch(endpoint + '?' + qs.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data.html) throw new Error('no html');
+                var tmp = document.createElement('div');
+                tmp.innerHTML = data.html.trim();
+                var newBox = tmp.firstElementChild;
+                box.replaceWith(newBox);
+                bind(newBox);
+            })
+            .catch(function () { window.location.href = btn.getAttribute('href'); });  // 폴백: 링크 이동
+    }
+
+    function bind(box) {
+        var btn = box.querySelector('.rec-box-reroll');
         if (!btn) return;
         btn.addEventListener('click', function (e) {
             e.preventDefault();
-            var slot = btn.getAttribute('data-reroll-slot');
-            var box = btn.closest('.rec-box');
-            var qs = currentCuisineQS();
-            qs.set('slot', slot);
-            btn.textContent = '…';
-            fetch(endpoint + '?' + qs.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-                .then(function (r) { return r.json(); })
-                .then(function (data) {
-                    if (!data.html) throw new Error('no html');
-                    var tmp = document.createElement('div');
-                    tmp.innerHTML = data.html.trim();
-                    var newBox = tmp.firstElementChild;
-                    box.replaceWith(newBox);
-                    bind(newBox.querySelector('.rec-box-reroll'));  // 교체된 카드의 버튼 재바인딩
-                })
-                .catch(function () { window.location.href = btn.getAttribute('href'); });  // 폴백: 링크 이동
+            reroll(box);
         });
     }
 
-    document.querySelectorAll('.rec-box-reroll').forEach(bind);
+    document.querySelectorAll('.rec-box-reroll').forEach(function (btn) {
+        bind(btn.closest('.rec-box'));
+    });
+
+    // 전체 새로고침: 재추첨 가능한 3개 카드를 동시에 교체
+    var allBtn = document.getElementById('rerollAll');
+    if (allBtn) {
+        allBtn.addEventListener('click', function () {
+            document.querySelectorAll('.rec-box-reroll').forEach(function (btn) {
+                reroll(btn.closest('.rec-box'));
+            });
+        });
+    }
 })();
 </script>
 
@@ -445,6 +493,31 @@
                 panel.style.display = (panel.getAttribute('data-range') === range) ? '' : 'none';
             });
         });
+    });
+})();
+</script>
+
+{# MY밥픽: 찜한 메뉴 중 랜덤으로 하나 골라주기(클라 JS) #}
+<script>
+(function () {
+    var dataEl = document.getElementById('mybobpick-data');
+    var btn = document.getElementById('mybobpickRandom');
+    var result = document.getElementById('mybobpickResult');
+    if (!dataEl || !btn || !result) return;
+    var items = JSON.parse(dataEl.textContent || '[]');
+    if (!items.length) { btn.disabled = true; return; }
+    var base = "{% url 'menus:detail' 0 %}";  // /menus/0/ → id 치환용
+    function esc(s) {
+        return (s || '').replace(/[&<>"']/g, function (ch) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
+        });
+    }
+    btn.addEventListener('click', function () {
+        var pick = items[Math.floor(Math.random() * items.length)];
+        var url = base.replace(/0\/$/, pick.id + '/');
+        result.innerHTML = '오늘은 <a href="' + url + '" class="fw-bold text-decoration-none">'
+            + esc(pick.name) + '</a> 어때요? →';
+        result.hidden = false;
     });
 })();
 </script>

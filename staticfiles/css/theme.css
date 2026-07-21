@@ -468,6 +468,11 @@ h5 {
 .review-mini-menu { font-weight: 600; font-size: .9rem; }
 .review-mini-text { font-size: .8rem; margin-top: .15rem; }
 
+/* ===== MY밥픽 개인 요약 ===== */
+.mybobpick-num { font-weight: 700; font-size: 1rem; color: var(--ink); line-height: 1.2; }
+.mybobpick-lbl { font-size: .72rem; color: var(--muted); }
+#mybobpickResult { font-size: .9rem; color: var(--ink); }
+
 /* ===== 음식 이름 검색형 콤보박스 ===== */
 .food-combobox-list {
     position: absolute;
