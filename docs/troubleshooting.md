@@ -645,3 +645,168 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 **배운 것**
 - **같은 관계를 through 모델 + 자동 M2M 둘로 만들면** 읽는 쪽/쓰는 쪽이 갈려 카운트가 어긋나거나 없는 테이블을 참조한다. 하나로 통일한다(가능하면 `likes`도 `through='MenuLike'`로). 지금은 팀원 소유 모델이라 최소 수정(카운트 소스 교정 + 누락 테이블 보정)으로 막고, 필드 일원화는 후속 과제로 남김.
 - 드리프트는 컬럼뿐 아니라 **M2M 자동 조인테이블 단위로도** 난다. `SHOW TABLES`로 실제 테이블 목록까지 대조한다. (이번 세션에서만 reviews.title, menus_menu_likes 두 번.)
+
+---
+
+## [2026-07-21 | 서버 물리 분리 작업 — 공통 배경]
+
+아래 세 항목(마이그레이션 이력 불일치 / NAT→브리지 IP 변경 연쇄 / GRANT 1133)은 모두 오늘 **DB 서버를 별도 머신으로 분리**하는 인프라 작업에서 나왔고, 뿌리는 초기 구성 선택에 있다. 세 항목 앞에 배경을 한 번만 정리한다.
+
+**처음에 선택했던 구성과 그 한계**
+- 비전공자로 시작해 초기에는 "웹서버 + DB서버 한 세트"를 **각자의 PC에 똑같이 복제**해 작업했다. 팀원 A의 PC에도 Server1(웹)+Server2(DB), 팀원 B의 PC에도 Server1(웹)+Server2(DB)가 있는 형태. 각자 자기 환경에서 개발하고 코드를 GitHub에 올려 병합했다.
+- 당시엔 "각자 독립적으로 개발하니 편하다"고 봤지만, 실제로는 하나의 서비스가 아니라 **서로 다른 두 개의 서비스를 각자 운영**하는 상태였다.
+- 문제는 병합 시점에 드러났다:
+  - Git으로 합쳐지는 건 **코드뿐**이고, DB의 데이터·스키마 상태는 합쳐지지 않는다. 각자의 DB는 각자의 시점·이력을 그대로 유지했다.
+  - 각자 `makemigrations`를 돌려 **마이그레이션 파일 계보가 갈라졌고**, 충돌을 넘기려 파일을 지우고 재생성하는 일이 반복돼 "코드의 마이그레이션 파일"과 "DB의 적용 이력"이 어긋났다.
+  - `.env`도 각자의 IP·계정 기준이라 병합 후 어느 값이 맞는지 판단하기 어려웠다.
+  - 결과적으로 코드는 하나로 합쳐졌지만 그 코드가 바라보는 **DB는 두 개였고 서로 상태가 달랐다**.
+- 짚어둘 점: 개발 환경을 각자 갖는 것 자체가 잘못은 아니다. 문제는 그 환경이 개발용에 머물지 않고 **각자의 운영 환경처럼 굳으면서 기준이 되는 단일 데이터 계층이 없었다**는 데 있다.
+
+**정상화 방향과 실제 작업**
+- 목표: 웹 계층과 데이터 계층이 각각 하나씩만 존재하고 **두 사람이 같은 DB를 바라보는 단일 3계층** → 웹서버(Server1)는 내 PC, DB 서버(Server2)는 팀원 PC에 두고 네트워크로 연결.
+- 네트워크: VMware 어댑터를 **NAT → 브리지**로 전환. 기존 NAT의 `192.168.32.x`는 VMware가 호스트 내부에 만든 가상 네트워크라 같은 공유기의 다른 PC에서 도달 불가. 브리지 후 각 VM이 공유기에서 직접 IP를 받으며 **Server2 주소가 192.168.32.73 → 192.168.32.78** 로 변경(Server1 = 192.168.32.74).
+- 데이터: 실제 데이터가 쌓여 있던 **기존 DB를 기준**으로 `mysqldump` 덤프를 떠 팀원 PC의 DB로 이전(메뉴 199건, 사용자 59건 등).
+- 이 과정에서 아래 세 문제가 발생·해결됐고, 셋 다 "각자 독립 환경에서 작업 후 나중에 합치려 했다"는 초기 선택에서 파생됐다.
+
+**이 경험에서 정리한 원칙**
+- 팀 개발에서 **코드는 Git으로 합쳐도 데이터·스키마 이력은 합쳐지지 않는다.** 개발 환경은 각자 두더라도 **기준 DB는 하나**여야 한다.
+- **마이그레이션은 한 사람이 생성하고 나머지는 적용만** 하는 원칙이 필요하다.
+- 설정은 하드코딩하지 않고 **환경변수로 분리**해야 각자 다른 IP·계정을 쓰면서 같은 코드를 공유할 수 있다.
+
+---
+
+## [2026-07-21 | DB 복원 후 migrate 실패 — Duplicate column 'cuisine_id' (1060), 마이그레이션 이력 불일치]
+
+> 발표·포트폴리오 강조 사례. 진단 과정 위주로 상세히 남긴다.
+
+**증상**
+- DB 복원 후 Server1에서 `python manage.py migrate` 실행 시 실패:
+  ```
+  django.db.utils.OperationalError: (1060, "Duplicate column name 'cuisine_id'")
+  ```
+
+**시도한 것 (진단 과정 — 가설 → 검증 → 다음 가설)**
+
+1. **데이터 유실부터 배제.** 복원이 덜 됐는지부터 확인.
+   ```sql
+   SELECT COUNT(*) FROM menus_menu;      -- → 199
+   SELECT COUNT(*) FROM accounts_user;   -- → 59
+   SHOW TABLES;                          -- → 23개 테이블 전부 존재
+   ```
+   → 복원 자체는 성공. **데이터 문제가 아니다.**
+
+2. **Django가 인식하는 적용 이력 확인.** migrate가 무엇을 "안 됐다"고 보는지.
+   ```sql
+   SELECT app, name FROM django_migrations
+    WHERE app IN ('accounts','menus','records','reviews');
+   ```
+   결과:
+   ```
+   accounts 0001_initial
+   accounts 0002_allergy_userpreference_userallergy_user_allergies
+   accounts 0003_userpreference_cuisine_userpreference_user_and_more
+   menus    0001_initial / 0002_menulike
+   records  0001_initial / 0002_mealrecord_menu
+   reviews  0001_initial / 0002_reviewview / 0003_review_review_type
+   ```
+
+3. **코드에 있는 마이그레이션 파일과 대조.**
+   ```bash
+   ls accounts/migrations/ menus/migrations/ records/migrations/ reviews/migrations/
+   ```
+   결과:
+   ```
+   accounts: 0001_initial, 0002_initial 뿐
+   menus:    0001_initial 뿐
+   reviews:  0001_initial 뿐
+   ```
+   → **DB 기록과 코드 파일의 이름 계보가 서로 다르다.** 특히 accounts는 DB엔 `0002_allergy_...`인데 코드엔 `0002_initial`로 **이름 자체가 다르다.**
+
+4. **"코드가 옛 버전인가?" 가설 검증.**
+   ```bash
+   git status             # 브랜치 origin과 일치, 작업 폴더 깨끗
+   git log --oneline -5   # 최신 커밋 전부 존재
+   ```
+   → 코드는 최신. **`git pull`로 해결되는 문제가 아니다.**
+
+5. **"그럼 스키마는 어느 쪽이 맞나?" 를 컬럼 단위로 확인.**
+   ```sql
+   SHOW COLUMNS FROM accounts_userpreference;   -- → cuisine_id 존재
+   SHOW COLUMNS FROM reviews_review;            -- → review_type, title, category 모두 존재
+   ```
+   → **DB 스키마는 이미 최신 코드가 기대하는 상태.** Django만 "미적용"으로 판단하고 있었다.
+
+**원인**
+- 각자 환경에서 `makemigrations`를 돌리고, 충돌 날 때마다 마이그레이션 파일을 **삭제·재생성**하면서 파일명 계보가 **이미 배포된 DB의 `django_migrations` 기록과 갈라졌다.**
+- 스키마는 이미 반영돼 있는데 Django는 미적용으로 인식해 다시 실행하려다 **컬럼 중복(1060)** 이 발생.
+
+**해결**
+- 스키마가 이미 일치함을 컬럼 단위로 확인(5단계)한 뒤, **SQL은 실행하지 않고 적용 기록만** 남김:
+  ```bash
+  python manage.py migrate accounts --fake
+  python manage.py showmigrations     # 전부 [X] 확인
+  sudo systemctl restart gunicorn
+  ```
+- 이후 브라우저에서 로그인·메뉴·후기·좋아요 등 **실제 화면으로 최종 검증.**
+
+**배운 것**
+- `--fake`는 **"스키마가 이미 그 상태임을 확인한 뒤에만"** 쓸 수 있다. 확인 없이 먼저 쓰면 Django는 적용됐다고 믿는데 실제 DB엔 컬럼이 없는, **훨씬 찾기 어려운 상태**가 된다. 그래서 `SHOW COLUMNS` 확인을 먼저 했다.
+- 에러 메시지(Duplicate column)만 보면 DB가 잘못된 것 같지만, 실제 원인은 DB가 아니라 **코드와 DB의 마이그레이션 이력 불일치**였다. **증상이 난 계층과 원인이 있는 계층이 다를 수 있다.**
+- 팀 프로젝트에서 마이그레이션 파일은 **삭제·재생성하지 않는다.** 로컬에선 멀쩡해도 이미 배포된 DB와 계보가 갈라진다.
+- 데이터 이전 후 검증은 **[데이터 무결성 → 스키마 → 마이그레이션 이력]** 순으로 좁혀 들어가는 것이 안전하다.
+
+---
+
+## [2026-07-21 | NAT→브리지 전환에 따른 IP 변경 연쇄 재설정]
+
+**증상 / 상황**
+- DB 서버를 팀원 PC로 분리하려 했으나 기존 **NAT 모드에서는 팀원 PC가 Server1에 접근할 수 없었다.** `192.168.32.x`는 VMware가 호스트 안에 만든 가상 네트워크라 같은 공유기의 다른 PC에서 도달 불가.
+
+**해결 과정**
+- VMware Network Adapter를 **NAT → Bridged**로 전환(양쪽 VM 모두).
+- 브리지 후 VM이 공유기에서 직접 IP를 받음 → **Server2가 .73 → .78로 변경.**
+- `ping`으로 상호 도달 확인.
+
+**IP 변경으로 연쇄적으로 깨진 것들** (핵심)
+
+| 대상 | 무엇이 깨졌나 | 조치 |
+|---|---|---|
+| MariaDB 계정 | `'menuuser'@'옛IP'`로 등록돼 새 IP에서 접속 거부 | 새 IP로 `CREATE USER` + `GRANT` |
+| ufw 방화벽 | 3306/6379 허용 규칙이 옛 IP를 가리킴 | 새 IP로 `allow` 규칙 추가 |
+| .env | `DB_HOST`, `ALLOWED_HOSTS`, `REDIS_URL`, `CSRF_TRUSTED_ORIGINS` 전부 옛 IP | 새 IP로 수정 |
+| Nginx | `server_name`이 옛 IP | 새 IP로 수정 후 `nginx -t` / `reload` |
+| SSL 인증서 | CN·subjectAltName에 옛 IP가 박혀 브라우저 경고 심화 | `openssl`로 새 IP 기준 재발급 |
+
+**배운 것**
+- 온프레미스 구성은 **IP에 강하게 결합**돼 있다. IP 하나가 바뀌면 DB 권한·방화벽·앱 설정·웹서버 설정·TLS 인증서까지 **5개 계층을 전부** 다시 만져야 한다.
+- 공유기가 바뀌면(집 ↔ 학원) 이 작업을 통째로 반복해야 한다. **발표 장소에서는 사전 재설정·검증이 필요하다.**
+- **DHCP 환경에서는 재부팅만으로도 재발**할 수 있어 고정 IP 설정이 필요하다.
+- 이 경험이 **2단계 AWS 이전의 직접적 명분**이 된다(엔드포인트 기반 접근, 관리형 DB, 인증서 관리 위임).
+
+---
+
+## [2026-07-21 | GRANT 실행 시 ERROR 1133 (28000) — 계정(user+host) 미존재]
+
+**증상**
+- 팀원 PC의 MariaDB에서 새 IP에 권한을 주려고 실행:
+  ```sql
+  GRANT ALL PRIVILEGES ON menudb.* TO 'menuuser'@'192.168.32.74';
+  -- → ERROR 1133 (28000)
+  ```
+
+**원인**
+- `GRANT`는 **이미 존재하는 계정에만** 권한을 부여한다. 해당 host의 계정이 없었다.
+- 과거 MySQL은 GRANT가 계정을 자동 생성했지만 **현재는 그렇지 않다.**
+- MariaDB에서 계정은 **"아이디 + 접속 출발지 host"가 한 세트**이며, `menuuser@옛IP`와 `menuuser@새IP`는 이름만 같을 뿐 **서로 다른 계정**이다.
+
+**해결**
+```sql
+CREATE USER 'menuuser'@'192.168.32.74' IDENTIFIED BY '***';
+GRANT ALL PRIVILEGES ON menudb.* TO 'menuuser'@'192.168.32.74';
+FLUSH PRIVILEGES;
+SELECT user, host FROM mysql.user WHERE user='menuuser';   -- 확인
+```
+
+**배운 것**
+- DB 접속 실패 시 가장 먼저 볼 것은 **비밀번호가 아니라** `SELECT user, host FROM mysql.user`로 **"그 출발지의 계정이 존재하는가"** 이다.
+- 계정 단위가 아니라 **(계정 + host) 단위**라는 점이 IP 변경 시 장애의 원인이 된다.
