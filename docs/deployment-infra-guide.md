@@ -16,33 +16,35 @@
 
 ## 1. 전체 아키텍처 한 장
 
-```
-                    (인터넷 / 사내망)
-                          │  HTTPS(443)
-                          ▼
-┌─────────────────────────────────────────────┐
-│  Server1  192.168.32.74   [웹 + 앱 계층]      │
-│                                               │
-│   ┌───────────────┐   유닉스 소켓             │
-│   │    Nginx      │   /run/gunicorn/          │
-│   │ (리버스 프록시)│──gunicorn.sock──┐        │
-│   │  - HTTPS 종료  │                 ▼        │
-│   │  - /static/ 서빙│         ┌──────────────┐ │
-│   └───────────────┘         │   Gunicorn    │ │
-│                             │  (WSGI, 워커3) │ │
-│                             │   → Django    │ │
-│                             └──────┬───────┘ │
-└────────────────────────────────────┼─────────┘
-                                      │ TCP
-                          DB:3306     │   Redis:6379
-                                      ▼
-┌─────────────────────────────────────────────┐
-│  Server2  192.168.32.73   [데이터 계층]       │
-│    ┌──────────┐        ┌──────────┐          │
-│    │ MariaDB  │        │  Redis   │          │
-│    │ (영구저장) │        │(세션·캐시)│          │
-│    └──────────┘        └──────────┘          │
-└─────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    B["🌐 브라우저<br/>사용자 요청"]
+
+    subgraph S1["Server1 · 192.168.32.74 — 웹 · 앱 계층"]
+        direction TB
+        N["Nginx<br/>리버스 프록시 · HTTPS 종료 · /static 서빙"]
+        G["Gunicorn 워커 3<br/>WSGI 앱서버"]
+        D["Django<br/>뷰 · ORM · 템플릿"]
+        N -->|"유닉스 소켓 · gunicorn.sock"| G
+        G -->|"config.wsgi"| D
+    end
+
+    subgraph S2["Server2 · 192.168.32.73 — 데이터 계층"]
+        direction LR
+        DB[("MariaDB<br/>영구저장 · 3306")]
+        R[("Redis<br/>세션 · 캐시 · 6379")]
+    end
+
+    B -->|"HTTPS · 443"| N
+    D -->|"TCP · 사설망"| DB
+    D -->|"TCP · 사설망"| R
+
+    classDef web fill:#e3ecf6,stroke:#3a6ea5,stroke-width:2px,color:#1b2230;
+    classDef app fill:#fbe6df,stroke:#e0623d,stroke-width:2px,color:#1b2230;
+    classDef data fill:#d9eded,stroke:#2c8c8c,stroke-width:2px,color:#1b2230;
+    class N web;
+    class G,D app;
+    class DB,R data;
 ```
 
 - **왜 2대로 나눴나?** 웹/앱과 DB를 물리적으로 분리하면 (1) 각각 독립적으로 재시작·증설 가능, (2) DB 서버는 외부에 포트를 안 열어 보안↑, (3) 나중에 앱 서버만 여러 대로 늘려도(수평 확장) DB는 공유. 이게 **CLAUDE.md 절대원칙 4 "웹서버/앱/DB 계층 분리"** 의 실체다.

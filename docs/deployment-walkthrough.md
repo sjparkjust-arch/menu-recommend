@@ -8,11 +8,13 @@
 
 ## 0. 큰 그림 — 4단계로 "포트가 사라지고 https가 붙는다"
 
-```
-1단계  개발용        http://127.0.0.1:8000     ← Django runserver (내 PC에서만)
-2단계  앱서버 도입    (소켓)                    ← Gunicorn 이 Django 를 실행
-3단계  웹서버 도입    http://192.168.32.74      ← Nginx 가 앞에서 받음 (:80, 포트 사라짐)
-4단계  암호화        https://192.168.32.74     ← Nginx 에 인증서(:443) + 80→443
+```mermaid
+flowchart TD
+    S1["1단계 · 개발용<br/>Django runserver<br/>http://127.0.0.1:8000 — 내 PC에서만"]
+    S2["2단계 · 앱서버 도입<br/>Gunicorn 이 Django 를 실행<br/>유닉스 소켓"]
+    S3["3단계 · 웹서버 도입<br/>Nginx 가 앞에서 받음 :80<br/>http://192.168.32.74 — 포트 사라짐"]
+    S4["4단계 · 암호화<br/>Nginx 에 인증서 :443 + 80→443<br/>https://192.168.32.74"]
+    S1 --> S2 --> S3 --> S4
 ```
 
 핵심만 먼저:
@@ -222,18 +224,22 @@ sudo systemctl restart gunicorn   # .env/settings 반영
 
 ## 5. 최종 요청 흐름 한 줄
 
-```
-브라우저  https://192.168.32.74
-   │  (443, TLS 암호화)
-   ▼
-Nginx  ── 정적파일이면 여기서 응답
-   │  (여기서 암호화 풀림 = TLS 종료, X-Forwarded-Proto 로 'https였음' 표시)
-   │  유닉스 소켓
-   ▼
-Gunicorn (워커 3) ── config.wsgi:application ──▶ Django
-   │
-   ▼  (사설망 TCP)
-MariaDB(3306) · Redis(6379)   ← Server2
+```mermaid
+flowchart TD
+    B["브라우저<br/>https://192.168.32.74"]
+    B -->|"443 · TLS 암호화"| N
+    N["Nginx<br/>TLS 종료 · 정적파일 직접 응답<br/>X-Forwarded-Proto 로 'https였음' 전달"]
+    N -->|"유닉스 소켓"| G["Gunicorn 워커 3"]
+    G -->|"config.wsgi:application"| D["Django"]
+    D -->|"사설망 TCP"| DB[("MariaDB · 3306")]
+    D -->|"사설망 TCP"| R[("Redis · 6379")]
+
+    classDef web fill:#e3ecf6,stroke:#3a6ea5,stroke-width:2px,color:#1b2230;
+    classDef app fill:#fbe6df,stroke:#e0623d,stroke-width:2px,color:#1b2230;
+    classDef data fill:#d9eded,stroke:#2c8c8c,stroke-width:2px,color:#1b2230;
+    class N web;
+    class G,D app;
+    class DB,R data;
 ```
 
 ## 6. "왜 포트가 사라졌나" 3줄 정리 (질문 답)
