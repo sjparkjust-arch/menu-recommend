@@ -86,23 +86,23 @@
 {% if page_obj.has_other_pages %}
 <nav class="mt-4" aria-label="메뉴 페이지">
     <ul class="pagination justify-content-center">
-        {% if page_obj.has_previous %}
+        {% if has_prev_group %}
         <li class="page-item">
             <a class="page-link"
-               href="?page={{ page_obj.previous_page_number }}{{ filter_querystring }}">이전</a>
+               href="?page={{ prev_group_page }}{{ filter_querystring }}">이전</a>
         </li>
         {% else %}
         <li class="page-item disabled"><span class="page-link">이전</span></li>
         {% endif %}
-        {% for num in page_obj.paginator.page_range %}
+        {% for num in window_pages %}
         <li class="page-item {% if num == page_obj.number %}active{% endif %}">
             <a class="page-link" href="?page={{ num }}{{ filter_querystring }}">{{ num }}</a>
         </li>
         {% endfor %}
-        {% if page_obj.has_next %}
+        {% if has_next_group %}
         <li class="page-item">
             <a class="page-link"
-               href="?page={{ page_obj.next_page_number }}{{ filter_querystring }}">다음</a>
+               href="?page={{ next_group_page }}{{ filter_querystring }}">다음</a>
         </li>
         {% else %}
         <li class="page-item disabled"><span class="page-link">다음</span></li>
