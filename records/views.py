@@ -1,22 +1,41 @@
 from datetime import datetime
 
+from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from menus.models import Menu
+from menus.pagination import page_window
 from .models import MealRecord
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_POST
+
+HISTORY_PAGE_SIZE = 15
 
 @login_required
 def history_view(request):
     from records import services as record_services
     records = MealRecord.objects.filter(user=request.user).select_related('menu').order_by('-created_at')
+    page_obj = Paginator(records, HISTORY_PAGE_SIZE).get_page(request.GET.get('page'))
     return render(request, 'records/history.html', {
-        'records': records,
+        'page_obj': page_obj,
+        'records': page_obj,  # 템플릿 호환(현재 페이지 항목 순회)
         'food_candidates': record_services.food_name_candidates(request.user),
+        **page_window(page_obj),
+    })
+
+
+@login_required
+def food_stats_view(request):
+    """음식별 섭취 통계 전체보기 페이지. food_count_stats 전체를 막대그래프로."""
+    from records import services as record_services
+    stats = record_services.food_count_stats(request.user)  # limit 없음 = 전체
+    return render(request, 'records/food_stats.html', {
+        'food_stats': stats,
+        'food_stats_max': stats[0]['count'] if stats else 0,
+        'total_records': MealRecord.objects.filter(user=request.user).count(),
     })
 
 

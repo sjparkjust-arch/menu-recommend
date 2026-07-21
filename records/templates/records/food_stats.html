@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}음식 통계 · 밥픽{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 800px; margin: 0 auto;">
+
+    <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
+        <h3 class="fw-bold m-0" style="color: var(--ink);">📊 음식 통계</h3>
+        <div class="d-flex gap-2">
+            <a href="{% url 'records:history' %}" class="btn btn-outline-secondary fw-bold px-3">식사 히스토리</a>
+            <a href="{% url 'accounts:profile' %}" class="btn btn-outline-dark fw-bold px-3">마이페이지</a>
+        </div>
+    </div>
+
+    {% if food_stats %}
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+            <div class="text-muted small mb-3">지금까지 총 <strong>{{ total_records }}</strong>끼 기록 · 음식 <strong>{{ food_stats|length }}</strong>종</div>
+            <div class="food-bars">
+                {% for f in food_stats %}
+                <div class="food-bar">
+                    <div class="food-bar-label">{{ f.food_name }}</div>
+                    <div class="food-bar-track">
+                        <div class="food-bar-fill" style="width: {% widthratio f.count food_stats_max 100 %}%"></div>
+                    </div>
+                    <div class="food-bar-value">{{ f.count }}회</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="text-center py-5 my-5 rounded shadow-sm" style="background-color: white; border: 1px solid var(--line);">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">🍽️</div>
+        <h5 class="fw-bold" style="color: var(--ink);">아직 기록된 식사가 없어요</h5>
+        <p class="text-muted mb-4">식사를 기록하면 음식별 통계를 볼 수 있어요.</p>
+        <a href="{% url 'menus:dashboard' %}" class="btn btn-primary px-4 fw-bold">메인으로 가기</a>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

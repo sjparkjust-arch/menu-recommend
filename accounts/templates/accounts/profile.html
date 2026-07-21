@@ -64,9 +64,34 @@
                 </ul>
         </div>
 
+        <!-- 2.3 찜한 메뉴 (좋아요한 메뉴 미리보기 5개) -->
+        <div class="history-card" id="liked-menus">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h2 class="section-title" style="margin: 0;">🧡 찜한 메뉴</h2>
+                <a href="{% url 'menus:liked' %}" style="color: #F37943; font-weight: bold; text-decoration: none; font-size: 14px;">전체보기 &gt;</a>
+            </div>
+            {% if liked_menus %}
+                <ul class="record-list">
+                    {% for menu in liked_menus %}
+                    <li class="record-item">
+                        <span class="food-name">
+                            <a href="{% url 'menus:detail' menu.pk %}" style="color:inherit; text-decoration:none;">{{ menu.name }}</a>
+                        </span>
+                        <span class="record-date">{{ menu.cuisine.name }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <span style="color:#8C756A; font-size:14px;">아직 좋아요한 메뉴가 없어요. 메뉴 카드의 ♥ 버튼을 눌러보세요.</span>
+            {% endif %}
+        </div>
+
         <!-- 2.4 음식별 섭취 통계 (상세) -->
         <div class="history-card">
-            <h2 class="section-title" style="margin: 0 0 16px 0;">📊 음식 통계</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h2 class="section-title" style="margin: 0;">📊 음식 통계</h2>
+                <a href="{% url 'records:food_stats' %}" style="color: #F37943; font-weight: bold; text-decoration: none; font-size: 14px;">전체보기 &gt;</a>
+            </div>
             {% if food_stats %}
                 <ul class="record-list">
                     {% for f in food_stats %}
@@ -105,6 +130,7 @@
                             <span class="food-name">{{ p.cuisine.name }}</span>
                             <span class="record-date">
                                 {% for n in "12345"|make_list %}{% if forloop.counter <= p.score %}★{% else %}☆{% endif %}{% endfor %}
+                                <strong style="margin-left:6px; color:#4A3022;">{{ p.score }}점</strong>
                             </span>
                         </li>
                         {% endfor %}
@@ -115,9 +141,12 @@
             </div>
         </div>
 
-        <!-- 2.6 최근 본 후기 (다른 사람이 쓴 후기 중 내가 조회한 것) -->
+        <!-- 2.6 최근 본 후기 (다른 사람이 쓴 후기 중 내가 조회한 것) 미리보기 5개 -->
         <div class="history-card">
-            <h2 class="section-title" style="margin: 0 0 16px 0;">👀 최근 본 후기</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h2 class="section-title" style="margin: 0;">👀 최근 본 후기</h2>
+                <a href="{% url 'reviews:recent_viewed' %}" style="color: #F37943; font-weight: bold; text-decoration: none; font-size: 14px;">전체보기 &gt;</a>
+            </div>
             {% csrf_token %}
             {% if recent_viewed_reviews %}
                 {% for review in recent_viewed_reviews %}

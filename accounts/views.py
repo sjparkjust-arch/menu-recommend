@@ -7,6 +7,7 @@ from django.contrib.auth import login as auth_login
 from records.models import MealRecord
 from records import services as record_services
 from reviews import services as review_services
+from menus.services import catalog as menu_catalog
 
 User = get_user_model()
 
@@ -301,10 +302,11 @@ def profile(request):
 
     context = {
         'meal_records': recent_records, # 템플릿의 {% for record in meal_records %} 와 매핑됩니다. / # 여기에 식사 기록 데이터 바인딩
+        'liked_menus': menu_catalog.liked_menus(request.user, limit=5),  # 미리보기 5개(전체는 menus:liked)
         'my_allergies': request.user.allergies.all(),
         'my_preferences': request.user.preferences.select_related('cuisine').order_by('-score'),
         'recent_viewed_reviews': recent_viewed_reviews,
         'liked_ids': review_services.liked_review_ids(request.user, recent_viewed_reviews),
-        'food_stats': record_services.food_count_stats(request.user),
+        'food_stats': record_services.food_count_stats(request.user, limit=5),  # 미리보기 5개(전체는 records:food_stats)
     }
     return render(request, 'accounts/profile.html', context)

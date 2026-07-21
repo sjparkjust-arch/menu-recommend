@@ -79,6 +79,28 @@
             </div>
             {% endfor %}
         </div>
+
+        {% if page_obj.has_other_pages %}
+        <nav class="mt-4" aria-label="식사 히스토리 페이지">
+            <ul class="pagination justify-content-center">
+                {% if has_prev_group %}
+                <li class="page-item"><a class="page-link" href="?page={{ prev_group_page }}">이전</a></li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">이전</span></li>
+                {% endif %}
+                {% for num in window_pages %}
+                <li class="page-item {% if num == page_obj.number %}active{% endif %}">
+                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                </li>
+                {% endfor %}
+                {% if has_next_group %}
+                <li class="page-item"><a class="page-link" href="?page={{ next_group_page }}">다음</a></li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">다음</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
     {% else %}
         <!-- 기록이 없을 때 빈 화면 안내 -->
         <div class="text-center py-5 my-5 rounded shadow-sm" style="background-color: white; border: 1px solid var(--line);">

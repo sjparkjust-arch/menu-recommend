@@ -1,12 +1,14 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.paginator import Paginator
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 from django.urls import reverse_lazy
 from menus.models import Menu
+from menus.pagination import page_window
 from reviews import services
 from reviews.forms import ReviewForm
 from reviews.mixins import OwnerOnlyMixin
@@ -14,6 +16,19 @@ from reviews.models import Review, ReviewLike
 from django import forms
 
 PAGE_SIZE = 10
+RECENT_VIEWED_MAX = 30  # 최근 본 후기 전체보기에서 보관·노출할 최대 개수
+
+
+@login_required
+def recent_viewed(request):
+    """최근 본 후기 전체보기 — 최대 RECENT_VIEWED_MAX개를 페이지 넘기며 열람."""
+    reviews_list = list(services.recently_viewed_reviews(request.user, limit=RECENT_VIEWED_MAX))
+    page_obj = Paginator(reviews_list, PAGE_SIZE).get_page(request.GET.get('page'))
+    return render(request, 'reviews/recent_viewed.html', {
+        'page_obj': page_obj,
+        'liked_ids': services.liked_review_ids(request.user, page_obj.object_list),
+        **page_window(page_obj),
+    })
 
 
 class ReviewListView(ListView):
@@ -35,6 +50,7 @@ class ReviewListView(ListView):
         ctx['liked_ids'] = services.liked_review_ids(
             self.request.user, ctx['page_obj'].object_list
         )
+        ctx.update(page_window(ctx['page_obj']))  # 페이지 번호 10개씩 그룹 노출
         services.record_reviews_viewed(self.request.user, ctx['page_obj'].object_list)
         return ctx
 
