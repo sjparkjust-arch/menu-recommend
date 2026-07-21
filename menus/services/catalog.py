@@ -71,7 +71,7 @@ def menu_list_queryset(cuisine_ids=None, search=None, main_only=False):
     return qs.annotate(
         avg_rating=Avg('reviews__rating'),
         review_count=Count('reviews', distinct=True),
-        like_count=Count('likes', distinct=True),
+        like_count=Count('menu_likes', distinct=True),
     ).order_by('name')
 
 
@@ -119,7 +119,7 @@ def get_menu_with_stats(pk):
         .annotate(
             avg_rating=Avg('reviews__rating'),
             review_count=Count('reviews', distinct=True),
-            like_count=Count('likes', distinct=True),
+            like_count=Count('menu_likes', distinct=True),
         )
     )
     return get_object_or_404(qs, pk=pk)
