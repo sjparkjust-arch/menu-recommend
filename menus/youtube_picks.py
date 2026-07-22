@@ -1,0 +1,77 @@
+"""fetch_youtube_picks 명령이 생성한 유튜버 추천 영상 목록. 직접 수정 금지."""
+# 각 항목: {"name": 유튜버, "videos": [{"id": 영상ID, "title": 제목}, ...]}
+
+PICKS = [
+    {"name": '입질의 추억', "videos": [
+        {"id": '2f2BYKmOp6w', "title": '초밥 트럭 1인분 만원의 진실, 과연 먹을만할까?'},
+        {"id": '9Qp4hsB08Dg', "title": '도대체 얼마나 맛있길래 중국에서 싹쓸이해갈까? 직접 먹어보니 와~ ㅠㅠ'},
+        {"id": 'tEoJ72eS564', "title": '이게 은갈치라고? 어마무시한 가격에 큰맘 먹고 샀더니 경악~!'},
+        {"id": '8SlOouum88k', "title": '[폭식주의!] 가격 오르기 전에 먹어야 하는 전라도 최고 생선회'},
+        {"id": 'Z3TIuPB5Ll0', "title": '세상에서 제일 귀여운 오징어를 먹어보자'},
+        {"id": 'BvU_uXlHNdE', "title": '한 마리에 200원, 요즘 엄청 잡혀 난리 난 생선!'},
+    ]},
+    {"name": '육식맨', "videos": [
+        {"id": 'j2LBRM2MnnY', "title": '런던 커리 탐방기 : 인도보다 맛있다는 자타공인 최고의 영국 음식'},
+        {"id": 'HKtvzlSuTn0', "title": '아르헨티나 피자 탐방기 : "한판에 치즈 1.5kg" 테두리까지 뒤덮은 치즈 폭탄! 국내도입 시급한 환상의 피자 스타일  (Argentine Pizza Tour)'},
+        {"id": '67FkgjU8b3A', "title": '항저우 육식 탐방기 : "여기가 동파육의 도시입니까?"'},
+        {"id": 'IizFRuGOAGI', "title": '도쿄 육식 탐방기 : 최고 평점과 원조 식당만 순회한 2박 3일 완벽 가이드'},
+        {"id": 'c6z99JQM8T8', "title": '비엔나 육식 올스타전 : 육식교향곡이 울려 퍼지는 미식 도시 (비엔나 소시지의 실체, 슈니첼, 타펠슈피츠, 슈텔제)'},
+        {"id": 'pFX_BTJpTZs', "title": "쯔양님의 '인생 맛집' 떡볶이를 먹어봤습니다. (경상북도 영주시)"},
+    ]},
+    {"name": '취요남', "videos": [
+        {"id": 'aejk17rWXjA', "title": '쇼츠공장 유튜버들에게 컵라면 끓여주는 영상'},
+        {"id": 'NbmRihG8mf8', "title": '집들이 초밥 오마카세'},
+        {"id": 'jUyoZsP6C64', "title": '집들이 킹크랩 코스요리. 그런데 이제 대사가 조금 많은…'},
+        {"id": 'tpLpfmdA7nQ', "title": '집들이 코스요리.'},
+        {"id": 'W-_hy7S9o0g', "title": '대대방어! 이걸 내가 할 수 있을까..? 일단 오마카세 열었습니다.'},
+        {"id": 'z4kNfT1OISY', "title": '아내세끼 여름편'},
+    ]},
+    {"name": '밥굽남', "videos": [
+        {"id": 'ZaT7ykiQjI0', "title": '강원도식 돼지국밥으로 속 제대로 풀었습니다. / korea  Gangwon-do style Pork and Rice Soup'},
+        {"id": 'qF7M42DFcFs', "title": '14kg 대방어를 산채로 모셔와 풀코스로 조져봤습니다! 대가리 숯불구이에서 대방어 회 통먹방까지...'},
+        {"id": 'id6ZoZVkBD4', "title": '솥뚜껑 삼겹살과 강된장 쌈밥 먹방~!  pork belly, soybean paste sauce  mukbang eating show'},
+        {"id": '3Y33uRMX6As', "title": '짜장면을 21세기 산적의 느낌대로~ / korea black noodle cooking mukbang eating show'},
+        {"id": 'Qg7Or1bTM80', "title": '파김치 1티어는 짜장라면이죠!  산적st 파김치~!!'},
+        {"id": 'BFZEYvcPrkY', "title": '고추장 양념한 삼겹살 더덕을 숯불에 구워 소주한잔하는 술먹방'},
+    ]},
+    {"name": '히밥', "videos": [
+        {"id": 'QO7mzgmLMXY', "title": '[SUB] 이 분식집 모르면 간첩이라고요? 할머니 조기퇴근 시켜드리기'},
+        {"id": 'IWQa1K86oqQ', "title": '히밥 개인 유튜브에도 올릴 정도로 진심이었던 찐단골 맛집 | KBS 250909 방송'},
+        {"id": 'Ysn7PPTeqaI', "title": '[SUB]🔥난이도 ★★★★★ 20분 안에 7kg 도전먹방🔥 혹시나.. 이거 다 먹으면 20분 뒤에 7kg가 늘어나나요?'},
+        {"id": '3-bWZlFwBQg', "title": '[SUB] 지나가다 맛있어 보여서 들어왔는데 떡갈비가 몸통만 하다..'},
+        {"id": 'wxauxuzz1fQ', "title": '[SUB] 🛑실제상황🛑 제가 하루종일 집에만 있을때 얼마나 먹는지 보여드리겠습니다.'},
+        {"id": 'caQAfBTKAJc', "title": '[SUB] 분명 1인분씩 시켰는데 자꾸 2인분씩 나와서 총 10인분을 먹었다는 50년된 전설의 중국집'},
+    ]},
+    {"name": '쯔양', "videos": [
+        {"id": 'Hw2IzWvWDGM', "title": ''},
+        {"id": 'G-4AtmmJ9BQ', "title": '마라탕 먹고싶어지는 영상'},
+        {"id": 'HxOwbR-CxwM', "title": ''},
+        {"id": '5brnQKkvSr4', "title": ''},
+        {"id": '5YCiRCtJqnk', "title": '제주 올레 시장 몬딱 털었수다! 쯔양 제주도 야시장 풀코스 먹방🍠🍣🍜🧆 #쯔양몇끼 8회 #클립'},
+        {"id": 'qJXE9D4mVro', "title": ''},
+    ]},
+    {"name": '떵개떵', "videos": [
+        {"id": 'qDILQ1bRjyA', "title": '씹을수록 단맛 나는 싱싱한 생새우회와 전복, 해삼 먹방~!! Raw shrimp, Sliced raw abalone, sea \u200b\u200bcucumber'},
+        {"id": '_RWFsK3JEGA', "title": 'BHC신메뉴 커링클콤보과 달콤바삭치즈볼에 뿌링클소스 먹방~!! curry-seasoned fried chicken'},
+        {"id": 'Q90Cp4yD2o8', "title": '노티드 도넛 13가지 메뉴 먹어보겠습니다~!! 먹방 리얼사운드 Knotted Doughnut('},
+        {"id": 'Xq9zE4BW5N4', "title": '시원하고 매콤한 불냉면과 고기왕만두, 고기잎새만두 먹방~!! Spicy cold noodle soup,  Meat dumpling'},
+        {"id": 'n34BPzRLr_M', "title": '기름 제대로 터지는 통대창에 매콤한 실비파김치 먹방~! Grilled large intestine, spicy green onion kimchi'},
+        {"id": 'kufraO8ue64', "title": '군침 도는 비주얼의 치즈대박폭탄피자와 크림스파게티, 버팔로윙, 치킨텐더 먹방~!! Cheese-loaded pizza, Creamy pasta'},
+    ]},
+    {"name": '흥삼이네', "videos": [
+        {"id": '82WlXi00-V0', "title": '포항 제철 과일로 차린 여름 한 상! 토마토 파스타부터 애플수박 화채까지(Pohang’s Seasonal Fruit Feast!) 요리&먹방 - Mukbang eating show'},
+        {"id": 'xIqrCDScihk', "title": '초복에는 가마솥 가득 홍삼삼계탕! 홍삼 들어간 진한 국물로 제대로 몸보신! (Red ginseng Chicken soup) 요리&먹방! - Mukbang eating show'},
+        {"id": 'r83Zok1FK6w', "title": '아삭한 미나리와 김치 넣은 솥뚜껑 삼겹살에 혼술 한 잔!! (Samgyeopsal with Minari, Kimchi) 요리&먹방!! - Mukbang eating show'},
+        {"id": '63mYLDxB92I', "title": '큼직하게 썬 생고기 넣고 맛있게 끓인 [[돼지고기 김치찌개]]와 밥도둑 햄구이!! (Pork and Kimchi stew) 요리&먹방!! - Mukbang eating show'},
+        {"id": 'ziUHv-SJ41k', "title": '간만에 먹는 중식! 간짜장, 짬뽕, 탕수육에 맛있는 김장 김치까지~ (Jjajangmyeon, Jjamppong, Tangsuyuk) 먹방! - Mukbang eating show'},
+        {"id": 'QY-ZX3a0TqE', "title": '🍕🍻어머니가 극찬하신 피자헛 신메뉴 립스테이크바이트 피자에 말표 맥주 한 잔! 피맥 먹방! (Pizza & Beer) 요리&먹방!! - Mukbang eating show'},
+    ]},
+    {"name": '입짧은햇님', "videos": [
+        {"id": 'V29HqL6WHNY', "title": '오늘은 치맥데이🍗 교촌치킨 & 노랑통닭, 후식 육계장 사발면 2개, 참외250604/Mukbang, eating show'},
+        {"id": 'tKTk_EnYwz0', "title": '달달한 도넛🍩 먹기 전에 칼칼하게 한우 곱도리탕🍖251112/Mukbang, eating show'},
+        {"id": 'Iax8zBsm_7k', "title": '처갓집, 페리카나, 멕시칸 양념치킨들 & 후식은 소금빵과 찹쌀떡 🥐 251201/Mukbang, eating show'},
+        {"id": 'r64_N9xzTzM', "title": '날도 추운데 뜨끈한 떡만둣국과 직접 김장한 김치! 반찬은 쪽갈비 4인분!251122/Mukbang, eating show'},
+        {"id": '3I7MWnzSTLQ', "title": '삼겹살 3키로와 진비빔면 먹방~!! 20200625/Mukbang'},
+        {"id": 'OqkcuRz6WTA', "title": '입짧은 햇님의 먹방~!mukbang, eating show(튀김특집,떡볶이 171212)'},
+    ]},
+]
