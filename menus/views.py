@@ -1,3 +1,5 @@
+import random
+
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.http import JsonResponse
@@ -15,7 +17,7 @@ from reviews import services as review_services
 
 PAGE_SIZE = 12
 RANKING_LIMIT = 10
-MY_BOBPICK_LIMIT = 10
+MY_BOBPICK_LIMIT = 5
 FOOD_STATS_LIMIT = 5
 POPULAR_RANK_LIMIT = 3
 REC_SLOTS = ('lunch', 'dinner', 'taste')  # 확률적이라 세션에 고정하는 슬롯
@@ -81,10 +83,26 @@ def dashboard(request):
     # '지금 인기' 카드 자리를 대체할 음식 후기 카드용(일간/주간 탭)
     food_reviews = review_services.recent_food_reviews()
 
+    # 음식 유튜버 추천 영상. 저장된 풀에서 유튜버당 1개 랜덤 + 순서 셔플 → 새로고침마다 바뀜.
+    try:
+        from menus.youtube_picks import PICKS as _yt_pool
+    except Exception:  # noqa: BLE001
+        _yt_pool = []
+    youtube_picks = []
+    for p in _yt_pool:
+        if p.get('videos'):
+            v = random.choice(p['videos'])
+            youtube_picks.append({'name': p['name'], 'video': v['id'], 'title': v.get('title', '')})
+    random.shuffle(youtube_picks)
+
+    # 미식 칼럼(블루리본/미슐랭) — fetch_food_columns 명령이 만든 정적 목록.
+    try:
+        from menus.food_columns import COLUMNS as food_columns
+    except Exception:  # noqa: BLE001
+        food_columns = {}
+
     if request.user.is_authenticated:
         my_bobpick = list(catalog.liked_menus(request.user, limit=MY_BOBPICK_LIMIT))
-        # 찜한 메뉴 랜덤픽(클라 JS)용 직렬화 리스트
-        my_bobpick_json = [{'id': m.id, 'name': m.name} for m in my_bobpick]
         food_stats = record_services.food_count_stats(request.user, limit=FOOD_STATS_LIMIT)
         # 막대 그래프 폭 계산용 최댓값
         food_stats_max = food_stats[0]['count'] if food_stats else 0
@@ -104,7 +122,6 @@ def dashboard(request):
         ]
     else:
         my_bobpick = None
-        my_bobpick_json = []
         food_stats = None
         food_stats_max = 0
         meal_calendar = None
@@ -119,9 +136,10 @@ def dashboard(request):
         'cuisine_qs': cuisine_qs,
         'popular_ranking': popular_ranking,
         'food_reviews': food_reviews,
+        'youtube_picks': youtube_picks,
+        'food_columns': food_columns,
         'meal_calendar': meal_calendar,
         'my_bobpick': my_bobpick,
-        'my_bobpick_json': my_bobpick_json,
         'food_stats': food_stats,
         'food_stats_max': food_stats_max,
         'food_candidates': food_candidates,
@@ -241,6 +259,62 @@ def menu_like_toggle(request, pk):
         # 좋아요 실제 행은 MenuLike(through)에 있다. menu.likes(자동 M2M)가 아니라
         # menu_likes(MenuLike 역참조)로 세야 토글이 쓴 값과 일치한다.
         'like_count': menu.menu_likes.count(),
+    })
+
+
+# ── 게임 (돌림판/사다리타기/이상형월드컵) ─────────────────────────────
+# 결과를 DB에 저장하지 않는 순수 클라이언트 게임. 후보 메뉴만 서버가 랜덤으로 뽑아 넘긴다.
+GAME_ROULETTE_SLICES = 8
+GAME_LADDER_PLAYERS = (4, 6, 8)
+GAME_WORLDCUP_SIZES = (8, 16, 32)
+
+
+def games_hub(request):
+    """게임 허브(메뉴 골라보기). 게임 3종 카드만 담백하게 보여준다."""
+    return render(request, 'menus/games/hub.html')
+
+
+def game_roulette(request):
+    """메뉴 돌림판. '메인' 코스에서 8개를 랜덤으로 뽑아 원판으로 보여준다.
+
+    새로고침(다시 섞기)마다 다른 8개가 나오도록 매 요청 랜덤 추출한다.
+    """
+    pool = list(catalog.menu_list_queryset(main_only=True))
+    picks = random.sample(pool, min(GAME_ROULETTE_SLICES, len(pool)))
+    menus_json = [{'id': m.id, 'name': m.name} for m in picks]
+    return render(request, 'menus/games/roulette.html', {'menus_json': menus_json})
+
+
+def game_ladder(request):
+    """메뉴 사다리타기. 인원수(4/6/8)만큼 메뉴를 랜덤 배정해 사다리로 보여준다."""
+    players = _as_int_or_none(request.GET.get('players'))
+    if players not in GAME_LADDER_PLAYERS:
+        players = GAME_LADDER_PLAYERS[0]
+    pool = list(catalog.menu_list_queryset(main_only=True))
+    picks = random.sample(pool, min(players, len(pool)))
+    menus_json = [{'id': m.id, 'name': m.name} for m in picks]
+    return render(request, 'menus/games/ladder.html', {
+        'players': players,
+        'player_options': GAME_LADDER_PLAYERS,
+        'menus_json': menus_json,
+    })
+
+
+def game_worldcup(request):
+    """음식 이상형 월드컵. 강수(8/16/32)만큼 메뉴를 랜덤 추출해 토너먼트로 보여준다."""
+    size = _as_int_or_none(request.GET.get('size'))
+    if size not in GAME_WORLDCUP_SIZES:
+        size = GAME_WORLDCUP_SIZES[0]
+    pool = list(catalog.menu_list_queryset(main_only=True))
+    picks = random.sample(pool, min(size, len(pool)))
+    menus_json = [
+        {'id': m.id, 'name': m.name, 'image': (m.image.url if m.image else '')}
+        for m in picks
+    ]
+    return render(request, 'menus/games/worldcup.html', {
+        'size': size,
+        'size_options': GAME_WORLDCUP_SIZES,
+        'menus_json': menus_json,
     })
 
 

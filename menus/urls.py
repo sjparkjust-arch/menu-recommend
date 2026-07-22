@@ -13,4 +13,9 @@ urlpatterns = [
     path('menus/ranking/', views.ranking, name='ranking'),
     path('menus/<int:pk>/', views.menu_detail, name='detail'),
     path('menus/<int:pk>/like/', views.menu_like_toggle, name='like'),
+    # 게임 3종(돌림판/사다리타기/이상형월드컵) — 결과 저장 없는 순수 클라이언트 게임
+    path('menus/games/', views.games_hub, name='games'),
+    path('menus/games/roulette/', views.game_roulette, name='game_roulette'),
+    path('menus/games/ladder/', views.game_ladder, name='game_ladder'),
+    path('menus/games/worldcup/', views.game_worldcup, name='game_worldcup'),
 ]

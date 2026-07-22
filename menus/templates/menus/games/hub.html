@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}메뉴 골라보기 · 밥픽{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 900px; margin: 0 auto;">
+
+    <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
+        <h3 class="fw-bold m-0" style="color: var(--ink);">메뉴 골라보기</h3>
+        <a href="{% url 'menus:dashboard' %}" class="btn btn-outline-secondary fw-bold px-3">메인으로</a>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-4">
+            <a href="{% url 'menus:game_roulette' %}" class="card shadow-sm h-100 text-decoration-none game-hub-card">
+                <div class="card-body text-center py-4">
+                    <div style="font-size: 2.6rem;">🎯</div>
+                    <div class="fw-bold mt-2" style="color: var(--ink);">메뉴 돌림판</div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="{% url 'menus:game_ladder' %}" class="card shadow-sm h-100 text-decoration-none game-hub-card">
+                <div class="card-body text-center py-4">
+                    <div style="font-size: 2.6rem;">🪜</div>
+                    <div class="fw-bold mt-2" style="color: var(--ink);">메뉴 사다리타기</div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="{% url 'menus:game_worldcup' %}" class="card shadow-sm h-100 text-decoration-none game-hub-card">
+                <div class="card-body text-center py-4">
+                    <div style="font-size: 2.6rem;">🏆</div>
+                    <div class="fw-bold mt-2" style="color: var(--ink);">음식 이상형 월드컵</div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+</div>
+
+<style>
+    .game-hub-card { transition: transform .15s ease, box-shadow .15s ease; }
+    .game-hub-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+</style>
+{% endblock %}

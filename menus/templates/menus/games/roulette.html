@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}메뉴 돌림판 · 밥픽{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 640px; margin: 0 auto;">
+
+    <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
+        <h3 class="fw-bold m-0" style="color: var(--ink);">🎯 메뉴 돌림판</h3>
+        <div class="d-flex gap-2">
+            <a href="{% url 'menus:games' %}" class="btn btn-outline-secondary fw-bold px-3">게임 목록</a>
+            <a href="{% url 'menus:dashboard' %}" class="btn btn-outline-dark fw-bold px-3">메인으로</a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body text-center py-4">
+            <div class="roulette-wrap mx-auto">
+                <div class="roulette-pointer">▼</div>
+                <canvas id="rouletteCanvas" width="320" height="320"></canvas>
+            </div>
+
+            <div class="d-flex justify-content-center gap-2 mt-4">
+                <button type="button" class="btn btn-primary fw-bold px-4" id="spinBtn">🎯 돌리기</button>
+                <a href="?{{ request.GET.urlencode }}" class="btn btn-outline-secondary fw-bold px-4" id="reshuffleBtn">🔀 다시 섞기</a>
+            </div>
+
+            <div id="rouletteResult" class="mt-4" hidden>
+                <div class="fs-5">오늘은 <span id="rouletteResultName" class="fw-bold"></span> 어때요?</div>
+                <a id="rouletteResultLink" href="#" class="btn btn-sm btn-outline-primary mt-2">메뉴 상세보기 →</a>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{{ menus_json|json_script:"roulette-menus" }}
+
+<style>
+    .roulette-wrap { position: relative; width: 320px; height: 320px; }
+    .roulette-pointer {
+        position: absolute; top: -6px; left: 50%; transform: translateX(-50%);
+        font-size: 1.8rem; color: var(--ink); z-index: 2; line-height: 1;
+    }
+    #rouletteCanvas {
+        border-radius: 50%; box-shadow: var(--shadow-md);
+        transition: transform 4.5s cubic-bezier(0.17, 0.67, 0.12, 1);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    var data = JSON.parse(document.getElementById('roulette-menus').textContent || '[]');
+    var canvas = document.getElementById('rouletteCanvas');
+    var ctx = canvas.getContext('2d');
+    var spinBtn = document.getElementById('spinBtn');
+    var result = document.getElementById('rouletteResult');
+    var resultName = document.getElementById('rouletteResultName');
+    var resultLink = document.getElementById('rouletteResultLink');
+    var detailBase = "{% url 'menus:detail' 0 %}";  // /menus/0/ → id 치환
+
+    var n = data.length;
+    if (!n) { spinBtn.disabled = true; return; }
+    var sliceAngle = 360 / n;
+    var radius = canvas.width / 2;
+    // 클래식 룰렛 느낌: 주황/잉크 두 색 교대 (인접 조각 대비 확보, 브랜드 팔레트 유지)
+    var colors = ['#F36235', '#2B1B12'];
+
+    function drawWheel() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (var i = 0; i < n; i++) {
+            var start = (-90 + i * sliceAngle) * Math.PI / 180;
+            var end = start + sliceAngle * Math.PI / 180;
+            ctx.beginPath();
+            ctx.moveTo(radius, radius);
+            ctx.arc(radius, radius, radius - 2, start, end);
+            ctx.closePath();
+            ctx.fillStyle = colors[i % colors.length];
+            ctx.fill();
+
+            // 라벨: 조각 중앙 각도를 따라 바깥쪽으로 향하게
+            var mid = start + (end - start) / 2;
+            ctx.save();
+            ctx.translate(radius, radius);
+            ctx.rotate(mid);
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#fff';
+            ctx.font = '600 13px "Pretendard Variable", sans-serif';
+            var label = data[i].name.length > 6 ? data[i].name.slice(0, 6) + '…' : data[i].name;
+            ctx.fillText(label, radius - 14, 0);
+            ctx.restore();
+        }
+    }
+    drawWheel();
+
+    var currentRotation = 0;
+    var spinning = false;
+
+    canvas.addEventListener('transitionend', function () {
+        spinning = false;
+        spinBtn.disabled = false;
+        var normalized = ((currentRotation % 360) + 360) % 360;
+        var targetAngle = (360 - normalized) % 360;
+        var idx = Math.floor(targetAngle / sliceAngle) % n;
+        var pick = data[idx];
+        resultName.textContent = pick.name;
+        resultLink.href = detailBase.replace(/0\/$/, pick.id + '/');
+        result.hidden = false;
+    });
+
+    spinBtn.addEventListener('click', function () {
+        if (spinning) return;
+        spinning = true;
+        spinBtn.disabled = true;
+        result.hidden = true;
+        currentRotation += 1800 + Math.floor(Math.random() * 1440);  // 5~9바퀴 + 랜덤
+        canvas.style.transform = 'rotate(' + currentRotation + 'deg)';
+    });
+})();
+</script>
+{% endblock %}
