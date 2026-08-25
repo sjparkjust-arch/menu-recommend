@@ -197,13 +197,17 @@ STORAGES = {
     "default": {
         "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
         "OPTIONS": {
-            "location": "media", # 유저 업로드 파일 목적지
+            "location": "media",
+            "default_acl": None,         # 👈 S3 버킷의 퍼블릭 차단 정책과 충돌 방지
+            "file_overwrite": True,
         },
     },
     "staticfiles": {
         "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
         "OPTIONS": {
-            "location": "static", # CSS, JS 정적 파일 목적지
+            "location": "static",
+            "default_acl": None,         # 👈 S3 버킷의 퍼블릭 차단 정책과 충돌 방지
+            "file_overwrite": True,
         },
     },
 }
