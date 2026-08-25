@@ -166,19 +166,48 @@ USE_I18N = True
 USE_TZ = True
 
 
+# ==========================================
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/6.0/howto/static-files/
+# ==========================================
+# 1. 정적 파일 URL의 기본 형태 (CloudFront 주소가 있으면 거기로 연결)
+if env('AWS_S3_CUSTOM_DOMAIN', default=None):
+    STATIC_URL = f"https://{env('AWS_S3_CUSTOM_DOMAIN')}/static/"
+    MEDIA_URL = f"https://{env('AWS_S3_CUSTOM_DOMAIN')}/media/"
+else:
+    STATIC_URL = 'static/'
+    MEDIA_URL = env('MEDIA_URL', default='media/')
 
-STATIC_URL = 'static/'
-# 앱 자체 static/ 폴더(accounts/static/ 등)는 자동 인식되지만, 프로젝트 공용
-# static/(theme.css 등)은 STATICFILES_DIRS에 등록해야 collectstatic이 수집한다.
+# 2. 장고가 CSS/JS 원본 파일을 찾을 위치 (기존 코드 유지)
 STATICFILES_DIRS = [BASE_DIR / 'static']
-# collectstatic 수집 경로. Nginx가 /static/ 을 여기서 직접 서빙한다.
+
+# 3. 로컬 개발용(Fallback) 경로 (기존 코드 유지 - S3 쓸 땐 무시됨)
 STATIC_ROOT = env('STATIC_ROOT', default=BASE_DIR / 'staticfiles')
-
-
-# Media (업로드 파일)
-# 운영에서는 django-storages 백엔드가 담당한다(CLAUDE.md 절대원칙 2).
-# 아래 MEDIA_ROOT는 DEBUG 로컬 개발용 서빙 fallback일 뿐, 앱 코드에 경로를 하드코딩하지 않는다.
-MEDIA_URL = env('MEDIA_URL', default='media/')
 MEDIA_ROOT = env('MEDIA_ROOT', default=BASE_DIR / 'media')
+
+
+# ==========================================
+# AWS S3 및 CloudFront 스토리지 설정 (새로 추가)
+# ==========================================
+AWS_STORAGE_BUCKET_NAME = env('AWS_STORAGE_BUCKET_NAME')
+AWS_S3_REGION_NAME = env('AWS_S3_REGION_NAME', default='ap-northeast-2')
+AWS_S3_CUSTOM_DOMAIN = env('AWS_S3_CUSTOM_DOMAIN', default=None)
+
+# 4. 목적지를 S3로 변경하는 핵심 스위치
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        "OPTIONS": {
+            "location": "media",
+            "default_acl": None,         # 👈 S3 버킷의 퍼블릭 차단 정책과 충돌 방지
+            "file_overwrite": True,
+        },
+    },
+    "staticfiles": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        "OPTIONS": {
+            "location": "static",
+            "default_acl": None,         # 👈 S3 버킷의 퍼블릭 차단 정책과 충돌 방지
+            "file_overwrite": True,
+        },
+    },
+}
