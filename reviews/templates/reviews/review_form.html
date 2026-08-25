@@ -5,7 +5,7 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-7">
-        <h4 class="mb-3">{% if menu %}{{ menu.name }} {% endif %}후기 {% if form.instance.pk %}수정{% else %}작성{% endif %}</h4>
+        <h4 class="page-title">{% if menu %}{{ menu.name }} {% endif %}후기 {% if form.instance.pk %}수정{% else %}작성{% endif %}</h4>
 
         <form method="post" enctype="multipart/form-data" class="card card-body shadow-sm">
             {% csrf_token %}
@@ -84,15 +84,6 @@
         </form>
     </div>
 </div>
-
-<style>
-    .star-rating { display: inline-flex; flex-direction: row-reverse; font-size: 2rem; line-height: 1; }
-    .star-rating input { display: none; }
-    .star-rating label { color: #ddd; cursor: pointer; padding: 0 .05em; }
-    .star-rating input:checked ~ label,
-    .star-rating label:hover,
-    .star-rating label:hover ~ label { color: #ffc107; }
-</style>
 
 <script>
 (function () {

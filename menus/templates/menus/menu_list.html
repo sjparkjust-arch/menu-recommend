@@ -3,7 +3,7 @@
 {% block title %}메뉴 목록 · 메뉴 추천{% endblock %}
 
 {% block content %}
-<h3 class="mb-3">메뉴 목록</h3>
+<h3 class="page-title">메뉴 목록</h3>
 
 {# 필터 + 검색 (GET) #}
 <form method="get" class="card card-body mb-4 shadow-sm">
@@ -112,7 +112,11 @@
 {% endif %}
 
 {% else %}
-<div class="alert alert-secondary">조건에 맞는 메뉴가 없습니다.</div>
+<div class="empty-state">
+    <div class="empty-state-icon">🍚</div>
+    <div class="empty-state-title">조건에 맞는 메뉴가 없습니다</div>
+    <div class="empty-state-text">필터나 검색어를 바꿔서 다시 찾아보세요.</div>
+</div>
 {% endif %}
 {% endblock %}
 

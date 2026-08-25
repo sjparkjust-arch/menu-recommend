@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>밥픽 발표 진행용 · 박상준 (4·5·7·8)</title>
+<style>
+  :root{
+    --bg:#F6EEE1; --surface:#FFFFFF; --surface-2:#FBF3E9; --surface-3:#F3E7D6;
+    --ink:#2B1B12; --muted:#8C7568; --line:#E7D9C4;
+    --brand:#F36235; --brand-dark:#DE632E; --brand-soft:#FCE7D8;
+    --gold:#B98600; --demo:#2E7D8C; --demo-soft:#DCEDEF;
+    --shadow:0 1px 3px rgba(43,27,18,.10), 0 6px 18px rgba(43,27,18,.10);
+    --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+    --sans:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,system-ui,"Segoe UI","Malgun Gothic",sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#171310; --surface:#241E18; --surface-2:#2C251E; --surface-3:#352C23;
+    --ink:#F4ECE2; --muted:#B6A493; --line:#3B3229;
+    --brand:#FB7A4E; --brand-dark:#F4A24A; --brand-soft:#3A2A20;
+    --gold:#E3B23C; --demo:#63C6D6; --demo-soft:#183036;
+    --shadow:0 1px 3px rgba(0,0,0,.5), 0 8px 22px rgba(0,0,0,.45);}}
+  :root[data-theme="dark"]{
+    --bg:#171310; --surface:#241E18; --surface-2:#2C251E; --surface-3:#352C23;
+    --ink:#F4ECE2; --muted:#B6A493; --line:#3B3229;
+    --brand:#FB7A4E; --brand-dark:#F4A24A; --brand-soft:#3A2A20;
+    --gold:#E3B23C; --demo:#63C6D6; --demo-soft:#183036;
+    --shadow:0 1px 3px rgba(0,0,0,.5), 0 8px 22px rgba(0,0,0,.45);}
+  :root[data-theme="light"]{
+    --bg:#F6EEE1; --surface:#FFFFFF; --surface-2:#FBF3E9; --surface-3:#F3E7D6;
+    --ink:#2B1B12; --muted:#8C7568; --line:#E7D9C4;
+    --brand:#F36235; --brand-dark:#DE632E; --brand-soft:#FCE7D8;
+    --gold:#B98600; --demo:#2E7D8C; --demo-soft:#DCEDEF;
+    --shadow:0 1px 3px rgba(43,27,18,.10), 0 6px 18px rgba(43,27,18,.10);}
+
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55;margin:0;
+       letter-spacing:-0.01em;-webkit-font-smoothing:antialiased;
+       padding-bottom:4.6rem;} /* space for bottom bar */
+  .wrap{max-width:620px;margin:0 auto;padding:0 clamp(.7rem,4vw,1.1rem)}
+
+  /* ── sticky TOP: 지금 어디 ── */
+  .top{position:sticky;top:0;z-index:30;background:linear-gradient(180deg,var(--brand),var(--brand-dark));
+       color:#fff;display:flex;align-items:center;gap:.7rem;padding:.6rem clamp(.7rem,4vw,1.1rem);
+       box-shadow:0 4px 14px rgba(0,0,0,.18)}
+  .top .bignum{flex:0 0 auto;width:2.6rem;height:2.6rem;border-radius:14px;background:rgba(255,255,255,.2);
+       border:1px solid rgba(255,255,255,.4);display:flex;align-items:center;justify-content:center;
+       font-weight:900;font-size:1.5rem;line-height:1}
+  .top .ttl{flex:1;min-width:0}
+  .top .ttl .ey{font-size:.68rem;font-weight:700;letter-spacing:.05em;opacity:.85;text-transform:uppercase}
+  .top .ttl .nm{font-size:1.12rem;font-weight:800;letter-spacing:-0.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .top .star{font-size:.66rem;font-weight:800;background:rgba(255,255,255,.24);border:1px solid rgba(255,255,255,.4);
+       border-radius:999px;padding:.15rem .45rem;margin-left:.3rem;display:none}
+  .top .prog{flex:0 0 auto;font-weight:800;font-size:.9rem;background:rgba(255,255,255,.2);border-radius:999px;
+       padding:.25rem .6rem;font-variant-numeric:tabular-nums}
+  .top .th{flex:0 0 auto;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.34);color:#fff;
+       border-radius:10px;width:2rem;height:2rem;font-size:.9rem;cursor:pointer;font-family:var(--sans)}
+
+  /* ── slide (one at a time) ── */
+  .slide{display:none;padding:.9rem 0 1rem;animation:fade .18s ease}
+  .slide.active{display:block}
+  @keyframes fade{from{opacity:.35;transform:translateY(4px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.slide{animation:none}}
+
+  .lbl{font-size:.72rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);
+       margin:.2rem 0 .55rem;display:flex;align-items:center;gap:.4rem}
+
+  .flow{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.5rem}
+  .flow li{display:flex;gap:.6rem;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:.65rem .7rem}
+  .flow .k{flex:0 0 auto;font-weight:800;font-size:.9rem;color:#fff;background:var(--brand);border-radius:8px;
+     min-width:1.85rem;height:1.85rem;display:inline-flex;align-items:center;justify-content:center;margin-top:.05rem}
+  .flow .t{flex:1;min-width:0}
+  .flow .t .h{font-weight:800;font-size:1.08rem;letter-spacing:-0.01em;line-height:1.25}
+  .flow .t .c{color:var(--muted);font-size:.92rem;margin-top:.15rem}
+  .rd{font-weight:700;color:var(--brand-dark);font-size:.85em;white-space:nowrap}
+  .flow .go .k{background:var(--gold)}
+  .flow .demo{background:var(--demo-soft);border-color:color-mix(in srgb,var(--demo) 40%,var(--line))}
+  .flow .demo .k{background:var(--demo)}
+  .flow .end{background:var(--surface-3);border-style:dashed}
+  .flow .end .k{background:var(--muted)}
+
+  details{margin-top:.7rem;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  details>summary{cursor:pointer;list-style:none;padding:.75rem .85rem;font-weight:800;font-size:.95rem;
+     display:flex;align-items:center;gap:.5rem;color:var(--ink)}
+  details>summary::-webkit-details-marker{display:none}
+  details>summary .chev{margin-left:auto;color:var(--muted);transition:transform .2s}
+  details[open]>summary .chev{transform:rotate(90deg)}
+  .dbody{padding:.1rem .9rem .9rem}
+  .script p{margin:.55rem 0;font-size:1rem;line-height:1.62}
+  .lead{color:var(--brand-dark);font-weight:700}
+  .cue{display:block;margin-top:.6rem;padding:.6rem .75rem;background:var(--surface-2);border:1px dashed var(--line);
+       border-radius:10px;font-size:.92rem;color:var(--muted);font-style:italic}
+  .cue b{color:var(--brand-dark);font-style:normal}
+  code{font-family:var(--mono);font-size:.85em;background:var(--brand-soft);color:var(--brand-dark);
+       padding:.06em .38em;border-radius:6px;border:1px solid var(--line)}
+
+  .terms{margin:0;padding:0;list-style:none}
+  .terms li{padding:.55rem 0;border-bottom:1px solid var(--line);font-size:.97rem}
+  .terms li:last-child{border-bottom:none}
+  .terms .term{font-weight:800}
+  .terms .say{color:var(--brand-dark);font-weight:700}
+  .terms .def{display:block;margin-top:.12rem;color:var(--muted);font-size:.9rem}
+
+  .demoNote{background:var(--demo-soft);border:1px solid color-mix(in srgb,var(--demo) 40%,var(--line));
+     border-left:4px solid var(--demo);border-radius:12px;padding:.75rem .85rem;margin-top:.75rem;font-size:.95rem}
+  .demoNote b{color:var(--demo)}
+  .demoNote ul{margin:.4rem 0 0;padding-left:1.15rem}
+  .demoNote li{margin:.3rem 0}
+
+  /* ── fixed BOTTOM: 넘기기 ── */
+  .bar{position:fixed;left:0;right:0;bottom:0;z-index:40;background:color-mix(in srgb,var(--bg) 90%,transparent);
+     backdrop-filter:blur(10px);border-top:1px solid var(--line);display:flex;align-items:center;gap:.5rem;
+     padding:.5rem clamp(.7rem,4vw,1.1rem);max-width:620px;margin:0 auto;
+     padding-bottom:calc(.5rem + env(safe-area-inset-bottom))}
+  .bar .mv{flex:0 0 auto;border:1px solid var(--line);background:var(--surface);color:var(--ink);
+     border-radius:12px;height:2.9rem;padding:0 .9rem;font-weight:800;font-size:.98rem;cursor:pointer;
+     font-family:var(--sans);box-shadow:var(--shadow);display:inline-flex;align-items:center;gap:.3rem}
+  .bar .mv.primary{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .bar .mv:disabled{opacity:.35;cursor:default}
+  .bar .dots{flex:1;display:flex;justify-content:center;gap:.4rem}
+  .bar .dot{width:2.3rem;height:2.9rem;border-radius:10px;border:1px solid var(--line);background:var(--surface);
+     color:var(--brand-dark);font-weight:800;font-size:1rem;cursor:pointer;font-family:var(--sans);
+     display:inline-flex;align-items:center;justify-content:center}
+  .bar .dot.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+
+  .hint{color:var(--muted);font-size:.82rem;text-align:center;margin:.8rem 0 .2rem}
+</style>
+
+</head>
+<body>
+<div class="top">
+  <span class="bignum" id="curNum">4</span>
+  <span class="ttl"><span class="ey">지금 슬라이드</span><span class="nm" id="curTitle">주요 기능 및 외부 연계</span></span>
+  <span class="prog" id="prog">1 / 4</span>
+  <button class="th" id="themeToggle" aria-label="테마">◐</button>
+</div>
+
+<div class="wrap">
+  <p class="hint">📱 키워드만 보고 말하다 막히면 <b>「전체 대본 펼치기」</b> · 아래 <b>◀ / 다음▶</b>로 슬라이드 넘기기 (좌우로 밀어도 됨)</p>
+
+  <!-- ===== SLIDE 4 ===== -->
+  <section class="slide active" id="s4">
+    <div class="lbl">🗣 말할 순서 (키워드)</div>
+    <ul class="flow">
+      <li><span class="k">·</span><div class="t"><div class="h">주요 기능 5가지</div>
+        <div class="c">"밥픽의 기능을 다섯 영역으로 정리했습니다."</div></div></li>
+      <li><span class="k">①</span><div class="t"><div class="h">계정 관리</div>
+        <div class="c">커스텀 유저 모델(Django Auth <span class="rd">장고 어스</span>) · 개인 선호 정보 안전 관리</div></div></li>
+      <li><span class="k">②</span><div class="t"><div class="h">맞춤 추천 엔진</div>
+        <div class="c"><code>recommender.py</code> <span class="rd">리코멘더 파이</span> · 5개 카드 중복 없이(점심·저녁·BEST·인기·취향) · 취향 = <b>협업 필터링</b> <span class="rd">콜라보레이티브 필터링</span></div></div></li>
+      <li><span class="k">③</span><div class="t"><div class="h">식사 기록 · 통계</div>
+        <div class="c">1:N 관계형 DB · 캘린더/섭취 비율 시각화 · 리텐션 <span class="rd">리텐션(재방문)</span></div></div></li>
+      <li><span class="k">④</span><div class="t"><div class="h">리뷰 · 인터랙션</div>
+        <div class="c">AJAX <span class="rd">에이잭스</span> 좋아요 · 최근 본 메뉴(세션 <span class="rd">세션</span>) · 실시간 인기순위</div></div></li>
+      <li><span class="k">⑤</span><div class="t"><div class="h">외부 미식 콘텐츠</div>
+        <div class="c">유튜브 · 미슐랭 · 블루리본 → 볼거리 + 먹을거리 한 화면</div></div></li>
+      <li class="demo"><span class="k">🌐</span><div class="t"><div class="h">[시연] 홈페이지 직접 보여주기</div>
+        <div class="c">슬라이드 링크 클릭 → 대시보드로 실제 기능 시연</div></div></li>
+      <li class="end"><span class="k">➡️</span><div class="t"><div class="h">전환 → 5번</div>
+        <div class="c">"그렇다면 이 서비스는 어떤 기술 위에서 돌아갈까요?"</div></div></li>
+    </ul>
+
+    <div class="demoNote">
+      <b>🌐 홈페이지 시연 큐</b>
+      <ul>
+        <li>슬라이드의 홈페이지 링크 클릭 → <b>로그인된 대시보드</b>.</li>
+        <li>"여기 보시면 방금 말한 <b>추천 카드</b>가 실제로 이렇게 뜹니다" — 카드 짚기.</li>
+        <li>(선택) <b>좋아요 하트</b> 눌러 새로고침 없이 즉시 반영 = <b>AJAX</b> 시연.</li>
+        <li>⏱ <b>30초~1분 이내</b>, 끝나면 슬라이드 복귀 후 전환 멘트.</li>
+      </ul>
+    </div>
+
+    <details><summary>📜 전체 대본 펼치기 <span class="chev">›</span></summary>
+      <div class="dbody script">
+        <p class="lead">밥픽의 주요 기능을 다섯 가지 영역으로 정리했습니다.</p>
+        <p><b>첫째, 계정 관리.</b> Django 기본 인증을 그대로 쓰지 않고 커스텀 유저 모델을 설계해, 개인별 선호 음식 정보를 안전하게 관리합니다.</p>
+        <p><b>둘째, 맞춤형 추천 엔진.</b> 별도 모듈 <code>recommender.py</code>에 로직을 모아, 점심·저녁·BEST·실시간 인기·취향, 성격이 다른 다섯 카드를 서로 중복 없이 뽑습니다. '취향' 카드는 가입 때 고른 취향과 평점 기록에, 나와 입맛이 겹치는 사용자의 고평점 메뉴에 가중치를 주는 협업 필터링까지 결합한 개인화 추천입니다.</p>
+        <p>(여기서 홈페이지를 열어 실제 대시보드를 보여드리겠습니다.)</p>
+        <p><b>셋째, 식사 기록 및 통계.</b> 메뉴와 식사 기록을 1대 다 관계형 DB로 모델링해, 캘린더 히스토리와 요리 종류별 섭취 비율을 시각화합니다.</p>
+        <p><b>넷째, 리뷰 및 인터랙션.</b> 새로고침 없이 즉시 반응하는 AJAX 좋아요, 세션 기반 '최근 본 메뉴' 추적, 실시간 인기 순위를 구현했습니다.</p>
+        <p><b>마지막, 외부 미식 콘텐츠 연계.</b> 유튜브·미슐랭·블루리본을 대시보드에 큐레이션해 먹을거리와 볼거리를 한 화면에서 제공합니다.</p>
+        <span class="cue"><b>[전환]</b> "그렇다면 이 서비스는 어떤 기술 위에서 돌아갈까요?"</span>
+      </div>
+    </details>
+    <details><summary>📖 용어 뜻 (발음) <span class="chev">›</span></summary>
+      <div class="dbody"><ul class="terms">
+        <li><span class="term">Django Auth</span> <span class="say">(장고 어스)</span><span class="def">장고의 기본 로그인·회원 인증 기능.</span></li>
+        <li><span class="term">커스텀 유저 모델</span> <span class="say">(Custom User Model)</span><span class="def">기본 회원 정보에 취향 등 필요한 항목을 더한 회원 모델.</span></li>
+        <li><span class="term">recommender.py</span> <span class="say">(리코멘더 파이)</span><span class="def">추천 로직만 모아둔 파이썬 파일.</span></li>
+        <li><span class="term">협업 필터링</span> <span class="say">(Collaborative Filtering · 콜라보레이티브 필터링)</span><span class="def">나와 입맛이 비슷한 사람이 좋아한 메뉴를 추천하는 방식.</span></li>
+        <li><span class="term">AJAX</span> <span class="say">(에이잭스)</span><span class="def">새로고침 없이 서버와 데이터를 주고받는 기술. 좋아요 즉시 반영.</span></li>
+        <li><span class="term">세션</span> <span class="say">(Session · 세션)</span><span class="def">로그인 사용자 정보를 서버가 잠시 기억하는 것. '최근 본 메뉴'에 사용.</span></li>
+        <li><span class="term">리텐션</span> <span class="say">(Retention · 리텐션)</span><span class="def">떠나지 않고 다시 방문하는 것(재방문율).</span></li>
+      </ul></div>
+    </details>
+  </section>
+
+  <!-- ===== SLIDE 5 ===== -->
+  <section class="slide" id="s5">
+    <div class="lbl">🗣 말할 순서 (키워드)</div>
+    <ul class="flow">
+      <li><span class="k">·</span><div class="t"><div class="h">기술 스택 4계층</div>
+        <div class="c">"크게 네 계층입니다."</div></div></li>
+      <li><span class="k">①</span><div class="t"><div class="h">백엔드</div>
+        <div class="c">Python <span class="rd">파이썬</span> · Django <span class="rd">장고</span> — 추천·인증·서버 로직</div></div></li>
+      <li><span class="k">②</span><div class="t"><div class="h">프런트엔드</div>
+        <div class="c">HTML·CSS · 바닐라 JS <span class="rd">바닐라 자바스크립트</span>(좋아요·캔버스 <span class="rd">캔버스</span> 게임) · Bootstrap <span class="rd">부트스트랩</span> · 반응형·다크모드</div></div></li>
+      <li><span class="k">③</span><div class="t"><div class="h">데이터베이스 2개</div>
+        <div class="c">MariaDB <span class="rd">마리아디비</span>(영속) + Redis <span class="rd">레디스</span>(세션·캐시 분리) → <b>확장성 복선</b></div></div></li>
+      <li class="go"><span class="k">★</span><div class="t"><div class="h">인프라 (오늘의 강조)</div>
+        <div class="c">Linux <span class="rd">리눅스</span> 위 Nginx <span class="rd">엔진엑스</span>·Gunicorn <span class="rd">구니콘</span> 직접 배포</div></div></li>
+      <li class="end"><span class="k">➡️</span><div class="t"><div class="h">전환 → 6번 (역할분담, 공동)</div>
+        <div class="c">"두 명이 어떻게 나눠 진행했는지 짧게 짚겠습니다."</div></div></li>
+    </ul>
+    <details><summary>📜 전체 대본 펼치기 <span class="chev">›</span></summary>
+      <div class="dbody script">
+        <p class="lead">밥픽의 기술 스택은 크게 네 계층입니다.</p>
+        <p><b>백엔드</b>는 Python과 Django로 추천 알고리즘·사용자 인증·서버 로직을 구현했습니다.</p>
+        <p><b>프런트엔드</b>는 HTML·CSS와 바닐라 자바스크립트로, 좋아요 비동기 처리와 돌림판·사다리 캔버스 게임까지 직접 구현했고, 반응형·다크모드 UI를 완성했습니다.</p>
+        <p><b>데이터베이스는 두 가지</b>입니다. 영속 데이터는 MariaDB로 관리하고, 세션·캐시는 Redis에 분리 저장합니다. 이 '세션 분리'가 뒤 확장성 설계의 핵심입니다.</p>
+        <p>그리고 오늘 강조하고 싶은 <b>인프라</b>. 리눅스 위에 Nginx와 Gunicorn을 올려 실제 서비스가 가능한 배포 환경을 직접 구성했습니다.</p>
+        <span class="cue"><b>[전환]</b> "본격적인 인프라 이야기에 앞서, 두 명이 작업을 어떻게 나눴는지 짧게 짚고 넘어가겠습니다."</span>
+      </div>
+    </details>
+    <details><summary>📖 용어 뜻 (발음) <span class="chev">›</span></summary>
+      <div class="dbody"><ul class="terms">
+        <li><span class="term">바닐라 자바스크립트</span> <span class="say">(Vanilla JavaScript)</span><span class="def">외부 프레임워크 없이 순수 자바스크립트만 쓴 것.</span></li>
+        <li><span class="term">Canvas</span> <span class="say">(캔버스)</span><span class="def">브라우저에서 그림·애니메이션을 그리는 기능. 게임 구현에 사용.</span></li>
+        <li><span class="term">Bootstrap</span> <span class="say">(부트스트랩)</span><span class="def">화면 디자인을 빠르게 잡아주는 CSS 도구.</span></li>
+        <li><span class="term">MariaDB</span> <span class="say">(마리아디비)</span><span class="def">표(관계형)로 데이터를 저장하는 데이터베이스.</span></li>
+        <li><span class="term">Redis</span> <span class="say">(레디스)</span><span class="def">메모리에 저장하는 초고속 저장소. 세션·캐시용.</span></li>
+        <li><span class="term">Nginx</span> <span class="say">(엔진엑스)</span><span class="def">맨 앞에서 요청을 받는 웹 서버.</span></li>
+        <li><span class="term">Gunicorn</span> <span class="say">(구니콘, 또는 지유니콘)</span><span class="def">파이썬 앱을 실제로 돌리는 앱 서버(WSGI).</span></li>
+        <li><span class="term">Linux</span> <span class="say">(리눅스)</span><span class="def">서버 운영체제.</span></li>
+      </ul></div>
+    </details>
+  </section>
+
+  <!-- ===== SLIDE 7 ===== -->
+  <section class="slide" id="s7">
+    <div class="lbl">🗣 말할 순서 (키워드) <span style="color:var(--brand-dark)">⭐ 집중</span></div>
+    <ul class="flow">
+      <li><span class="k">·</span><div class="t"><div class="h">3계층 <span class="rd">쓰리 티어</span> 인프라</div>
+        <div class="c">"웹·앱·DB를 물리적으로 분리했습니다."</div></div></li>
+      <li><span class="k">①</span><div class="t"><div class="h">물리 분리 2대</div>
+        <div class="c">Server1 = Nginx·Gunicorn·Django / Server2 = MariaDB·Redis</div></div></li>
+      <li><span class="k">②</span><div class="t"><div class="h">Nginx = 문지기</div>
+        <div class="c">443 포트에서 암호화 풀고 정적 파일 직접 처리</div></div></li>
+      <li><span class="k">③</span><div class="t"><div class="h">Gunicorn (WSGI <span class="rd">더블유에스지아이</span>)</div>
+        <div class="c">동적 요청 → Django · 데몬 <span class="rd">데몬</span> 등록으로 자동 재시작</div></div></li>
+      <li class="go"><span class="k">★</span><div class="t"><div class="h">확장성 = 무상태 <span class="rd">스테이트리스</span></div>
+        <div class="c">세션 Redis 분리 → 앱 서버 <b>수평 확장</b>해도 로그인 유지</div></div></li>
+      <li><span class="k">④</span><div class="t"><div class="h">.env <span class="rd">닷 이엔브이</span> 분리</div>
+        <div class="c">설정값 분리 → 환경만 바꾸면 이관</div></div></li>
+      <li><span class="k">⑤</span><div class="t"><div class="h">AWS <span class="rd">에이더블유에스</span> 이관 로드맵</div>
+        <div class="c">코드 안 고치고 EC2 <span class="rd">이씨투</span>·RDS <span class="rd">알디에스</span> 무중단 이관</div></div></li>
+      <li class="end"><span class="k">➡️</span><div class="t"><div class="h">전환 → 8번 배포 일지</div>
+        <div class="c">"어떤 단계를 거쳐 구축했는지 배포 일지로 보여드리겠습니다."</div></div></li>
+    </ul>
+    <details><summary>📜 전체 대본 펼치기 <span class="chev">›</span></summary>
+      <div class="dbody script">
+        <p class="lead">밥픽의 인프라 아키텍처입니다.</p>
+        <p>우측 다이어그램처럼 웹·앱 서버와 DB를 물리적으로 분리한 3계층 구조입니다. Server 1에는 Nginx·Gunicorn·Django를, Server 2에는 MariaDB와 Redis를 올렸습니다.</p>
+        <p>앞단의 Nginx는 443 포트에서 암호화를 풀고 정적 파일을 직접 처리하는 문지기입니다. 동적 요청만 WSGI인 Gunicorn을 거쳐 Django로 전달되고, Gunicorn은 데몬으로 등록해 서버가 꺼져도 자동으로 되살아납니다.</p>
+        <p>특히 처음부터 확장성을 고려했습니다. 세션을 앱 메모리가 아니라 Redis에 분리 저장해, 앱 서버를 수평 확장해도 로그인 상태가 유지되는 무상태 구조입니다. 시크릿 키와 DB 정보는 <code>.env</code>로 분리했습니다.</p>
+        <p>이 표준화된 설계 덕분에 코드를 고치지 않고도 AWS의 EC2·RDS로 무중단 이관할 수 있는 로드맵을 갖췄습니다.</p>
+        <span class="cue"><b>[전환]</b> "그럼 이 인프라를 실제로 어떤 단계를 거쳐 구축했는지, 배포 일지로 보여드리겠습니다."</span>
+      </div>
+    </details>
+    <details><summary>📖 용어 뜻 (발음) <span class="chev">›</span></summary>
+      <div class="dbody"><ul class="terms">
+        <li><span class="term">3계층 / 3-Tier</span> <span class="say">(쓰리 티어)</span><span class="def">웹·앱·DB를 계층으로 나눈 구조.</span></li>
+        <li><span class="term">WSGI</span> <span class="say">(더블유에스지아이)</span><span class="def">웹 서버와 파이썬 앱을 연결하는 표준 규격. Gunicorn이 그 역할.</span></li>
+        <li><span class="term">데몬</span> <span class="say">(Daemon · 데몬)</span><span class="def">백그라운드에서 계속 도는 프로그램.</span></li>
+        <li><span class="term">systemd</span> <span class="say">(시스템디)</span><span class="def">데몬을 관리하고 자동 재시작해 주는 리눅스 도구.</span></li>
+        <li><span class="term">무상태</span> <span class="say">(Stateless · 스테이트리스)</span><span class="def">상태(세션)를 앱 서버에 저장하지 않는 구조. 서버 증설이 자유로움.</span></li>
+        <li><span class="term">수평 확장</span> <span class="say">(Horizontal Scaling)</span><span class="def">서버 대수를 늘려 부하를 나누는 것.</span></li>
+        <li><span class="term">.env</span> <span class="say">(닷 이엔브이)</span><span class="def">비밀번호·주소 같은 설정값을 담는 환경변수 파일.</span></li>
+        <li><span class="term">AWS · EC2 · RDS</span> <span class="say">(에이더블유에스 · 이씨투 · 알디에스)</span><span class="def">아마존 클라우드. EC2=서버, RDS=관리형 데이터베이스.</span></li>
+      </ul></div>
+    </details>
+  </section>
+
+  <!-- ===== SLIDE 8 ===== -->
+  <section class="slide" id="s8">
+    <div class="lbl">🗣 말할 순서 (키워드) <span style="color:var(--brand-dark)">⭐ 집중</span></div>
+    <ul class="flow">
+      <li><span class="k">1</span><div class="t"><div class="h">runserver <span class="rd">런서버</span> (개발용)</div>
+        <div class="c">동시접속 한계 · 터미널 끄면 죽음 · 주소에 <code>:8000</code></div></div></li>
+      <li><span class="k">2</span><div class="t"><div class="h">Gunicorn <span class="rd">구니콘</span> (운영 앱서버)</div>
+        <div class="c">워커 <span class="rd">워커</span> 3개 · systemd <span class="rd">시스템디</span> 데몬 · 유닉스 소켓 <span class="rd">유닉스 소켓(.sock=닷 삭)</span> → 빠르고 안전</div></div></li>
+      <li><span class="k">3</span><div class="t"><div class="h">Nginx <span class="rd">엔진엑스</span> (웹서버)</div>
+        <div class="c">정적 파일 직접 서빙 · 80 포트 → 주소에서 <code>:8000</code> 제거</div></div></li>
+      <li class="go"><span class="k">4</span><div class="t"><div class="h">HTTPS <span class="rd">에이치티티피에스</span> 전환</div>
+        <div class="c">80→443 리다이렉트 · 자체서명+SAN <span class="rd">에스에이엔(샌)</span>에 IP · 헤더 짝맞춤 → 403 <span class="rd">사공삼</span>/무한 리다이렉트 방지</div></div></li>
+      <li><span class="k">·</span><div class="t"><div class="h">마무리</div>
+        <div class="c">브라우저→Nginx→소켓→Gunicorn→DB, 완전한 프로덕션 파이프라인</div></div></li>
+      <li class="end"><span class="k">➡️</span><div class="t"><div class="h">전환 → 9번 (한빈님에게)</div>
+        <div class="c">"가장 큰 도전 두 가지는 한빈 팀원이 이어서 소개합니다."</div></div></li>
+    </ul>
+    <details><summary>📜 전체 대본 펼치기 <span class="chev">›</span></summary>
+      <div class="dbody script">
+        <p><b>1단계, <code>runserver</code>.</b> 동시 접속 한계, 터미널 끄면 죽고, 주소 뒤 <code>:8000</code>이 붙어 실서비스엔 부적합.</p>
+        <p><b>2단계, WSGI 서버 Gunicorn.</b> 워커 3개로 동시 요청 처리, systemd 데몬 등록으로 자동 재시작. Nginx와는 TCP 포트가 아니라 유닉스 소켓으로 통신 — 같은 서버라 더 빠르고 안전.</p>
+        <p><b>3단계, 앞단에 Nginx.</b> 정적 파일은 Nginx가 직접 서빙해 부하를 줄이고, HTTP 표준 80번 포트에 띄워 <code>:8000</code>을 URL에서 없앴습니다.</p>
+        <p><b>4단계, HTTPS 전환.</b> 80→443 자동 리다이렉트, 사설망이라 자체 서명 인증서를 발급하되 SAN에 IP를 명시. Nginx가 암호화를 풀고 Django엔 평문으로 넘기므로 <code>SECURE_PROXY_SSL_HEADER</code>와 <code>CSRF_TRUSTED_ORIGINS</code>를 맞춰줘야 무한 리다이렉트·403이 안 납니다.</p>
+        <p class="lead">결과적으로 브라우저→Nginx→유닉스 소켓→Gunicorn→DB로 이어지는 완전한 프로덕션 배포 파이프라인을 완성했습니다.</p>
+        <span class="cue"><b>[전환]</b> "이 과정이 순탄치만은 않았습니다. 가장 큰 도전 두 가지는 한빈 팀원이 이어서 소개하겠습니다."</span>
+      </div>
+    </details>
+    <details><summary>📖 용어 뜻 (발음) <span class="chev">›</span></summary>
+      <div class="dbody"><ul class="terms">
+        <li><span class="term">runserver</span> <span class="say">(런서버)</span><span class="def">장고 기본 개발용 서버. 실서비스엔 부적합.</span></li>
+        <li><span class="term">Gunicorn</span> <span class="say">(구니콘)</span><span class="def">실서비스용 파이썬 앱 서버.</span></li>
+        <li><span class="term">워커</span> <span class="say">(Worker · 워커)</span><span class="def">요청을 처리하는 일꾼 프로세스. 3개면 동시에 3개 처리.</span></li>
+        <li><span class="term">systemd</span> <span class="say">(시스템디)</span><span class="def">서버가 꺼져도 자동 재시작하게 관리하는 도구.</span></li>
+        <li><span class="term">유닉스 소켓 / .sock</span> <span class="say">(유닉스 소켓 · 닷 삭)</span><span class="def">같은 서버 안 프로그램끼리 빠르고 안전하게 통신하는 통로.</span></li>
+        <li><span class="term">TCP 포트</span> <span class="say">(티씨피 포트)</span><span class="def">네트워크 통신용 번호. 소켓과 대비되는 방식.</span></li>
+        <li><span class="term">HTTP / HTTPS</span> <span class="say">(에이치티티피 · 에이치티티피에스)</span><span class="def">웹 통신 규약 / 그 암호화된 버전.</span></li>
+        <li><span class="term">리다이렉트</span> <span class="say">(Redirect · 리다이렉트)</span><span class="def">다른 주소로 자동 이동(80→443).</span></li>
+        <li><span class="term">자체 서명 인증서</span> <span class="say">(Self-signed Certificate)</span><span class="def">공인기관 없이 직접 만든 HTTPS 인증서. 내부망용.</span></li>
+        <li><span class="term">SAN</span> <span class="say">(에스에이엔, 흔히 "샌")</span><span class="def">인증서에 유효한 도메인·IP를 명시하는 항목.</span></li>
+        <li><span class="term">SECURE_PROXY_SSL_HEADER</span> <span class="say">(시큐어 프록시 에스에스엘 헤더)</span><span class="def">"앞단이 HTTPS로 받았다"를 장고가 믿게 하는 설정.</span></li>
+        <li><span class="term">X-Forwarded-Proto</span> <span class="say">(엑스 포워디드 프로토)</span><span class="def">Nginx가 장고에게 "원래 HTTPS였다"를 알려주는 값.</span></li>
+        <li><span class="term">CSRF_TRUSTED_ORIGINS</span> <span class="say">(씨에스알에프 트러스티드 오리진스)</span><span class="def">이 주소에서 오는 폼 요청은 믿겠다는 보안 설정. (CSRF=위조 요청 공격)</span></li>
+        <li><span class="term">403 에러</span> <span class="say">(사공삼)</span><span class="def">권한 거부 오류.</span></li>
+      </ul></div>
+    </details>
+  </section>
+</div>
+
+<div class="bar">
+  <button class="mv" id="prev">◀ 이전</button>
+  <div class="dots">
+    <button class="dot on" data-i="0">4</button>
+    <button class="dot" data-i="1">5</button>
+    <button class="dot" data-i="2">7</button>
+    <button class="dot" data-i="3">8</button>
+  </div>
+  <button class="mv primary" id="next">다음 ▶</button>
+</div>
+
+<script>
+  (function(){
+    var root=document.documentElement;
+    document.getElementById('themeToggle').addEventListener('click',function(){
+      var cur=root.getAttribute('data-theme');
+      var next = cur==='dark' ? 'light' : (cur==='light' ? 'dark'
+                 : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'light':'dark'));
+      root.setAttribute('data-theme',next);
+    });
+
+    var ids=['s4','s5','s7','s8'];
+    var titles={s4:'주요 기능 및 외부 연계',s5:'사용된 기술 스택',s7:'시스템 아키텍처 및 확장성',s8:'실전 배포 일지 4단계'};
+    var i=0;
+    var prev=document.getElementById('prev'), next=document.getElementById('next');
+    var dots=[].slice.call(document.querySelectorAll('.dot'));
+    function show(n){
+      i=Math.max(0,Math.min(ids.length-1,n));
+      ids.forEach(function(id,k){ document.getElementById(id).classList.toggle('active',k===i); });
+      var id=ids[i];
+      document.getElementById('curNum').textContent=id.slice(1);
+      document.getElementById('curTitle').textContent=titles[id];
+      document.getElementById('prog').textContent=(i+1)+' / '+ids.length;
+      dots.forEach(function(d){ d.classList.toggle('on', +d.dataset.i===i); });
+      // 각 슬라이드 진입 시 펼쳐둔 대본/용어 접기
+      document.querySelectorAll('#'+id+' details[open]').forEach(function(d){ d.open=false; });
+      prev.disabled=(i===0); next.disabled=(i===ids.length-1);
+      window.scrollTo(0,0);
+    }
+    prev.addEventListener('click',function(){ show(i-1); });
+    next.addEventListener('click',function(){ show(i+1); });
+    dots.forEach(function(d){ d.addEventListener('click',function(){ show(+d.dataset.i); }); });
+
+    // 좌우 스와이프로 넘기기 (수평 우세일 때만)
+    var x0=null,y0=null;
+    document.addEventListener('touchstart',function(e){ var t=e.changedTouches[0]; x0=t.clientX; y0=t.clientY; },{passive:true});
+    document.addEventListener('touchend',function(e){
+      if(x0===null) return; var t=e.changedTouches[0];
+      var dx=t.clientX-x0, dy=t.clientY-y0;
+      if(Math.abs(dx)>60 && Math.abs(dx)>Math.abs(dy)*1.6){ show(i + (dx<0?1:-1)); }
+      x0=null;y0=null;
+    },{passive:true});
+
+    show(0);
+  })();
+</script>
+
+</body>
+</html>

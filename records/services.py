@@ -8,7 +8,7 @@ from datetime import datetime
 from django.db.models import Count
 from django.utils import timezone
 
-from menus.models import Menu
+from menus.models import Cuisine, Menu
 from records.models import MealRecord
 
 
@@ -72,6 +72,36 @@ def food_count_stats(user, limit=None):
         .order_by('-count', 'food_name')
     )
     return list(qs[:limit]) if limit else list(qs)
+
+
+def cuisine_percentage(user):
+    """user가 먹은 음식 중 요리종류(Cuisine)별 비율(%). 전체 요리종류를 항상 다 보여준다
+    (안 먹은 분야는 0%로 표시). 많이 먹은 순으로 정렬.
+
+    MY밥픽 '선호하는 음식 분야' 그래프용 — 가입 시 조사한 선호도 점수가 아니라
+    실제 식사 기록을 근거로 한다. menu FK가 연결된 기록만 집계 대상(카탈로그 밖
+    자유 입력 음식은 요리종류를 알 수 없어 제외).
+    """
+    counts = dict(
+        MealRecord.objects
+        .filter(user=user, menu__isnull=False)
+        .values_list('menu__cuisine__name')
+        .annotate(count=Count('id'))
+        .values_list('menu__cuisine__name', 'count')
+    )
+    total = sum(counts.values())
+    if not total:
+        return []
+    stats = [
+        {
+            'name': name,
+            'count': counts.get(name, 0),
+            'pct': round(counts.get(name, 0) * 100 / total),
+        }
+        for name in Cuisine.objects.order_by('name').values_list('name', flat=True)
+    ]
+    stats.sort(key=lambda s: -s['count'])
+    return stats
 
 
 def meal_calendar(user, year=None, month=None):

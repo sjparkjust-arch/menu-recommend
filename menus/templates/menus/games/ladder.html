@@ -6,18 +6,19 @@
 <div class="container" style="max-width: 720px; margin: 0 auto;">
 
     <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
-        <h3 class="fw-bold m-0" style="color: var(--ink);">🪜 메뉴 사다리타기</h3>
+        <h3 class="page-title m-0">🪜 메뉴 사다리타기</h3>
         <div class="d-flex gap-2">
             <a href="{% url 'menus:games' %}" class="btn btn-outline-secondary fw-bold px-3">게임 목록</a>
-            <a href="{% url 'menus:dashboard' %}" class="btn btn-outline-dark fw-bold px-3">메인으로</a>
         </div>
     </div>
 
-    <div class="d-flex justify-content-center gap-2 mb-3">
-        {% for n in player_options %}
-        <a href="?players={{ n }}" class="btn btn-sm {% if n == players %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ n }}명</a>
-        {% endfor %}
-    </div>
+    <form method="get" class="d-flex justify-content-center align-items-center gap-2 mb-3">
+        <label for="playersInput" class="small fw-semibold mb-0">인원수</label>
+        <input type="number" id="playersInput" name="players" class="form-control form-control-sm"
+               style="width: 5rem;" min="{{ min_players }}" max="{{ max_players }}" value="{{ players }}">
+        <span class="small text-muted">({{ min_players }}~{{ max_players }}명)</span>
+        <button type="submit" class="btn btn-sm btn-outline-primary">적용</button>
+    </form>
 
     <div class="card shadow-sm">
         <div class="card-body py-4">
@@ -27,6 +28,12 @@
                 <div id="ladderMenus" style="position: relative; height: 44px;"></div>
             </div>
 
+            {# 이름/메뉴를 정하기 전까지 사다리 모양이 안 보이게 가려서, 시작 전에 경로를 미리 볼 수 없게 한다 #}
+            <div class="text-center mt-3" id="ladderStartArea">
+                <div class="small text-muted mb-2">참가자 이름과 메뉴를 정한 뒤 시작하세요. 시작 전에는 사다리 모양이 보이지 않습니다.</div>
+                <button type="button" class="btn btn-primary fw-bold px-4" id="ladderStartBtn">🪜 게임 시작</button>
+            </div>
+
             <div id="ladderResults" class="mt-4"></div>
         </div>
     </div>
@@ -34,21 +41,19 @@
 </div>
 
 {{ menus_json|json_script:"ladder-menus" }}
+{{ all_menus_json|json_script:"ladder-all-menus" }}
 
 <style>
     .ladder-slot-btn {
         position: absolute; transform: translateX(-50%);
         font-size: .72rem; padding: .2rem .3rem; border: 1px solid var(--line); border-radius: 6px;
-        background: #fff; text-align: center; width: 64px;
+        background: var(--surface); text-align: center; width: 64px;
     }
-    .ladder-name-input {
+    .ladder-name-input,
+    .ladder-menu-input {
         position: absolute; transform: translateX(-50%);
-        width: 70px; font-size: .72rem; text-align: center; padding: .15rem .2rem;
+        width: 74px; font-size: .72rem; text-align: center; padding: .15rem .2rem;
         border: 1px solid var(--line); border-radius: 6px;
-    }
-    .ladder-menu-label {
-        position: absolute; transform: translateX(-50%);
-        font-size: .72rem; font-weight: 600; text-align: center; width: 70px; color: var(--ink);
     }
     #ladderResults .ladder-result-item { padding: .35rem 0; border-bottom: 1px solid var(--line); font-size: .92rem; }
 </style>
@@ -58,11 +63,14 @@
 <script>
 (function () {
     var menus = JSON.parse(document.getElementById('ladder-menus').textContent || '[]');
+    var allMenus = JSON.parse(document.getElementById('ladder-all-menus').textContent || '[]');
     var n = menus.length;
     if (!n) return;
 
     var canvas = document.getElementById('ladderCanvas');
     var ctx = canvas.getContext('2d');
+    var rootStyle = getComputedStyle(document.documentElement);
+    function cssVar(name) { return rootStyle.getPropertyValue(name).trim(); }
     var W = canvas.width, H = canvas.height;
     var margin = 30;
     var colX = [];
@@ -84,9 +92,12 @@
         rungsByRow.push(row);
     }
 
+    var started = false;
+
     function draw() {
+        if (!started) { ctx.clearRect(0, 0, W, H); return; }
         ctx.clearRect(0, 0, W, H);
-        ctx.strokeStyle = '#EAD9C4';
+        ctx.strokeStyle = cssVar('--line');
         ctx.lineWidth = 2;
         // 세로줄
         for (i = 0; i < n; i++) {
@@ -96,7 +107,7 @@
             ctx.stroke();
         }
         // 가로줄(rung)
-        ctx.strokeStyle = '#DE632E';
+        ctx.strokeStyle = cssVar('--brand-dark');
         ctx.lineWidth = 3;
         for (r = 0; r < ROWS; r++) {
             for (i = 0; i < n - 1; i++) {
@@ -109,7 +120,7 @@
             }
         }
     }
-    draw();
+    draw(); // started=false라 실제로는 아무것도 안 그림(빈 캔버스) — 시작 전 경로 숨김
 
     // 경로 계산: 세로줄을 타고 내려가다 가로줄을 만나면 반대편으로 이동
     function simulate(start) {
@@ -129,10 +140,23 @@
         return { end: col, path: path };
     }
 
-    // 참가자 이름 입력(상단) + 메뉴 라벨(하단) — colX 좌표에 맞춰 절대배치
+    // 참가자 이름 입력(상단) + 메뉴 이름 입력/선택(하단) — colX 좌표에 맞춰 절대배치
     var namesEl = document.getElementById('ladderNames');
     var menusEl = document.getElementById('ladderMenus');
     var buttons = [];
+    var nameInputs = [];
+    var menuInputs = [];
+
+    // 메뉴 이름 선택용 datalist(전체 메뉴) — 직접 타이핑도 그대로 가능
+    var datalistEl = document.createElement('datalist');
+    datalistEl.id = 'ladderMenuOptions';
+    allMenus.forEach(function (m) {
+        var opt = document.createElement('option');
+        opt.value = m.name;
+        datalistEl.appendChild(opt);
+    });
+    document.body.appendChild(datalistEl);
+
     for (i = 0; i < n; i++) {
         var input = document.createElement('input');
         input.type = 'text';
@@ -141,6 +165,7 @@
         input.style.left = colX[i] + 'px';
         input.style.top = '0px';
         namesEl.appendChild(input);
+        nameInputs.push(input);
 
         var btn = document.createElement('button');
         btn.type = 'button';
@@ -149,29 +174,53 @@
         btn.style.left = colX[i] + 'px';
         btn.style.top = '22px';
         btn.dataset.col = i;
+        btn.hidden = true; // 게임 시작 전엔 숨김
         namesEl.appendChild(btn);
         buttons.push(btn);
 
-        var label = document.createElement('div');
-        label.className = 'ladder-menu-label';
-        label.style.left = colX[i] + 'px';
-        label.style.top = '4px';
-        label.textContent = menus[i].name;
-        menusEl.appendChild(label);
+        var menuInput = document.createElement('input');
+        menuInput.type = 'text';
+        menuInput.className = 'ladder-menu-input';
+        menuInput.setAttribute('list', 'ladderMenuOptions');
+        menuInput.value = menus[i].name;
+        menuInput.style.left = colX[i] + 'px';
+        menuInput.style.top = '4px';
+        menusEl.appendChild(menuInput);
+        menuInputs.push(menuInput);
     }
 
     var playing = false;
     var resultsEl = document.getElementById('ladderResults');
-    var colors = ['#F36235', '#2B1B12', '#3A6EA5', '#2C8C8C', '#DE632E', '#8C7568', '#C97B3D', '#E9A23B'];
+    var startArea = document.getElementById('ladderStartArea');
+    var startBtn = document.getElementById('ladderStartBtn');
+    var colors = ['--ladder-1', '--ladder-2', '--ladder-3', '--ladder-4', '--ladder-5', '--ladder-6', '--ladder-7', '--ladder-8'].map(cssVar);
+
+    startBtn.addEventListener('click', function () {
+        if (started) return;
+        // 메뉴 이름을 직접 바꿨으면 그 값으로 확정(전체 메뉴와 이름이 같으면 id 연결, 아니면 커스텀)
+        menus.forEach(function (m, idx) {
+            var typed = (menuInputs[idx].value || '').trim() || m.name;
+            var matched = allMenus.find(function (am) { return am.name === typed; });
+            m.name = typed;
+            m.id = matched ? matched.id : null;
+            menuInputs[idx].value = typed;
+            menuInputs[idx].disabled = true;
+            nameInputs[idx].disabled = true;
+        });
+        started = true;
+        startArea.hidden = true;
+        buttons.forEach(function (b) { b.hidden = false; });
+        draw();
+    });
 
     buttons.forEach(function (btn) {
         btn.addEventListener('click', function () {
-            if (playing || btn.disabled) return;
+            if (!started || playing || btn.disabled) return;
             playing = true;
             buttons.forEach(function (b) { b.disabled = true; });
 
             var col = parseInt(btn.dataset.col, 10);
-            var nameInput = namesEl.querySelectorAll('.ladder-name-input')[col];
+            var nameInput = nameInputs[col];
             var sim = simulate(col);
             var color = colors[col % colors.length];
             var path = sim.path;
@@ -217,8 +266,8 @@
                     var pick = menus[sim.end];
                     var item = document.createElement('div');
                     item.className = 'ladder-result-item';
-                    item.innerHTML = (nameInput.value || ('참가자' + (col + 1))) + ' → <strong>' + pick.name + '</strong> '
-                        + '<a href="/menus/' + pick.id + '/" class="ms-2 small">상세보기 →</a>';
+                    var link = pick.id ? ' <a href="/menus/' + pick.id + '/" class="ms-2 small">상세보기 →</a>' : '';
+                    item.innerHTML = (nameInput.value || ('참가자' + (col + 1))) + ' → <strong>' + pick.name + '</strong>' + link;
                     resultsEl.prepend(item);
                 }
             }

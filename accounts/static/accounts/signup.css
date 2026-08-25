@@ -1,164 +1,173 @@
-        /* 배경 및 기본 정렬 (로그인 화면과 동일한 톤 유지) */
-        body {
-            background-color: #FFF9F2; 
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
-        }
-        .logo-img {
-        width: 180px; /* 로그인 창과 똑같은 180픽셀로 크기 제한 */
-        margin: 0 auto 0px auto; /* 가로 중앙 정렬 및 아래쪽 여백 30px */
-        display: block; /* 이미지를 블록 단위로 만들어 중앙 정렬이 먹히게 함 */
-        }
-        /* 회원가입 메인 박스 */
-        .signup-container {
-            background-color: #ffffff;
-            width: 100%;
-            max-width: 470px;
-            padding: 50px 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(242, 133, 70, 0.1);
-            box-sizing: border-box;
-        }
+/* accounts/static/accounts/signup.css
+   폰트·배경·전체 여백은 base.html + theme.css(사이트 공통 디자인 시스템)가 담당.
+   이 파일은 회원가입 폼 카드 자체의 레이아웃과, theme.css 색상 변수를 그대로 쓰는
+   색 규칙만 남긴다. */
 
-        /* 제목 */
-        .title {
-            text-align: center;
-            font-size: 28px;
-            font-weight: bold;
-            color: #333;
-            margin-top: 0;
-            margin-bottom: 30px;
-        }
+/* 페이지 중앙에 회원가입 카드를 배치 */
+.signup-page {
+    display: flex;
+    justify-content: center;
+    padding: var(--sp-8) var(--sp-4) var(--sp-9);
+}
 
-        /* 네이버 스타일: 입력창을 묶어주는 그룹 */
-        .input-group {
-            margin-bottom: 25px;
-            border: 1px solid #E5D5C5;
-            border-radius: 8px;
-            overflow: hidden; /* 그룹 밖으로 튀어나오는 테두리 숨김 */
-        }
+/* 그림 로고 대신 글씨 로고(워드마크 폰트) — 로그인 창과 동일 톤 */
+.logo-text {
+    font-family: 'MungyeongGamhongApple', sans-serif;
+    font-weight: 400;
+    font-size: 2.8rem;
+    color: var(--brand);
+    letter-spacing: -0.01em;
+    text-align: center;
+    margin-bottom: var(--sp-3);
+}
 
-        /* 그룹 내부의 입력창 (테두리 제거 및 딱 붙게 설정) */
-        .input-group input {
-            width: 100%;
-            padding: 16px;
-            border: none;
-            border-bottom: 1px solid #E5D5C5; /* 아래쪽 테두리만 남김 */
-            font-size: 15px;
-            box-sizing: border-box;
-            outline: none;
-            color: #4A3022;
-        }
+/* 회원가입 메인 박스 */
+.signup-container {
+    background-color: var(--surface);
+    width: 100%;
+    max-width: 470px;
+    padding: var(--sp-8) var(--sp-7);
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(243, 98, 53, .1);
+    box-sizing: border-box;
+}
 
-        /* 그룹의 맨 마지막 입력창은 아래쪽 테두리도 없앰 */
-        .input-group input:last-child {
-            border-bottom: none;
-        }
+/* 제목 */
+.title {
+    text-align: center;
+    font-family: var(--ui-font); /* 사이트 공통 콘텐츠 폰트(theme.css --ui-font) */
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-top: 0;
+    margin-bottom: var(--sp-6);
+}
 
-        /* 클릭 시 배경색이 아주 살짝 변해서 포커스 된 것을 알림 */
-        .input-group input:focus {
-            background-color: #FFFDFB;
-        }
+/* 네이버 스타일: 입력창을 묶어주는 그룹 */
+.input-group {
+    margin-bottom: var(--sp-5);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden; /* 그룹 밖으로 튀어나오는 테두리 숨김 */
+}
 
-        /* 가입하기 버튼 */
-        .submit-btn {
-            width: 100%;
-            padding: 16px;
-            background-color: #F37943;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            margin-bottom: 20px;
-        }
-        .submit-btn:hover {
-            background-color: #DE632E;
-        }
+/* 그룹 내부의 입력창 (테두리 제거 및 딱 붙게 설정) */
+.input-group input {
+    width: 100%;
+    padding: var(--sp-4);
+    border: none;
+    border-bottom: 1px solid var(--line); /* 아래쪽 테두리만 남김 */
+    font-size: 15px;
+    box-sizing: border-box;
+    outline: none;
+    color: var(--ink);
+}
 
-        /* 에러 메시지 */
-        .error-msg {
-            color: #FF5A5A;
-            font-size: 13px;
-            margin: -15px 0 20px 5px; /* 입력창 그룹 바로 아래에 자연스럽게 배치 */
-        }
+/* 그룹의 맨 마지막 입력창은 아래쪽 테두리도 없앰 */
+.input-group input:last-child {
+    border-bottom: none;
+}
 
-        /* 하단 링크 */
-        .bottom-links {
-            text-align: center;
-            font-size: 14px;
-        }
-        .bottom-links a {
-            color: #eb5a1c;
-            text-decoration: none;
-        }
-        .bottom-links a:hover {
-            color: #F37943;
-            text-decoration: underline;
-        }
-        .help-text {
-        font-size: 12px;         /* 글자 크기를 작게 */
-        color: #8C756A;          /* 밥픽 테마의 부드러운 갈색 적용 */
-        text-align: left;        /* 왼쪽 정렬 */
-        margin: -15px 5px 25px 5px; /* 위쪽 여백을 음수(-)로 주어 입력창에 살짝 붙임 */
-        line-height: 1.6;        /* 줄 간격을 살짝 띄워서 읽기 편하게 만듦 */
-        }
+/* 클릭 시 배경색이 아주 살짝 변해서 포커스 된 것을 알림 */
+.input-group input:focus {
+    background-color: var(--brand-soft);
+}
 
-        /* 회원가입 완료 팝업 */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.4);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 999;
-        }
-        .modal-window {
-            background-color: #ffffff;
-            width: 100%;
-            max-width: 360px;
-            border-radius: 16px;
-            padding: 32px 28px;
-            text-align: center;
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
-        }
-        .modal-title {
-            font-size: 22px;
-            font-weight: bold;
-            color: #333;
-            margin: 0 0 12px 0;
-        }
-        .modal-message {
-            font-size: 14px;
-            color: #8C756A;
-            margin: 0 0 24px 0;
-            line-height: 1.6;
-        }
-        .modal-confirm-btn {
-            display: inline-block;
-            width: 100%;
-            padding: 14px;
-            background-color: #F37943;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            text-decoration: none;
-            box-sizing: border-box;
-            transition: background-color 0.2s;
-        }
-        .modal-confirm-btn:hover {
-            background-color: #DE632E;
-            color: white;
-        }
+/* 가입하기 버튼 */
+.submit-btn {
+    width: 100%;
+    padding: var(--sp-4);
+    background-color: var(--brand);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-bottom: var(--sp-5);
+}
+.submit-btn:hover {
+    background-color: var(--brand-dark);
+}
+
+/* 에러 메시지 */
+.error-msg {
+    color: var(--danger);
+    font-size: 13px;
+    margin: -15px 0 var(--sp-5) 5px; /* 입력창 그룹 바로 아래에 자연스럽게 배치 */
+}
+
+/* 하단 링크 */
+.bottom-links {
+    text-align: center;
+    font-size: 14px;
+}
+.bottom-links a {
+    color: var(--brand-dark);
+    text-decoration: none;
+}
+.bottom-links a:hover {
+    color: var(--brand);
+    text-decoration: underline;
+}
+.help-text {
+    font-size: 12px;         /* 글자 크기를 작게 */
+    color: var(--muted);     /* 밥픽 테마의 부드러운 갈색 적용 */
+    text-align: left;        /* 왼쪽 정렬 */
+    margin: -15px 5px var(--sp-5) 5px; /* 위쪽 여백을 음수(-)로 주어 입력창에 살짝 붙임 */
+    line-height: 1.6;        /* 줄 간격을 살짝 띄워서 읽기 편하게 만듦 */
+}
+
+/* 회원가입 완료 팝업 */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+}
+.modal-window {
+    background-color: var(--surface);
+    width: 100%;
+    max-width: 360px;
+    border-radius: 16px;
+    padding: 32px 28px;
+    text-align: center;
+    box-shadow: var(--shadow-md);
+}
+.modal-title {
+    font-size: 22px;
+    font-weight: bold;
+    color: var(--ink);
+    margin: 0 0 12px 0;
+}
+.modal-message {
+    font-size: 14px;
+    color: var(--muted);
+    margin: 0 0 var(--sp-6) 0;
+    line-height: 1.6;
+}
+.modal-confirm-btn {
+    display: inline-block;
+    width: 100%;
+    padding: 14px;
+    background-color: var(--brand);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    text-decoration: none;
+    box-sizing: border-box;
+    transition: background-color 0.2s;
+}
+.modal-confirm-btn:hover {
+    background-color: var(--brand-dark);
+    color: white;
+}

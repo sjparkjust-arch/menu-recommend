@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>밥픽 발표 대본 · 전체 (최한빈 & 박상준)</title>
+<style>
+  :root{
+    --bg:#F6EEE1; --surface:#FFFFFF; --surface-2:#FBF3E9;
+    --ink:#2B1B12; --muted:#8C7568; --line:#EADFCE;
+    --brand:#F36235; --brand-dark:#DE632E; --brand-soft:#FCE7D8;
+    --terracotta:#C25E3A; --gold:#C99700; --espresso:#5C3A28; --caramel:#9E6B4A;
+    --ok:#5B8C5A; --warn:#C98A2E;
+    --shadow:0 1px 3px rgba(43,27,18,.10), 0 8px 22px rgba(43,27,18,.10);
+    --radius:16px;
+    --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+    --sans:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,system-ui,"Segoe UI","Malgun Gothic",sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#1E1813; --surface:#2A231D; --surface-2:#332A22;
+      --ink:#F3EAE0; --muted:#B3A093; --line:#3C332B;
+      --brand:#FB7A4E; --brand-dark:#F0A93E; --brand-soft:#3B2B21;
+      --terracotta:#D6764E; --gold:#E3AC16; --espresso:#A07A5C; --caramel:#C89A72;
+      --shadow:0 1px 3px rgba(0,0,0,.45), 0 10px 26px rgba(0,0,0,.40);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#1E1813; --surface:#2A231D; --surface-2:#332A22;
+    --ink:#F3EAE0; --muted:#B3A093; --line:#3C332B;
+    --brand:#FB7A4E; --brand-dark:#F0A93E; --brand-soft:#3B2B21;
+    --terracotta:#D6764E; --gold:#E3AC16; --espresso:#A07A5C; --caramel:#C89A72;
+    --shadow:0 1px 3px rgba(0,0,0,.45), 0 10px 26px rgba(0,0,0,.40);
+  }
+  :root[data-theme="light"]{
+    --bg:#F6EEE1; --surface:#FFFFFF; --surface-2:#FBF3E9;
+    --ink:#2B1B12; --muted:#8C7568; --line:#EADFCE;
+    --brand:#F36235; --brand-dark:#DE632E; --brand-soft:#FCE7D8;
+    --terracotta:#C25E3A; --gold:#C99700; --espresso:#5C3A28; --caramel:#9E6B4A;
+    --shadow:0 1px 3px rgba(43,27,18,.10), 0 8px 22px rgba(43,27,18,.10);
+  }
+
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.72;
+       letter-spacing:-0.01em;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:900px;margin:0 auto;padding:clamp(1.2rem,4vw,3rem) clamp(1rem,4vw,2rem) 4rem;}
+
+  .masthead{margin-bottom:1.6rem}
+  .eyebrow{display:inline-flex;align-items:center;gap:.5rem;font-size:.8rem;font-weight:700;
+           letter-spacing:.08em;text-transform:uppercase;color:var(--brand-dark);
+           background:var(--brand-soft);padding:.35rem .8rem;border-radius:999px;}
+  h1.title{font-size:clamp(1.7rem,5vw,2.6rem);font-weight:800;line-height:1.15;margin:.9rem 0 .4rem;
+           text-wrap:balance;letter-spacing:-0.025em;}
+  h1.title .accent{color:var(--brand)}
+  .sub{color:var(--muted);font-size:1.02rem;max-width:62ch}
+  .meta{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem}
+  .tag{font-size:.78rem;font-weight:600;color:var(--ink);background:var(--surface);
+       border:1px solid var(--line);border-radius:999px;padding:.3rem .7rem;box-shadow:var(--shadow)}
+  .tag b{color:var(--brand-dark)}
+
+  /* speaker legend */
+  .legend{display:flex;flex-wrap:wrap;gap:.6rem;margin:1.2rem 0 2rem}
+  .lg{display:inline-flex;align-items:center;gap:.45rem;font-size:.82rem;font-weight:700;
+      background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:.3rem .75rem;box-shadow:var(--shadow)}
+  .sw{width:.85rem;height:.85rem;border-radius:50%}
+  .sw-h{background:#7E5A40}.sw-s{background:#F36235}.sw-b{background:#C99700}
+
+  /* slide card */
+  .slide{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+         box-shadow:var(--shadow);overflow:hidden;margin:0 0 1.5rem}
+  .slide__head{display:flex;align-items:center;gap:.85rem;padding:1rem 1.3rem;color:#fff;
+               background:linear-gradient(180deg,var(--h-top),var(--h-bot))}
+  .num{flex:0 0 auto;width:2.4rem;height:2.4rem;border-radius:50%;display:flex;align-items:center;
+       justify-content:center;font-weight:800;font-size:1.05rem;background:rgba(255,255,255,.18);
+       border:1px solid rgba(255,255,255,.30)}
+  .slide__head h2{margin:0;font-size:1.12rem;font-weight:800;letter-spacing:-0.02em;line-height:1.25}
+  .slide__head .who{margin-left:auto;font-size:.72rem;font-weight:700;letter-spacing:.03em;
+        background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.34);
+        padding:.25rem .6rem;border-radius:999px;white-space:nowrap}
+
+  .slide__body{padding:1.15rem 1.3rem 1.3rem}
+  .script p{margin:.6rem 0}
+  .script p:first-child{margin-top:0}
+  .lead{color:var(--brand-dark);font-weight:700}
+  .cue{display:block;margin-top:.9rem;padding:.7rem .9rem;background:var(--surface-2);
+       border:1px dashed var(--line);border-radius:10px;font-size:.9rem;color:var(--muted);font-style:italic}
+  .cue b{color:var(--brand-dark);font-style:normal}
+  .steps{margin:.6rem 0 0;padding-left:1.2rem}
+  .steps li{margin:.28rem 0}
+  code{font-family:var(--mono);font-size:.86em;background:var(--brand-soft);
+       color:var(--brand-dark);padding:.08em .4em;border-radius:6px;border:1px solid var(--line);white-space:nowrap}
+
+  /* Q&A */
+  .qa{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+      box-shadow:var(--shadow);padding:1.3rem 1.4rem;margin-top:2.2rem}
+  .qa > h2{margin:0 0 1rem;font-size:1.25rem;font-weight:800;letter-spacing:-0.02em}
+  .qa details{border-top:1px solid var(--line);padding:.5rem 0}
+  .qa summary{cursor:pointer;font-weight:700;color:var(--ink);list-style:none;padding:.45rem 0;
+       display:flex;gap:.6rem;align-items:flex-start}
+  .qa summary::-webkit-details-marker{display:none}
+  .qa summary .q{flex:0 0 auto;color:var(--brand);font-weight:800}
+  .qa .a{margin:.3rem 0 .2rem 1.4rem;color:var(--ink);font-size:.95rem}
+  .qa .a b{color:var(--brand-dark)}
+
+  .rd{font-weight:700;color:var(--brand-dark);font-size:.85em;white-space:nowrap}
+  .tlabel{font-size:.72rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--brand-dark);margin:1.1rem 0 .4rem}
+  .terms{margin:0;padding:0;list-style:none;border-top:2px solid var(--line)}
+  .terms li{padding:.45rem 0;border-bottom:1px solid var(--line);font-size:.95rem}
+  .terms li:last-child{border-bottom:none}
+  .terms .term{font-weight:800}
+  .terms .say{color:var(--brand-dark);font-weight:700;margin-left:.2rem}
+  .terms .def{display:block;margin-top:.1rem;color:var(--muted);font-size:.88rem;line-height:1.45}
+  .demoblock{border-radius:16px;box-shadow:var(--shadow);overflow:hidden;margin:0 0 1.5rem}
+  .demoblock .dh{display:flex;align-items:center;gap:.7rem;padding:.85rem 1.1rem;color:#fff;background:linear-gradient(180deg,#3A97A8,#2E7D8C)}
+  .demoblock .dh .ic{width:2rem;height:2rem;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.34)}
+  .demoblock .dh h2{margin:0;font-size:1.02rem;font-weight:800;letter-spacing:-0.02em}
+  .demoblock .db{background:var(--surface);border:1px solid var(--line);border-top:none;padding:.9rem 1.2rem 1.1rem}
+  .demoblock .db p{margin:.55rem 0}
+  .demoblock .db p:first-child{margin-top:0}
+  .demoblock .act{color:#2E7D8C;font-weight:700;font-style:normal}
+  @media (prefers-color-scheme:dark){.demoblock .act{color:#63C6D6}}
+  :root[data-theme="dark"] .demoblock .act{color:#63C6D6}
+
+  footer{margin-top:2.2rem;color:var(--muted);font-size:.85rem;text-align:center;line-height:1.6}
+
+  .toggle{position:fixed;top:1rem;right:1rem;z-index:20;background:var(--surface);
+     border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:.45rem .8rem;
+     font-size:.8rem;font-weight:700;cursor:pointer;box-shadow:var(--shadow);font-family:var(--sans)}
+  @media (max-width:520px){.slide__head .who{font-size:.66rem}}
+</style>
+
+</head>
+<body>
+<button class="toggle" id="themeToggle" aria-label="라이트/다크 전환">◐ 테마</button>
+
+<div class="wrap">
+  <header class="masthead">
+    <span class="eyebrow">🍚 밥픽(BobPick) · 발표 대본</span>
+    <h1 class="title">전체 발표 대본 <span class="accent">— 11 슬라이드</span></h1>
+    <p class="sub">최한빈 · 박상준 공동 발표 대본입니다. 슬라이드마다 화자·발표 멘트·전환 멘트,
+       <b>4번 뒤 웹사이트 시연 멘트</b>, 그리고 슬라이드별 <b>용어(읽는법·뜻)</b>를 바로 볼 수 있게 정리했습니다.</p>
+    <div class="legend">
+      <span class="lg"><span class="sw sw-h"></span> 최한빈</span>
+      <span class="lg"><span class="sw sw-s"></span> 박상준</span>
+      <span class="lg"><span class="sw sw-b"></span> 공동</span>
+    </div>
+  </header>
+
+  <!-- S1 한빈 -->
+  <section class="slide" style="--h-top:#8A664A;--h-bot:#5C3A28">
+    <div class="slide__head"><span class="num">1</span><h2>메인 타이틀 (표지)</h2><span class="who">최한빈</span></div>
+    <div class="slide__body"><div class="script">
+      <p class="lead">"안녕하십니까. 사용자 맞춤형 메뉴 추천 및 식사 기록 플랫폼, '밥픽(BobPick)'의 발표를 맡은
+         최한빈, 박상준입니다.</p>
+      <p>다들 오늘 식사 메뉴 고르실 때 얼마나 걸리셨나요? 아마 '오늘 뭐 먹지?' 하고 한참 고민해 보신 적이
+         있으실 겁니다. 저희 밥픽은 바로 이 소소하지만 반복되는 고민을 덜어주고, 매 끼니를 즐거운 경험으로
+         바꾸어 주는 플랫폼입니다.</p>
+      <p>오늘 발표에서는 밥픽 서비스 소개와 함께, 이 서비스를 실제 리눅스 환경 위에 3계층 온프레미스로 직접
+         구축하고 클라우드 확장을 대비해 고민했던 저희의 엔지니어링 경험을 공유해 드리겠습니다."</p>
+      <span class="cue"><b>[전환 → 2]</b> "그렇다면 저희가 왜 이 서비스를 기획하게 되었는지, 그 배경부터 말씀드리겠습니다."</span>
+    </div></div>
+  </section>
+
+  <!-- S2 한빈 -->
+  <section class="slide" style="--h-top:#8A664A;--h-bot:#5C3A28">
+    <div class="slide__head"><span class="num">2</span><h2>기획 배경 및 필요성</h2><span class="who">최한빈</span></div>
+    <div class="slide__body"><div class="script">
+      <p>"최근 1인 가구가 급증하고 배달 음식과 간편식이 일상화되면서, 우리가 선택할 수 있는 음식의 종류와 매장은
+         과거와 비교할 수 없을 만큼 폭발적으로 늘어났습니다.</p>
+      <p>하지만 선택지가 너무 많아지다 보니, 역설적으로 매 끼니 '오늘 뭐 먹지?'를 고민하는 <b>결정 피로</b>가
+         현대인의 새로운 스트레스로 자리 잡았습니다.</p>
+      <p>여기에 더해, 내가 최근에 무엇을 먹었는지 기록하고, 편중된 식습관을 확인하고, 중복된 메뉴를 피하고 싶어
+         하는 니즈도 꾸준히 증가하고 있습니다. 저희는 바로 이 지점에 주목했습니다."</p>
+    </div></div>
+  </section>
+
+  <!-- S3 한빈 -->
+  <section class="slide" style="--h-top:#8A664A;--h-bot:#5C3A28">
+    <div class="slide__head"><span class="num">3</span><h2>프로젝트 정의 및 핵심 가치</h2><span class="who">최한빈</span></div>
+    <div class="slide__body"><div class="script">
+      <p class="lead">"그래서 탄생한 것이 바로 지능형 식사 큐레이션 플랫폼, 밥픽입니다.</p>
+      <p>저희의 모토는 <b>'매일 마주하는 평범한 한 끼를 일상 속 맛있는 즐거움으로 바꾸자'</b>입니다.
+         밥픽이 추구하는 핵심 가치는 크게 네 가지입니다.</p>
+      <p><b>첫째</b>, 3초 만에 메뉴를 제안하고, 새로고침 버튼으로 '뭐 먹지?'라는 고민에서 벗어날 수 있습니다.</p>
+      <p><b>둘째</b>, 회원 가입 시 취향을 기록하고, 저장된 기록을 기반으로 한 필터링과 랜덤픽으로 새로운 음식을
+         제안하는 발견의 즐거움을 줍니다.</p>
+      <p><b>셋째</b>, 식사 기록과 통계 시각화로, 혼자 먹는 밥도 대충 때우지 않도록 식사의 즐거움을 만듭니다.</p>
+      <p><b>마지막으로</b>, 먹을거리와 볼거리를 동시에 제공하는 '미식 허브(Hub)'로 도약하고자 합니다."</p>
+      <span class="cue"><b>[전환 → 4]</b> "이러한 핵심 가치를 어떤 기능들로 구현해 냈는지 살펴보겠습니다."</span>
+    </div></div>
+  </section>
+
+  <!-- S4 상준 -->
+  <section class="slide" style="--h-top:#F8794F;--h-bot:#DE632E">
+    <div class="slide__head"><span class="num">4</span><h2>주요 기능 및 외부 연계</h2><span class="who">박상준</span></div>
+    <div class="slide__body"><div class="script">
+      <p class="lead">밥픽의 주요 기능을 다섯 가지 영역으로 정리했습니다.</p>
+      <p><b>첫째, 계정 관리</b>입니다. Django 기본 인증을 그대로 쓰지 않고 <b>커스텀 유저 모델</b>을 설계해,
+         개인별 선호 음식 정보를 안전하게 관리합니다.</p>
+      <p><b>둘째, 맞춤형 추천 엔진</b>입니다. 뷰가 아니라 별도 모듈(<code>recommender.py</code>)에 로직을 모아,
+         점심·저녁·오늘의 BEST·실시간 인기·취향, 성격이 다른 <b>다섯 개 카드를 서로 중복 없이</b> 뽑습니다.
+         그중 '취향' 카드는 가입 때 고른 취향과 그동안의 평점 기록을 바탕으로, 여기에 <b>나와 입맛이 겹치는
+         사용자의 고평점 메뉴에 가중치를 주는 협업 필터링</b>까지 결합한 개인화 추천입니다.</p>
+      <p><b>셋째, 식사 기록 및 통계</b>입니다. 메뉴와 식사 기록을 <b>1대 다 관계형 DB</b>로 모델링해,
+         일자별 캘린더 히스토리와 요리 종류별 섭취 비율을 시각화함으로써 지속적인 방문(리텐션)을 유도합니다.</p>
+      <p><b>넷째, 리뷰 및 인터랙션</b>입니다. 페이지 전체를 새로고침하지 않고 즉시 반응하는 <b>AJAX 좋아요</b>,
+         세션 기반 '최근 본 메뉴' 추적, 평점 기반 실시간 인기 순위를 구현했습니다.</p>
+      <p><b>마지막으로 외부 미식 콘텐츠 연계</b>입니다. 유튜브 리뷰와 미슐랭·블루리본 칼럼을 대시보드에 함께
+         큐레이션해, <b>먹을거리와 볼거리를 한 화면에서</b> 제공합니다.</p>
+      <span class="cue"><b>[전환 → 5]</b> (아래 웹사이트 시연을 마친 뒤) "그렇다면 이 서비스는 어떤 기술 위에서 돌아갈까요?"</span>
+      <div class="tlabel">📖 용어 (읽는법 · 뜻)</div>
+      <ul class="terms">
+        <li><span class="term">Django Auth</span><span class="say">(장고 어스)</span><span class="def">장고의 기본 로그인·회원 인증 기능.</span></li>
+        <li><span class="term">커스텀 유저 모델</span><span class="def">기본 회원 정보에 취향 등 필요한 항목을 더한 우리만의 회원 모델. (영어: Custom User Model)</span></li>
+        <li><span class="term">recommender.py</span><span class="say">(리코멘더 파이)</span><span class="def">추천 로직만 따로 모아둔 파이썬 파일.</span></li>
+        <li><span class="term">협업 필터링</span><span class="def">나와 입맛이 비슷한 사람이 좋아한 메뉴를 추천하는 방식. (영어: Collaborative Filtering)</span></li>
+        <li><span class="term">AJAX</span><span class="say">(에이잭스)</span><span class="def">새로고침 없이 서버와 데이터를 주고받는 기술. 좋아요가 즉시 반영되는 이유.</span></li>
+        <li><span class="term">세션</span><span class="def">로그인 사용자 정보를 서버가 잠시 기억하는 것. '최근 본 메뉴'에 사용. (영어: Session)</span></li>
+        <li><span class="term">리텐션</span><span class="def">사용자가 떠나지 않고 다시 방문하는 것(재방문율). (영어: Retention)</span></li>
+      </ul>
+    </div></div>
+  </section>
+
+  <!-- S4 직후: 웹사이트 시연 멘트 -->
+  <section class="demoblock">
+    <div class="dh"><span class="ic">🌐</span><h2>[4번 직후] 웹사이트 시연하며 할 말</h2></div>
+    <div class="db">
+      <p><span class="act">(슬라이드의 홈페이지 링크를 클릭하며)</span> "말씀드린 기능들을 실제 화면으로 잠깐 보여드리겠습니다."</p>
+      <p><span class="act">(대시보드가 뜨면)</span> "이 화면이 로그인 후 첫 페이지인 대시보드입니다. 방금 설명드린 추천이 여기 이렇게 <b>점심·저녁·오늘의 BEST·실시간 인기·취향</b>, 다섯 카드로 나뉘어 실제로 뜹니다."</p>
+      <p><span class="act">('취향' 카드를 가리키며)</span> "이 '취향' 카드가 아까 말씀드린 <b>협업 필터링</b>으로 뽑힌 메뉴입니다."</p>
+      <p><span class="act">(좋아요 하트를 누르며)</span> "이 하트를 눌러 보면 — 보시는 것처럼 <b>페이지 새로고침 없이 즉시 반영</b>됩니다. 이게 AJAX로 만든 비동기 좋아요입니다."</p>
+      <p><span class="act">(아래로 스크롤하며)</span> "조금 내리면 <b>실시간 인기 순위</b>와, 제가 먹은 기록이 쌓이는 <b>식사 캘린더</b>도 보실 수 있습니다."</p>
+      <p><span class="act">(선택 · 게임 화면)</span> "메뉴 고르기 어려울 땐 이런 <b>돌림판 미니게임</b>으로 재미있게 정할 수도 있습니다."</p>
+      <p><span class="act">(슬라이드로 돌아오며)</span> "화면은 여기까지 보여드리고, 다시 발표로 돌아가겠습니다. 그렇다면 이 서비스는 어떤 기술 위에서 돌아갈까요?" <span class="cue" style="margin-top:.4rem">⏱ 시연은 <b>30초~1분 이내</b>. 끝나면 곧바로 5번으로.</span></p>
+    </div>
+  </section>
+
+  <!-- S5 상준 -->
+  <section class="slide" style="--h-top:#F8794F;--h-bot:#DE632E">
+    <div class="slide__head"><span class="num">5</span><h2>사용된 기술 스택</h2><span class="who">박상준</span></div>
+    <div class="slide__body"><div class="script">
+      <p class="lead">밥픽의 기술 스택은 크게 네 계층입니다.</p>
+      <p><b>백엔드</b>는 Python과 Django로, 추천 알고리즘과 사용자 인증, 서버 로직 같은 핵심 기능을 구현했습니다.</p>
+      <p><b>프런트엔드</b>는 Django 템플릿 위에 HTML·CSS와 <b>바닐라 자바스크립트</b>로, 좋아요 같은 비동기 처리와
+         돌림판·사다리 같은 <b>캔버스 게임</b>까지 직접 구현했고, 데스크톱·모바일에 대응하는 반응형과 다크모드
+         UI를 완성했습니다.</p>
+      <p><b>데이터베이스는 두 가지</b>를 씁니다. 메뉴·사용자·리뷰·식사 기록 같은 영속 데이터는 <b>MariaDB</b>로
+         무결성을 관리하고, 로그인 세션과 캐시는 <b>Redis</b>에 분리해 저장합니다. 이 '세션 분리'가 바로 뒤에서
+         말씀드릴 <b>확장성 설계의 핵심</b>이 됩니다.</p>
+      <p>그리고 오늘 가장 강조하고 싶은 <b>인프라</b>입니다. 로컬 개발에 그치지 않고, 리눅스 위에
+         <b>Nginx와 Gunicorn</b>을 올려 실제 서비스가 가능한 배포 환경을 직접 구성했습니다.</p>
+      <span class="cue"><b>[전환 → 6]</b> "본격적인 인프라 이야기에 앞서, 이 작업을 저희 두 명이 어떻게 나눠
+         진행했는지 짧게 짚고 넘어가겠습니다."</span>
+      <div class="tlabel">📖 용어 (읽는법 · 뜻)</div>
+      <ul class="terms">
+        <li><span class="term">Python / Django</span><span class="say">(파이썬 / 장고)</span><span class="def">파이썬 = 프로그래밍 언어, 장고 = 파이썬 웹 프레임워크.</span></li>
+        <li><span class="term">바닐라 자바스크립트</span><span class="def">외부 프레임워크 없이 순수 자바스크립트만 쓴 것. (영어: Vanilla JavaScript)</span></li>
+        <li><span class="term">Canvas</span><span class="say">(캔버스)</span><span class="def">브라우저에서 그림·애니메이션을 그리는 기능. 돌림판·사다리 게임 구현에 사용.</span></li>
+        <li><span class="term">Bootstrap</span><span class="say">(부트스트랩)</span><span class="def">화면 디자인을 빠르게 잡아주는 CSS(씨에스에스) 도구.</span></li>
+        <li><span class="term">MariaDB</span><span class="say">(마리아디비)</span><span class="def">표(관계형) 형태로 데이터를 저장하는 데이터베이스.</span></li>
+        <li><span class="term">Redis</span><span class="say">(레디스)</span><span class="def">메모리에 저장해 아주 빠른 저장소. 세션·캐시용.</span></li>
+        <li><span class="term">Nginx</span><span class="say">(엔진엑스)</span><span class="def">맨 앞에서 요청을 받는 웹 서버.</span></li>
+        <li><span class="term">Gunicorn</span><span class="say">(구니콘)</span><span class="def">파이썬 앱을 실제로 돌리는 앱 서버. '지유니콘'이라고도 읽음.</span></li>
+        <li><span class="term">Linux</span><span class="say">(리눅스)</span><span class="def">서버 운영체제.</span></li>
+      </ul>
+    </div></div>
+  </section>
+
+  <!-- S6 공동 -->
+  <section class="slide" style="--h-top:#D2A400;--h-bot:#A87F0C">
+    <div class="slide__head"><span class="num">6</span><h2>팀원별 역할 분담</h2><span class="who">공동 (상준·한빈)</span></div>
+    <div class="slide__body"><div class="script">
+      <p class="lead">먼저 역할 분담입니다.</p>
+      <p>가장 까다로웠던 <b>Linux 서버 환경 구축과 3계층 온프레미스 인프라 세팅, 트러블슈팅</b>은 두 사람이
+         함께 고민하며 공동으로 작업했습니다.</p>
+      <p>세부적으로 <b>박상준</b> 팀원은 추천 알고리즘 설계와 더미 데이터 자동 생성 파이프라인, 그리고 전체적인
+         UI 디자인을 총괄했습니다.</p>
+      <p><b>최한빈</b> 팀원은 식사 기록 DB 모델링 및 데이터 집계, Django Auth 기반 인증과 비동기 좋아요, 세션
+         처리 등 백엔드 코어 기능을 주로 담당했습니다.</p>
+      <span class="cue"><b>[전환 → 7]</b> "이제부터 저희 프로젝트의 목표였던 시스템 아키텍처에 대해 말씀드리겠습니다."</span>
+    </div></div>
+  </section>
+
+  <!-- S7 상준 -->
+  <section class="slide" style="--h-top:#F8794F;--h-bot:#DE632E">
+    <div class="slide__head"><span class="num">7</span><h2>시스템 아키텍처 및 확장성 ⭐</h2><span class="who">박상준</span></div>
+    <div class="slide__body"><div class="script">
+      <p class="lead">밥픽의 인프라 아키텍처입니다.</p>
+      <p>우측 다이어그램처럼, 저희는 웹·앱 서버와 DB를 <b>물리적으로 분리한 3계층 구조</b>로 설계했습니다.
+         실제로 <b>Server 1</b>에는 <code>Nginx</code>·<code>Gunicorn</code>·<code>Django</code>를,
+         <b>Server 2</b>에는 <code>MariaDB</code>와 <code>Redis</code>를 올려 두 대의 서버로 나눴습니다.</p>
+      <p>가장 앞단의 <b>Nginx</b>는 443 포트에서 <b>암호화를 풀고 정적 파일을 직접 처리</b>하는 문지기 역할을 합니다.
+         동적 요청만 WSGI인 <b>Gunicorn</b>을 거쳐 Django로 전달되고, 이 Gunicorn은 <b>데몬으로 등록</b>해
+         서버가 꺼져도 자동으로 되살아나도록 안정성을 확보했습니다.</p>
+      <p>특히 저희는 <b>처음부터 확장성</b>을 고려했습니다. 로그인 세션을 앱 메모리가 아니라 <b>Redis에 분리 저장</b>했기
+         때문에, 앞으로 앱 서버를 여러 대로 <b>수평 확장</b>하더라도 어느 서버로 요청이 가든 로그인 상태가 그대로
+         유지되는 <b>무상태(Stateless) 구조</b>입니다. 또 시크릿 키와 DB 접속 정보는 <code>.env</code>로 분리해
+         환경만 바꾸면 그대로 이관되도록 했습니다.</p>
+      <p>이 표준화된 3계층 설계 덕분에, <b>코드를 고치지 않고도</b> 트래픽이 늘면 AWS의 <b>EC2·RDS로 무중단 이관</b>할
+         수 있는 로드맵을 갖추게 됐습니다.</p>
+      <span class="cue"><b>[전환 → 8]</b> "그럼 이 인프라를 실제로 어떤 단계를 거쳐 구축했는지, 로컬 개발부터
+         HTTPS 배포까지의 과정을 <b>배포 일지</b>로 보여드리겠습니다."</span>
+      <div class="tlabel">📖 용어 (읽는법 · 뜻)</div>
+      <ul class="terms">
+        <li><span class="term">3계층 / 3-Tier</span><span class="say">(쓰리 티어)</span><span class="def">웹·앱·DB를 계층으로 나눈 구조.</span></li>
+        <li><span class="term">WSGI</span><span class="say">(알파벳 그대로)</span><span class="def">웹 서버와 파이썬 앱을 연결하는 표준 규격. Gunicorn이 그 역할.</span></li>
+        <li><span class="term">데몬</span><span class="def">백그라운드에서 계속 도는 프로그램. (영어 Daemon — '데몬'으로 읽음)</span></li>
+        <li><span class="term">무상태</span><span class="say">(스테이트리스)</span><span class="def">세션 같은 상태를 앱 서버에 저장하지 않는 구조. 서버 증설이 자유로움. (영어: Stateless)</span></li>
+        <li><span class="term">수평 확장</span><span class="def">서버 대수를 늘려 부하를 나누는 것. (영어: Horizontal Scaling)</span></li>
+        <li><span class="term">.env</span><span class="say">(닷 + 알파벳 그대로 e·n·v)</span><span class="def">비밀번호·주소 같은 설정값을 담는 환경변수 파일.</span></li>
+        <li><span class="term">AWS · EC2 · RDS</span><span class="say">(전부 알파벳 그대로 · 2는 "투")</span><span class="def">아마존 클라우드. EC2=서버, RDS=관리형 데이터베이스.</span></li>
+      </ul>
+    </div></div>
+  </section>
+
+  <!-- S8 상준 -->
+  <section class="slide" style="--h-top:#F8794F;--h-bot:#DE632E">
+    <div class="slide__head"><span class="num">8</span><h2>실전 배포 일지 — 4단계 ⭐</h2><span class="who">박상준</span></div>
+    <div class="slide__body"><div class="script">
+      <p><b>1단계, 개발 환경 <code>runserver</code>.</b> 처음엔 다들 아는 런서버로 시작했습니다. 하지만 동시 접속
+         처리에 한계가 있고, 터미널을 끄면 서버도 같이 죽습니다. 무엇보다 주소 뒤에 <code>:8000</code> 포트가 붙어
+         실제 서비스용으로는 부적합했습니다.</p>
+      <p><b>그래서 2단계, 운영용 WSGI 서버 <code>Gunicorn</code>.</b> 워커를 <b>3개</b> 띄워 동시 요청을 처리하고,
+         <b>systemd 데몬</b>으로 등록해 서버가 꺼져도 자동 재시작되게 했습니다. 특히 Nginx와의 통신에 TCP 포트가
+         아니라 <b>유닉스 소켓(<code>.sock</code>)</b>을 썼는데, 같은 서버 안의 통신이라 소켓을 쓰면
+         <b>네트워크 스택을 거치지 않아 더 빠르고 안전</b>합니다.</p>
+      <p><b>3단계, 그 앞에 <code>Nginx</code>를 세운 것.</b> 무거운 정적 파일은 파이썬까지 가지 않고 Nginx가 직접
+         서빙해 앱 부하를 줄였습니다. 여기 재미있는 포인트가 있는데요 — 평소 웹서핑할 때 주소 뒤에 포트를 안 치시죠?
+         Nginx를 <b>HTTP 표준 80번 포트</b>에 띄웠기 때문에 브라우저가 이를 자동 인식해서, 지저분한
+         <code>:8000</code>을 URL에서 없앨 수 있었습니다.</p>
+      <p><b>마지막 4단계, HTTPS 전환.</b> 80번으로 들어온 요청을 <b>443으로 자동 리다이렉트</b>하고, 사설망이라
+         <b>자체 서명 인증서</b>를 발급하되 최신 브라우저 규격에 맞춰 <b>SAN에 IP를 명시</b>해 인증서 에러를 막았습니다.
+         그리고 Nginx가 암호화를 풀고 뒤의 Django엔 평문으로 넘기기 때문에, Django 쪽에도 두 가지 설정을 맞춰줘야
+         했습니다. 하나는 <b>"앞단에서 이미 HTTPS로 처리됐다는 걸 신뢰하라"</b>는 설정, 다른 하나는
+         <b>"우리 서비스 주소에서 들어온 요청은 안전한 것으로 인정하라"</b>는 보안 설정입니다. 이 짝을 안 맞추면
+         <b>주소가 끝없이 도는 무한 리다이렉트</b>나 <b>로그인할 때 권한 거부(403) 에러</b>가 터지는데, 저희는 여기까지
+         완벽히 동기화했습니다. <span class="cue" style="margin-top:.4rem">※ 이 두 설정의 실제 이름
+         (<code>SECURE_PROXY_SSL_HEADER</code>·<code>CSRF_TRUSTED_ORIGINS</code>)은 <b>발표 때 그대로 읽지 말고
+         위처럼 '뜻'으로 설명</b>하세요. 정확한 이름은 아래 용어에 있습니다.</span></p>
+      <p class="lead">결과적으로, 브라우저에서 Nginx, 유닉스 소켓, Gunicorn을 거쳐 DB까지 이어지는 완전한
+         프로덕션 배포 파이프라인을 완성했습니다.</p>
+      <span class="cue"><b>[전환 → 9, 한빈님에게]</b> "물론 이 과정이 순탄치만은 않았습니다. 저희가 구축 과정에서
+         겪은 <b>가장 큰 도전 두 가지</b>는, 이어서 한빈 팀원이 소개해 드리겠습니다."</span>
+      <div class="tlabel">📖 용어 (읽는법 · 뜻)</div>
+      <ul class="terms">
+        <li><span class="term">runserver</span><span class="say">(런서버)</span><span class="def">장고 기본 개발용 서버. 실서비스엔 부적합.</span></li>
+        <li><span class="term">Gunicorn</span><span class="say">(구니콘)</span><span class="def">실서비스용 파이썬 앱 서버.</span></li>
+        <li><span class="term">워커</span><span class="def">요청을 처리하는 일꾼 프로세스. 3개면 동시에 3개 처리. (영어: Worker)</span></li>
+        <li><span class="term">systemd</span><span class="say">(시스템디)</span><span class="def">서버가 꺼져도 자동 재시작하게 관리하는 도구.</span></li>
+        <li><span class="term">유닉스 소켓 / .sock</span><span class="say">(유닉스 소켓 · 닷 삭)</span><span class="def">같은 서버 안 프로그램끼리 빠르고 안전하게 통신하는 통로.</span></li>
+        <li><span class="term">TCP 포트</span><span class="say">(TCP는 알파벳 그대로)</span><span class="def">네트워크 통신용 번호. 소켓과 대비되는 방식.</span></li>
+        <li><span class="term">HTTP / HTTPS</span><span class="say">(알파벳 그대로)</span><span class="def">웹 통신 규약 / 그 암호화된 버전.</span></li>
+        <li><span class="term">리다이렉트</span><span class="def">다른 주소로 자동 이동(80→443). (영어: Redirect)</span></li>
+        <li><span class="term">자체 서명 인증서</span><span class="def">공인기관 없이 직접 만든 HTTPS 인증서. 내부망용. (영어: Self-signed Certificate)</span></li>
+        <li><span class="term">SAN</span><span class="say">("샌" 또는 알파벳 그대로)</span><span class="def">인증서에 유효한 도메인·IP를 명시하는 항목.</span></li>
+        <li><span class="term">SECURE_PROXY_SSL_HEADER</span><span class="say">(발표에선 읽지 말고 "뜻"으로 설명)</span><span class="def">본문에서 말한 <b>"앞단 Nginx가 HTTPS로 받았다는 걸 신뢰하라"는 설정</b>의 실제 이름.</span></li>
+        <li><span class="term">X-Forwarded-Proto</span><span class="say">(엑스 포워디드 프로토)</span><span class="def">Nginx가 장고에게 "원래 HTTPS였다"를 알려주는 값.</span></li>
+        <li><span class="term">CSRF_TRUSTED_ORIGINS</span><span class="say">(발표에선 읽지 말고 "뜻"으로 설명)</span><span class="def">본문에서 말한 <b>"우리 서비스 주소에서 온 요청은 안전하게 인정하라"는 보안 설정</b>의 실제 이름. (CSRF=위조 요청 공격)</span></li>
+        <li><span class="term">403 에러</span><span class="say">(사공삼)</span><span class="def">권한 거부 오류.</span></li>
+      </ul>
+    </div></div>
+  </section>
+
+  <!-- S9 한빈 -->
+  <section class="slide" style="--h-top:#8A664A;--h-bot:#5C3A28">
+    <div class="slide__head"><span class="num">9</span><h2>[도전 1] 데이터 이관과 마이그레이션 진단</h2><span class="who">최한빈</span></div>
+    <div class="slide__body"><div class="script">
+      <p class="lead">첫 번째 위기는 DB 서버를 물리적으로 분리한 직후 찾아왔습니다.</p>
+      <p>데이터 복원 후 마이그레이션을 실행했더니, Django가 <b>"컬럼이 중복되었습니다(Duplicate column)"</b> 하고
+         멈췄습니다. 에러가 터진 곳은 파이썬 코드 실행 단이었습니다.</p>
+      <p>그래서 먼저 데이터가 유실됐는지 확인했고(정상), 코드와 DB 이력을 대조해 보니 <b>마이그레이션 파일 계보가
+         불일치</b>함을 발견했습니다. 마지막으로 <code>SHOW COLUMNS</code>로 실제 스키마를 확인해 보니, DB 스키마는
+         이미 최신인데 <code>django_migrations</code> 기록만 빠져 있었습니다. 알고 보니 문제는 Django에서 일어난
+         것처럼 보였지만, 실제로는 <b>DB 내부의 이력 데이터(0002_add_column)가 손상</b>됐던 것입니다.</p>
+      <p>여기서 엔지니어링 판단이 필요했습니다. 구글링하면 <code>--fake</code> 옵션으로 넘기라는 글이 많지만, 무작정
+         쓰면 지금은 넘어가도 나중에 더 큰 장애를 유발합니다. 그래서 <b>컬럼 단위로 스키마 일치를 완벽히 검증한
+         뒤에만</b> 해결했습니다.</p>
+      <p>이를 통해 <b>'증상이 발생한 계층(Django)과 실제 원인이 있는 계층(DB)은 다를 수 있다'</b>는 값진 교훈을
+         얻었습니다."</p>
+      <span class="cue"><b>[전환 → 10]</b> "DB 문제를 해결하니, 이번엔 네트워크가 발목을 잡았습니다."</span>
+    </div></div>
+  </section>
+
+  <!-- S10 한빈 -->
+  <section class="slide" style="--h-top:#8A664A;--h-bot:#5C3A28">
+    <div class="slide__head"><span class="num">10</span><h2>[도전 2] 온프레미스의 한계와 AWS 도입 명분</h2><span class="who">최한빈</span></div>
+    <div class="slide__body"><div class="script">
+      <p class="lead">두 번째 위기는 IP 변경으로 인한 연쇄 장애입니다.</p>
+      <p>서버 분리를 위해 네트워크를 변경하면서 DB 서버 IP가 <code>.73</code>에서 <code>.78</code>로 끝자리 하나
+         바뀌었습니다. 그런데 IP 하나가 바뀌자, MariaDB 권한 거부부터 방화벽, <code>.env</code>, Nginx, SSL 인증서까지
+         <b>무려 5개 계층이 도미노처럼</b> 무너졌습니다.</p>
+      <p>DB 계정이 단순 아이디가 아니라 <b>'아이디 + 접속 IP'의 세트</b>라는 것을 파악하고, 하위 네트워크부터 최상위
+         보안까지 계층 순서대로 5단계를 다시 설정해 복구했습니다.</p>
+      <ol class="steps">
+        <li><b>DB 계정 권한 재설정</b> — 새 IP에 <code>GRANT</code> 재부여 후 <code>FLUSH PRIVILEGES</code>.</li>
+        <li><b>OS 방화벽(ufw) 갱신</b> — 기존 룰 삭제 후 새 IP에만 <code>3306</code> 오픈.</li>
+        <li><b>애플리케이션 <code>.env</code> 수정</b> — <code>DB_HOST</code> 주소 업데이트.</li>
+        <li><b>Nginx 리버스 프록시 갱신</b> — 프록시 타겟 IP 수정 후 <code>reload</code>로 무중단 반영.</li>
+        <li><b>SSL 인증서 SAN 재발급</b> — <code>openssl.cnf</code>의 SAN에 새 IP 반영해 재발급·재적용.</li>
+      </ol>
+      <p style="margin-top:.7rem">이 고생을 통해 온프레미스 인프라가 <b>IP에 얼마나 강하게 결합</b>되어 있는지 뼈저리게
+         체감했고, 역설적으로 이 시행착오가 <b>고정 엔드포인트를 제공하는 AWS RDS와 클라우드로 넘어가야 할 강력한
+         기술적 명분</b>을 쥐여 주었습니다."</p>
+      <span class="cue"><b>[전환 → 11]</b> "마지막으로, 실제로 프로젝트를 이어간다면 얻을 기대 효과와 소감을 말씀드리며
+         마치겠습니다."</span>
+    </div></div>
+  </section>
+
+  <!-- S11 공동 -->
+  <section class="slide" style="--h-top:#D2A400;--h-bot:#A87F0C">
+    <div class="slide__head"><span class="num">11</span><h2>프로젝트 기대 효과 및 마무리</h2><span class="who">공동 (한빈·상준)</span></div>
+    <div class="slide__body"><div class="script">
+      <p>밥픽은 사용자의 메뉴 선택 스트레스를 덜어주고, 쌓이는 데이터(기록·리뷰)를 바탕으로 추천이 점점 정교해지는
+         <b>데이터 선순환 구조</b>를 만들어 갈 것입니다. 추후에는 재방문율(DAU), 추천 메뉴 클릭률(CTR) 같은 지표로
+         비즈니스 성과도 증명해 나갈 예정입니다.</p>
+      <p>저희는 이번 프로젝트를 통해 단순히 프론트엔드와 백엔드를 잇는 코딩을 넘어, Nginx와 Gunicorn을 설정하고,
+         서버 장애의 진짜 원인을 추적하며, 클라우드 확장의 필요성을 몸소 증명해 냈습니다. <b>코드를 짜는 것을 넘어,
+         서비스를 안정적으로 사용자에게 전달하는 인프라의 중요성</b>을 깊이 이해하게 된 시간이었습니다.</p>
+      <p>앞으로도 문제를 회피하지 않고 근본 원인을 파헤치는 끈기 있는 엔지니어로 성장하겠습니다.</p>
+
+      <div style="background:var(--surface-2);border:1px solid var(--line);border-left:4px solid var(--brand);
+                  border-radius:12px;padding:.9rem 1.1rem;margin:1rem 0">
+        <p style="margin:0 0 .5rem;font-weight:800;color:var(--brand-dark)">[각자 프로젝트 후기 한마디]</p>
+        <p style="margin:.4rem 0"><b>최한빈:</b> 웹 서비스를 시작할 때 웹 구성부터 개발까지 이렇게 어려운지 몰랐고,
+           시간이 정말 빠르게 지나간 것 같습니다. 인프라 구축을 바닥부터 해 보니 간단한 구축도 쉽지 않았는데,
+           실무는 얼마나 더 어려울지 걱정 반 기대 반입니다.</p>
+        <p style="margin:.4rem 0"><b>박상준:</b> 저는 추천 로직과 UI, 그리고 인프라를 맡았는데, 웹 서비스 하나를 실제로
+           세상에 띄우는 일이 이렇게 여러 계층으로 이뤄져 있는지 이번에 처음 체감했습니다. 처음엔
+           <code>runserver</code> 하나면 끝인 줄 알았는데, Gunicorn과 Nginx, HTTPS까지 직접 쌓아 올리면서
+           <b>'돌아가는 코드'와 '서비스되는 코드'는 다르다</b>는 걸 배웠습니다. 특히 서버 IP 한 자리가 바뀌자
+           여러 계층이 도미노처럼 무너지는 걸 겪으며, 클라우드가 왜 필요한지를 말이 아니라 몸으로 이해하게 됐습니다.
+           아직 부족하지만, 문제를 회피하지 않고 끝까지 원인을 파고드는 개발자가 되고 싶습니다.</p>
+      </div>
+
+      <p class="lead">이상으로 '밥픽' 발표를 마치겠습니다. 경청해 주셔서 감사합니다!</p>
+    </div></div>
+  </section>
+
+  <!-- Q&A -->
+  <section class="qa">
+    <h2>💬 예상 질문 대비 (공용)</h2>
+    <details>
+      <summary><span class="q">Q.</span> '취향' 추천이 정말 협업 필터링인가요?</summary>
+      <p class="a"><b>네.</b> 나와 같은 메뉴에 고평점을 준 사용자들이 좋아한 메뉴에 <b>가중치 3배</b>를 주고, 여기에
+         개인의 <b>요리 종류 선호도(1배)</b>를 합산해 점수가 높은 메뉴를 뽑습니다. 데이터가 쌓일수록 정교해지는
+         협업 + 콘텐츠 기반 하이브리드입니다.</p>
+    </details>
+    <details>
+      <summary><span class="q">Q.</span> 왜 클라우드가 아니라 온프레미스부터 했나요?</summary>
+      <p class="a">클라우드가 추상화로 숨기는 <b>웹서버·WSGI·소켓·TLS의 원리를 직접 손으로 구성</b>해 이해하기 위해서입니다.
+         그 경험이 있어야 클라우드로 갈 때 무엇을 왜 옮기는지 판단할 수 있다고 봤습니다.</p>
+    </details>
+    <details>
+      <summary><span class="q">Q.</span> 동시 접속은 어떻게 처리하나요?</summary>
+      <p class="a"><b>Gunicorn 워커 3개</b>로 병렬 처리하고, 세션을 <b>Redis로 분리</b>해 앱 서버를 수평 확장할 수 있게
+         설계했습니다. 트래픽이 늘면 워커 수를 늘리거나 앱 서버를 추가하면 됩니다.</p>
+    </details>
+    <details>
+      <summary><span class="q">Q.</span> 왜 TCP 포트가 아니라 유닉스 소켓을 썼나요?</summary>
+      <p class="a">Nginx와 Gunicorn이 <b>같은 서버</b>에 있어, TCP 루프백보다 네트워크 스택 오버헤드가 없어 <b>더 빠르고</b>,
+         파일 권한으로 접근을 통제할 수 있어 <b>더 안전</b>합니다.</p>
+    </details>
+    <details>
+      <summary><span class="q">Q.</span> 왜 <code>--fake</code>로 간단히 넘기지 않았나요?</summary>
+      <p class="a"><code>--fake</code>는 당장은 성공한 것처럼 보여도 스키마와 이력이 어긋난 채 봉합돼 <b>나중에 더 큰 장애</b>를
+         부릅니다. 그래서 <b>컬럼 단위로 실제 스키마 일치를 검증한 뒤에만</b> 이력을 맞췄습니다.</p>
+    </details>
+    <details>
+      <summary><span class="q">Q.</span> 무상태(Stateless)가 왜 수평 확장에 중요한가요?</summary>
+      <p class="a">세션이 특정 앱 서버 메모리에 있으면 그 사용자는 <b>그 서버로만</b> 가야 합니다. 세션을 Redis로 공유하면
+         <b>어느 앱 서버가 받아도</b> 되므로, 앱 서버를 자유롭게 늘릴 수 있습니다.</p>
+    </details>
+  </section>
+
+  <footer>
+    실제 프로젝트 코드(<code>recommender.py</code>·인프라 설정)와 최한빈·박상준 대본을 대조해 정리했습니다.<br>
+    발표 순서 <b>1→2→3→4→5→6→7→8→9→10→11</b>, 각 장 끝의 전환 멘트로 자연스럽게 이어집니다.
+  </footer>
+</div>
+
+<script>
+  (function(){
+    var root=document.documentElement, btn=document.getElementById('themeToggle');
+    btn.addEventListener('click',function(){
+      var cur=root.getAttribute('data-theme');
+      var next = cur==='dark' ? 'light' : (cur==='light' ? 'dark'
+                 : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'light':'dark'));
+      root.setAttribute('data-theme',next);
+    });
+  })();
+</script>
+
+</body>
+</html>

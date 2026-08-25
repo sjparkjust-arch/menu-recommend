@@ -1,17 +1,15 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <title>로그인</title>
-    <!-- 장고의 static 태그를 이용해 css 파일을 정확히 가리킵니다 -->
-    <link rel="stylesheet" href="{% static 'accounts/login.css' %}">
-</head>
-<body>
+{% block title %}로그인{% endblock %}
+{% block header %}{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'accounts/login.css' %}">
+{% endblock %}
 
+{% block content %}
+<div class="login-page">
     <div class="login-container">
-        <!-- 나중에 이미지를 넣고 싶으시면 이 글자를 <img> 태그로 바꾸시면 됩니다 -->
-        <img src="{% static 'accounts/images/logo.png' %}" alt="밥픽 로고" class="logo-img">
+        <div class="logo-text">BOBPICK</div>
 
         <!-- action을 명확히 지정하여 장고의 login 뷰로 데이터를 보냅니다 -->
         <form method="post" action="{% url 'accounts:login' %}">
@@ -23,14 +21,14 @@
 
             <!-- 아이디 입력창 -->
             <div>
-                <input 
-                    type="text" 
-                    name="username" 
+                <input
+                    type="text"
+                    name="username"
                     class="input-box"
-                    placeholder="아이디" 
-                    value="{{ username|default:'' }}" 
-                    autocomplete="username" 
-                    required 
+                    placeholder="아이디"
+                    value="{{ username|default:'' }}"
+                    autocomplete="username"
+                    required
                     autofocus
                 >
                 {% if errors.username %}
@@ -40,12 +38,12 @@
 
             <!-- 비밀번호 입력창 -->
             <div>
-                <input 
-                    type="password" 
-                    name="password" 
+                <input
+                    type="password"
+                    name="password"
                     class="input-box"
-                    placeholder="비밀번호" 
-                    autocomplete="current-password" 
+                    placeholder="비밀번호"
+                    autocomplete="current-password"
                     required
                 >
                 {% if errors.password %}
@@ -56,9 +54,9 @@
             <!-- 아이디 기억하기 (label로 묶어서 글자를 눌러도 체크되게 만듦) -->
             <div class="checkbox-area">
                 <label>
-                    <input 
-                        type="checkbox" 
-                        name="remember_id" 
+                    <input
+                        type="checkbox"
+                        name="remember_id"
                         {% if remember_id %}checked{% endif %}
                     >
                     아이디 기억하기
@@ -78,6 +76,5 @@
             <a href="{% url 'accounts:find_pw' %}">비밀번호 찾기</a>
         </div>
     </div>
-
-</body>
-</html>
+</div>
+{% endblock %}

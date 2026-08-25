@@ -21,47 +21,48 @@ MY_BOBPICK_LIMIT = 5
 FOOD_STATS_LIMIT = 5
 POPULAR_RANK_LIMIT = 3
 REC_SLOTS = ('lunch', 'dinner', 'taste')  # 확률적이라 세션에 고정하는 슬롯
-# 재추첨(AJAX) 가능한 슬롯의 카드 제목/색상 variant (lunch/dinner는 끼니 구분 없는 일반 추천)
+# 재추첨(AJAX) 가능한 슬롯의 카드 제목/색상 variant
 SLOT_META = {
-    'lunch': ('🍽️ 오늘의 추천', 'lunch'),
-    'dinner': ('🎲 또 다른 추천', 'dinner'),
+    'lunch': ('☀️ 오늘의 점심 추천', 'lunch'),
+    'dinner': ('🌙 오늘의 저녁 추천', 'dinner'),
     'taste': ('🎯 당신의 취향을 담은', 'taste'),
 }
 
 
 def _resolve_recs(request, cuisine_ids, reroll_set):
-    """세션(Redis)에 고정된 추천 핀을 읽고/갱신해 최종 추천 dict를 반환.
+    """세션(Redis)에 사용자가 명시적으로 '고정'한 슬롯만 유지하고, 나머지는 매번 새로 뽑는다.
 
-    dashboard()와 reroll_slot()이 공유한다. 필터 시그니처가 바뀌면 핀을 버린다.
+    dashboard()·reroll_slot()·toggle_pin()이 공유. 고정은 '메뉴 고정' 버튼을 눌러야만
+    세션(pinned_recs)에 저장되며, F5(페이지 새로고침)해도 고정 안 된 슬롯은 계속
+    재추첨된다. 필터 시그니처가 바뀌면 고정도 함께 해제한다.
+
+    Returns: (recs, pinned) — pinned={slot: menu_id}(현재 고정된 것만).
     """
     filter_sig = ','.join(str(c) for c in sorted(cuisine_ids))
-    stored = request.session.get('rec_picks') or {}
+    stored = request.session.get('pinned_recs') or {}
     if stored.get('sig') == filter_sig:
         pinned = {s: stored[s] for s in REC_SLOTS if stored.get(s)}
     else:
         pinned = {}
+    # 고정된 슬롯은 reroll 요청이 와도 강제로 바뀌지 않게 방어.
+    reroll_set = reroll_set - set(pinned.keys())
     recs = recommend_dashboard(request.user, cuisine_ids=cuisine_ids or None,
                                pinned=pinned, reroll=reroll_set)
-    request.session['rec_picks'] = {
-        'sig': filter_sig,
-        **{s: (recs[s].id if recs[s] else None) for s in REC_SLOTS},
-    }
-    return recs
+    return recs, pinned
 
 def dashboard(request):
     """메인 대시보드. 비로그인도 열람 가능(알러지 필터·최근 기록은 로그인 사용자에게만).
 
     추천 로직은 recommender.recommend_dashboard() 에만 있다(CLAUDE.md 코드 스타일).
     점심/저녁/오늘의BEST/지금인기/당신의취향 5카드 + 하단 실시간 인기 순위.
-    점심/저녁/취향은 세션(Redis)에 고정 → 새로고침해도 유지, ?reroll=<slot> 이나
-    국가별 필터 변경 시에만 재추첨.
+    점심/저녁/취향은 기본적으로 새로고침(F5)마다 재추첨되고, '메뉴 고정' 버튼을
+    누른 슬롯만 고정 유지(세션). ?reroll=<slot> 은 그 카드만 즉시 재추첨.
     """
     cuisine_ids = _as_int_list(request.GET.getlist('cuisine'))
     reroll = request.GET.get('reroll')
     reroll_set = {reroll} if reroll in REC_SLOTS else set()
 
-    # 세션 핀을 읽고/갱신해 추천 확정(로직은 _resolve_recs에 공유).
-    recs = _resolve_recs(request, cuisine_ids, reroll_set)
+    recs, pinned = _resolve_recs(request, cuisine_ids, reroll_set)
 
     # 리롤 버튼이 현재 필터를 유지하도록 querystring 조각.
     cuisine_qs = ''.join(f'&cuisine={c}' for c in cuisine_ids)
@@ -112,14 +113,11 @@ def dashboard(request):
             month=_as_int_or_none(request.GET.get('cal_month')),
         )
         food_candidates = record_services.food_name_candidates(request.user)
-        # MY밥픽 개인 요약: 활동 수치 + 선호 요리종류 top3
+        # MY밥픽 개인 요약: 활동 수치 + 선호 요리종류(실제 식사기록 기반 비율 %)
         my_likes_count = request.user.menu_likes.count()
         my_records_count = request.user.meal_records.count()
         my_reviews_count = request.user.reviews.count()
-        my_top_cuisines = [
-            p.cuisine for p in
-            request.user.preferences.select_related('cuisine').order_by('-score')[:3]
-        ]
+        my_top_cuisines = record_services.cuisine_percentage(request.user)
     else:
         my_bobpick = None
         food_stats = None
@@ -131,6 +129,7 @@ def dashboard(request):
 
     context = {
         'recs': recs,
+        'pinned_slots': pinned,
         'cuisines': Cuisine.objects.all(),
         'selected_cuisines': cuisine_ids,
         'cuisine_qs': cuisine_qs,
@@ -162,7 +161,7 @@ def reroll_slot(request):
     if slot not in SLOT_META:
         return JsonResponse({'error': 'invalid slot'}, status=400)
     cuisine_ids = _as_int_list(request.GET.getlist('cuisine'))
-    recs = _resolve_recs(request, cuisine_ids, {slot})
+    recs, pinned = _resolve_recs(request, cuisine_ids, {slot})
     head, variant = SLOT_META[slot]
     cuisine_qs = ''.join(f'&cuisine={c}' for c in cuisine_ids)
     html = render_to_string('menus/_rec_card.html', {
@@ -170,8 +169,47 @@ def reroll_slot(request):
         'head': head,
         'variant': variant,
         'reroll_url': f'?reroll={slot}{cuisine_qs}',
+        'is_pinned': slot in pinned,
     }, request=request)
     return JsonResponse({'html': html})
+
+
+@require_POST
+def toggle_pin(request):
+    """추천 카드 고정/해제 토글(AJAX).
+
+    지금 화면에 보이는 메뉴(menu_id)는 그대로 두고 세션의 고정 상태만 바꾼다.
+    고정하면 F5(새로고침)해도 이 슬롯은 재추첨되지 않는다.
+    """
+    slot = request.POST.get('slot')
+    if slot not in SLOT_META:
+        return JsonResponse({'error': 'invalid slot'}, status=400)
+    menu_id = _as_int_or_none(request.POST.get('menu_id'))
+    cuisine_ids = _as_int_list(request.POST.getlist('cuisine'))
+    filter_sig = ','.join(str(c) for c in sorted(cuisine_ids))
+
+    stored = request.session.get('pinned_recs') or {}
+    if stored.get('sig') != filter_sig:
+        stored = {'sig': filter_sig}
+
+    now_pinned = not bool(stored.get(slot))
+    if now_pinned and menu_id:
+        stored[slot] = menu_id
+    else:
+        stored.pop(slot, None)
+    request.session['pinned_recs'] = stored
+
+    menu = get_object_or_404(Menu, pk=menu_id) if menu_id else None
+    head, variant = SLOT_META[slot]
+    cuisine_qs = ''.join(f'&cuisine={c}' for c in cuisine_ids)
+    html = render_to_string('menus/_rec_card.html', {
+        'menu': menu,
+        'head': head,
+        'variant': variant,
+        'reroll_url': f'?reroll={slot}{cuisine_qs}',
+        'is_pinned': now_pinned,
+    }, request=request)
+    return JsonResponse({'html': html, 'pinned': now_pinned})
 
 
 def menu_list(request):
@@ -265,7 +303,9 @@ def menu_like_toggle(request, pk):
 # ── 게임 (돌림판/사다리타기/이상형월드컵) ─────────────────────────────
 # 결과를 DB에 저장하지 않는 순수 클라이언트 게임. 후보 메뉴만 서버가 랜덤으로 뽑아 넘긴다.
 GAME_ROULETTE_SLICES = 8
-GAME_LADDER_PLAYERS = (4, 6, 8)
+GAME_LADDER_MIN_PLAYERS = 2
+GAME_LADDER_MAX_PLAYERS = 10
+GAME_LADDER_DEFAULT_PLAYERS = 4
 GAME_WORLDCUP_SIZES = (8, 16, 32)
 
 
@@ -278,25 +318,34 @@ def game_roulette(request):
     """메뉴 돌림판. '메인' 코스에서 8개를 랜덤으로 뽑아 원판으로 보여준다.
 
     새로고침(다시 섞기)마다 다른 8개가 나오도록 매 요청 랜덤 추출한다.
+    사용자가 직접 이름을 입력하거나 전체 메뉴 중에서 골라 바꿔치기할 수 있어서
+    전체 메뉴 이름 목록(all_menus_json)도 함께 내려준다(선택용 datalist).
     """
     pool = list(catalog.menu_list_queryset(main_only=True))
     picks = random.sample(pool, min(GAME_ROULETTE_SLICES, len(pool)))
     menus_json = [{'id': m.id, 'name': m.name} for m in picks]
-    return render(request, 'menus/games/roulette.html', {'menus_json': menus_json})
+    all_menus_json = [{'id': m.id, 'name': m.name} for m in pool]
+    return render(request, 'menus/games/roulette.html', {
+        'menus_json': menus_json,
+        'all_menus_json': all_menus_json,
+    })
 
 
 def game_ladder(request):
-    """메뉴 사다리타기. 인원수(4/6/8)만큼 메뉴를 랜덤 배정해 사다리로 보여준다."""
+    """메뉴 사다리타기. 인원수(2~10명)만큼 메뉴를 랜덤 배정해 사다리로 보여준다."""
     players = _as_int_or_none(request.GET.get('players'))
-    if players not in GAME_LADDER_PLAYERS:
-        players = GAME_LADDER_PLAYERS[0]
+    if players is None or not (GAME_LADDER_MIN_PLAYERS <= players <= GAME_LADDER_MAX_PLAYERS):
+        players = GAME_LADDER_DEFAULT_PLAYERS
     pool = list(catalog.menu_list_queryset(main_only=True))
     picks = random.sample(pool, min(players, len(pool)))
     menus_json = [{'id': m.id, 'name': m.name} for m in picks]
+    all_menus_json = [{'id': m.id, 'name': m.name} for m in pool]
     return render(request, 'menus/games/ladder.html', {
         'players': players,
-        'player_options': GAME_LADDER_PLAYERS,
+        'min_players': GAME_LADDER_MIN_PLAYERS,
+        'max_players': GAME_LADDER_MAX_PLAYERS,
         'menus_json': menus_json,
+        'all_menus_json': all_menus_json,
     })
 
 

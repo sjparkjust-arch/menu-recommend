@@ -1,63 +1,66 @@
-/* accounts/static/accounts/login.css */
+/* accounts/static/accounts/login.css
+   폰트·배경·전체 여백은 base.html + theme.css(사이트 공통 디자인 시스템)가 담당.
+   이 파일은 로그인 폼 카드 자체의 레이아웃과, theme.css 색상 변수를 그대로 쓰는
+   색 규칙만 남긴다. */
 
-/* 1. 배경을 차가운 회색에서 따뜻한 크림색으로 변경 */
-body {
-    background-color: #fffdf2; 
+/* 1. 페이지 중앙에 로그인 카드를 배치 */
+.login-page {
     display: flex;
     justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-    font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    padding: var(--sp-8) var(--sp-4) var(--sp-9);
 }
 
 /* 2. 로그인 메인 박스 */
 .login-container {
-    background-color: #ffffff;
+    background-color: var(--surface);
     width: 100%;
     max-width: 460px;
-    padding: 50px 40px;
+    padding: var(--sp-8) var(--sp-7);
     border-radius: 12px; /* 로고처럼 동글동글한 느낌을 위해 모서리를 더 둥글게 */
-    box-shadow: 0 4px 15px rgba(242, 133, 70, 0.1); /* 그림자도 연한 주황빛으로 설정 */
+    box-shadow: 0 4px 15px rgba(243, 98, 53, .1); /* 그림자도 연한 브랜드 오렌지빛으로 */
     box-sizing: border-box;
     text-align: center; /* 로고 이미지를 가운데 정렬하기 위함 */
 }
 
-/* 3. 삽입한 로고 이미지 크기 및 위치 조정 */
-.logo-img {
-    width: 180px; /* 로고 크기 (원하시면 숫자를 줄이거나 늘려보세요) */
-    margin-bottom: 30px;
+/* 3. 그림 로고 대신 글씨 로고(워드마크 폰트) */
+.logo-text {
+    font-family: 'MungyeongGamhongApple', sans-serif;
+    font-weight: 400;
+    font-size: 2.8rem;
+    color: var(--brand);
+    letter-spacing: -0.01em;
+    margin-bottom: var(--sp-5);
 }
 
 /* 4. 입력창(Input) 공통 스타일 */
 .input-box {
     width: 100%;
-    padding: 15px;
-    margin-bottom: 12px;
-    border: 1px solid #E5D5C5; /* 테두리를 연한 베이지/갈색 톤으로 변경 */
+    padding: var(--sp-4);
+    margin-bottom: var(--sp-3);
+    border: 1px solid var(--line);
     border-radius: 8px; /* 입력창 모서리도 둥글게 */
     font-size: 15px;
     box-sizing: border-box;
     outline: none;
-    color: #4A3022; /* 입력되는 글자색을 다크 브라운으로 설정 */
+    color: var(--ink);
 }
 
 /* 입력창을 클릭(포커스)했을 때 밥픽의 메인 주황색으로 테두리 강조 */
 .input-box:focus {
-    border: 1px solid #F37943; 
-    box-shadow: 0 0 5px rgba(243, 121, 67, 0.3);
+    border: 1px solid var(--brand);
+    box-shadow: 0 0 5px rgba(243, 98, 53, .3);
 }
 
 /* 5. 아이디 기억하기 체크박스 영역 */
 .checkbox-area {
     display: flex;
     align-items: center;
-    margin-bottom: 25px;
+    margin-bottom: var(--sp-5);
     font-size: 14px;
-    color: #8C756A; /* 텍스트 색상을 부드러운 갈색으로 변경 */
+    color: var(--muted);
 }
 .checkbox-area input[type="checkbox"] {
-    margin-right: 8px;
+    margin-right: var(--sp-2);
     cursor: pointer;
 }
 .checkbox-area label {
@@ -67,8 +70,8 @@ body {
 /* 6. 로그인 버튼 스타일 (메인 포인트) */
 .login-btn {
     width: 100%;
-    padding: 16px;
-    background-color: #F37943; /* 밥픽 로고의 쨍한 주황색 */
+    padding: var(--sp-4);
+    background-color: var(--brand); /* 밥픽 메인 오렌지 */
     color: white;
     border: none;
     border-radius: 8px; /* 버튼 모서리 둥글게 */
@@ -80,33 +83,33 @@ body {
 
 /* 마우스를 올렸을 때 살짝 더 진한 주황색으로 변함 */
 .login-btn:hover {
-    background-color: #DE632E; 
+    background-color: var(--brand-dark);
 }
 
 /* 7. 하단 링크 (회원가입, 아이디 찾기 등) 영역 */
 .bottom-links {
-    margin-top: 25px;
+    margin-top: var(--sp-5);
     text-align: center;
     font-size: 14px;
 }
 .bottom-links a {
-    color: #8C756A; /* 부드러운 갈색 */
+    color: var(--muted);
     text-decoration: none;
 }
 .bottom-links a:hover {
-    color: #F37943; /* 마우스를 올리면 글자색이 주황색으로 바뀜 */
+    color: var(--brand);
     text-decoration: underline;
 }
 .divider {
-    color: #E5D5C5;
-    margin: 0 12px;
+    color: var(--line);
+    margin: 0 var(--sp-3);
 }
 
 /* 에러 메시지 스타일 */
 .error-msg {
-    color: #FF5A5A;
+    color: var(--danger);
     font-size: 13px;
-    margin-bottom: 10px;
+    margin-bottom: var(--sp-2);
     margin-top: -5px;
     text-align: left; /* 에러 메시지는 왼쪽 정렬 */
 }

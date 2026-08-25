@@ -19,8 +19,8 @@
 
         {# 실시간 인기 순위 TOP 3 (좋아요 기반) — 최상단 #}
         {% if popular_ranking %}
-        <h5 class="mb-2">🔥 실시간 인기 순위</h5>
         <div class="card shadow-sm mb-3">
+            <div class="card-header card-header-brown">🔥 실시간 인기 순위</div>
             <ul class="list-group list-group-flush">
                 {% for menu in popular_ranking %}
                 <li class="list-group-item d-flex align-items-center gap-2">
@@ -29,8 +29,8 @@
                     <a href="{% url 'menus:detail' menu.pk %}" class="text-decoration-none text-body flex-shrink-0">{{ menu.name }}</a>
                     <span class="badge text-bg-light border flex-shrink-0">{{ menu.cuisine.name }}</span>
                     {% if menu.sample_review %}
-                    <span class="small text-muted text-truncate ms-1">
-                        💬 {% if menu.sample_review.content %}{{ menu.sample_review.content|truncatechars:24 }}{% else %}⭐ {{ menu.sample_review.rating }}점 후기{% endif %}
+                    <span class="small text-muted text-truncate ms-1 flex-fill" style="min-width:0;">
+                        💬 {% if menu.sample_review.content %}{{ menu.sample_review.content|truncatechars:80 }}{% else %}⭐ {{ menu.sample_review.rating }}점 후기{% endif %}
                     </span>
                     {% endif %}
                 </li>
@@ -55,18 +55,23 @@
                 {% if selected_cuisines %}
                 <a href="{% url 'menus:dashboard' %}" class="btn btn-sm btn-outline-secondary">초기화</a>
                 {% endif %}
-                {# 추천 3개(오늘의 추천·또 다른 추천·당신의 취향) 동시 새로고침 — 우측 끝 #}
-                <button type="button" class="btn btn-sm btn-outline-primary ms-auto" id="rerollAll">🔄 전체 새로고침</button>
+                {# 추천 3개(점심·저녁·당신의 취향) 동시 새로고침 — 우측 끝 #}
+                <button type="button" class="btn btn-sm btn-outline-primary ms-auto d-inline-flex align-items-center gap-1" id="rerollAll">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/>
+                    </svg>
+                    메뉴 전체 새로고침
+                </button>
             </div>
         </form>
 
-        {# 위: 오늘의 추천 / 또 다른 추천 (끼니 구분 없이 각각 랜덤 + 다시 추천받기) #}
+        {# 위: 점심 / 저녁 (각각 다시 추천받기) #}
         <div class="row g-3 mb-3">
             <div class="col-md-6">
-                {% include "menus/_rec_card.html" with menu=recs.lunch head="🍽️ 오늘의 추천" variant="lunch" reroll_url="?reroll=lunch"|add:cuisine_qs %}
+                {% include "menus/_rec_card.html" with menu=recs.lunch head="☀️ 오늘의 점심 추천" variant="lunch" reroll_url="?reroll=lunch"|add:cuisine_qs is_pinned=pinned_slots.lunch %}
             </div>
             <div class="col-md-6">
-                {% include "menus/_rec_card.html" with menu=recs.dinner head="🎲 또 다른 추천" variant="dinner" reroll_url="?reroll=dinner"|add:cuisine_qs %}
+                {% include "menus/_rec_card.html" with menu=recs.dinner head="🌙 오늘의 저녁 추천" variant="dinner" reroll_url="?reroll=dinner"|add:cuisine_qs is_pinned=pinned_slots.dinner %}
             </div>
         </div>
 
@@ -76,7 +81,7 @@
                 {% include "menus/_rec_card.html" with menu=recs.best head="🏆 오늘의 BEST 메뉴" variant="best" %}
             </div>
             <div class="col-md-4">
-                {% include "menus/_rec_card.html" with menu=recs.taste head="🎯 당신의 취향을 담은" variant="taste" reroll_url="?reroll=taste"|add:cuisine_qs %}
+                {% include "menus/_rec_card.html" with menu=recs.taste head="🎯 당신의 취향을 담은" variant="taste" reroll_url="?reroll=taste"|add:cuisine_qs is_pinned=pinned_slots.taste %}
             </div>
             <div class="col-md-4">
                 {# '지금 인기' 자리를 대체하는 음식 후기 카드 — 우상단 일간/주간 탭 #}
@@ -84,8 +89,8 @@
                     <div class="rec-box-head d-flex justify-content-between align-items-center">
                         <span>💬 음식 후기</span>
                         <div class="btn-group btn-group-sm" role="group" aria-label="기간">
-                            <button type="button" class="btn btn-sm btn-light active" data-review-range="daily">일간</button>
-                            <button type="button" class="btn btn-sm btn-light" data-review-range="weekly">주간</button>
+                            <button type="button" class="btn btn-sm period-toggle active" data-review-range="daily">일간</button>
+                            <button type="button" class="btn btn-sm period-toggle" data-review-range="weekly">주간</button>
                         </div>
                     </div>
                     <div class="rec-box-review-body">
@@ -119,8 +124,8 @@
             .yt-thumb { position: relative; border-radius: 10px; overflow: hidden; aspect-ratio: 16/9; background: #000; box-shadow: var(--shadow-sm); }
             .yt-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .18s ease; }
             .yt-card:hover .yt-thumb img { transform: scale(1.05); }
-            .yt-play { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.5rem; text-shadow: 0 1px 4px rgba(0,0,0,.6); background: rgba(0,0,0,.12); }
-            .yt-badge { position: absolute; top: 6px; left: 6px; background: #ff0000; color: #fff; font-size: .62rem; font-weight: 700; padding: 1px 6px; border-radius: 4px; letter-spacing: .02em; }
+            .yt-play { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--surface); font-size: 1.5rem; text-shadow: 0 1px 4px rgba(0,0,0,.6); background: rgba(0,0,0,.12); }
+            .yt-badge { position: absolute; top: 6px; left: 6px; background: #ff0000; color: var(--surface); font-size: .62rem; font-weight: 700; padding: 1px 6px; border-radius: 4px; letter-spacing: .02em; }
             .yt-title { margin-top: .45rem; font-size: .82rem; font-weight: 600; line-height: 1.3; color: var(--ink); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
             .yt-name { margin-top: .2rem; font-size: .75rem; color: var(--muted); }
         </style>
@@ -151,13 +156,13 @@
             .col-thumb { position: relative; border-radius: 10px; overflow: hidden; aspect-ratio: 16/9; background: #f3e9df; box-shadow: var(--shadow-sm); }
             .col-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .18s ease; }
             .col-card:hover .col-thumb img { transform: scale(1.05); }
-            .col-badge { position: absolute; top: 6px; left: 6px; color: #fff; font-size: .6rem; font-weight: 700; padding: 1px 6px; border-radius: 4px; letter-spacing: .03em; }
+            .col-badge { position: absolute; top: 6px; left: 6px; color: var(--surface); font-size: .6rem; font-weight: 700; padding: 1px 6px; border-radius: 4px; letter-spacing: .03em; }
             .col-title { margin-top: .4rem; font-size: .82rem; font-weight: 600; line-height: 1.3; color: var(--ink); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         </style>
         <h5 class="mt-4 mb-2">🍴 미식 칼럼 · 가이드</h5>
         {% if food_columns.michelin %}
         <div class="small fw-bold mb-1" style="color:#c8102e;">⭐ 미슐랭 가이드
-            <a href="https://guide.michelin.com/kr/ko/articles/dining-in" target="_blank" rel="noopener" class="fw-normal ms-1">더보기 →</a>
+            <a href="https://guide.michelin.com/kr/ko/articles/dining-in" target="_blank" rel="noopener" class="more-chip ms-1">더보기 ›</a>
         </div>
         <div class="col-strip mb-2">
             {% for c in food_columns.michelin %}
@@ -173,7 +178,7 @@
         {% endif %}
         {% if food_columns.bluer %}
         <div class="small fw-bold mb-1 mt-2" style="color:#1f6feb;">🎀 블루리본 서베이
-            <a href="https://www.bluer.co.kr/magazine" target="_blank" rel="noopener" class="fw-normal ms-1">더보기 →</a>
+            <a href="https://www.bluer.co.kr/magazine" target="_blank" rel="noopener" class="more-chip ms-1">더보기 ›</a>
         </div>
         <div class="col-strip">
             {% for c in food_columns.bluer %}
@@ -192,9 +197,8 @@
 
 {# ── 우측: 최근 먹은 음식 (달력형) ──────────────────── #}
     <div class="col-lg-4">
-        <!-- 💡 카드 전체 배경을 흰색으로 강제 고정 -->
-        <div class="card shadow-sm" style="background-color: #ffffff !important;">
-            <div class="card-header d-flex justify-content-between align-items-center" style="background-color: #ffffff !important;">
+        <div class="card shadow-sm">
+            <div class="card-header card-header-plain d-flex justify-content-between align-items-center">
                 {% if user.is_authenticated %}
                 <div class="d-flex align-items-center gap-2">
                     <a href="?cal_year={{ meal_calendar.prev_year }}&cal_month={{ meal_calendar.prev_month }}"
@@ -214,8 +218,8 @@
                 {{ meal_calendar.records_by_day|json_script:"cal-records" }}
                 <div class="card-body p-2">
                     <!-- 💡 테이블 테두리(bordered) 추가 및 바탕색 흰색 강제 고정 -->
-                    <table class="table table-sm table-bordered mb-0 meal-calendar" style="background-color: #ffffff !important; text-align: center; table-layout: fixed;">
-    <thead style="background-color: #fcfcfc !important;">
+                    <table class="table table-sm table-bordered mb-0 meal-calendar" style="background-color: var(--surface) !important; text-align: center; table-layout: fixed;">
+    <thead style="background-color: var(--surface) !important;">
         <tr>
             <th>일</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th>
         </tr>
@@ -224,7 +228,7 @@
         {% for week in meal_calendar.weeks %}
         <tr>
             {% for cell in week %}
-            <td style="background-color: #ffffff !important; height: 90px; vertical-align: top; padding: 4px;">
+            <td style="background-color: var(--surface) !important; height: 90px; vertical-align: top; padding: 4px;">
     {% if cell %}
         <div class="cal-cell-content h-100 d-flex flex-column align-items-center" data-day="{{ cell.day }}" data-date="{{ meal_calendar.year }}년 {{ meal_calendar.month }}월 {{ cell.day }}일" style="cursor: pointer;">
             
@@ -244,12 +248,12 @@
     </tbody>
 </table>
                 </div>
-                <div class="card-body border-top small text-muted py-2 d-flex justify-content-between" style="background-color: #ffffff !important;">
+                <div class="card-body border-top small text-muted py-2 d-flex justify-content-between">
                     <span>이번 달 총 <strong>{{ meal_calendar.total }}</strong>끼 기록</span>
                     <span class="text-muted">날짜를 눌러 상세 보기</span>
                 </div>
             {% else %}
-                <div class="card-body text-muted small" style="background-color: #ffffff !important;">
+                <div class="card-body text-muted small">
                     <a href="{% url 'accounts:login' %}">로그인</a>하면 식사 기록을 볼 수 있어요.
                 </div>
             {% endif %}
@@ -257,51 +261,63 @@
 
         {# ── MY밥픽: 개인 요약(통계·선호·찜한 메뉴·랜덤픽) + 많이 먹은 음식 그래프 ── #}
         <div class="card shadow-sm mt-3">
-            <div class="card-header fw-semibold">🧡 MY밥픽</div>
+            <div class="card-header">🧡 MY 밥픽</div>
             {% if user.is_authenticated %}
-                {# 미니 통계 + 선호 요리종류 #}
+                {# 미니 통계 #}
                 <div class="card-body pb-2">
-                    <div class="mybobpick-stats d-flex justify-content-around text-center mb-2">
-                        <div><div class="mybobpick-num">♥ {{ my_likes_count }}</div><div class="mybobpick-lbl">좋아요</div></div>
-                        <div><div class="mybobpick-num">🍽 {{ my_records_count }}</div><div class="mybobpick-lbl">기록</div></div>
-                        <div><div class="mybobpick-num">✍ {{ my_reviews_count }}</div><div class="mybobpick-lbl">후기</div></div>
+                    <div class="mybobpick-stats d-flex justify-content-around text-center">
+                        <div><div class="mybobpick-num">❤️ {{ my_likes_count }}</div><div class="mybobpick-lbl">좋아요</div></div>
+                        <div><div class="mybobpick-num">🍽️ {{ my_records_count }}</div><div class="mybobpick-lbl">기록</div></div>
+                        <div><div class="mybobpick-num">✍️ {{ my_reviews_count }}</div><div class="mybobpick-lbl">후기</div></div>
                     </div>
-                    {% if my_top_cuisines %}
-                    <div class="d-flex flex-wrap gap-1 justify-content-center">
-                        <span class="small text-muted me-1">선호</span>
-                        {% for cz in my_top_cuisines %}
-                        <span class="badge rounded-pill text-bg-warning">{{ cz.name }}</span>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
                 </div>
 
-                {% if my_bobpick %}
-                <div class="px-3 d-flex justify-content-between align-items-center">
-                    <span class="small fw-semibold">찜한 메뉴</span>
-                    <a href="{% url 'accounts:profile' %}#liked-menus" class="small text-decoration-none">전체보기 &gt;</a>
+                {# 선호 요리종류 — 제목 칸 자체를 색칠하고, 그 밑줄로 구분 #}
+                {% if my_top_cuisines %}
+                <div class="mybobpick-subhead">선호하는 음식 분야</div>
+                <div class="card-body py-2">
+                    <div class="food-bars">
+                        {% for p in my_top_cuisines %}
+                        <div class="food-bar">
+                            <div class="food-bar-label">{{ p.name }}</div>
+                            <div class="food-bar-track">
+                                <div class="food-bar-fill" style="width: {{ p.pct }}%"></div>
+                            </div>
+                            <div class="food-bar-value">{{ p.pct }}%</div>
+                        </div>
+                        {% endfor %}
+                    </div>
                 </div>
-                <ul class="list-group list-group-flush">
-                    {% for menu in my_bobpick %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center py-2">
-                        <a href="{% url 'menus:detail' menu.pk %}" class="text-decoration-none text-body">
-                            {{ menu.name }}
-                        </a>
-                        <span class="badge text-bg-light border">{{ menu.cuisine.name }}</span>
-                    </li>
-                    {% endfor %}
-                </ul>
+                {% endif %}
+
+                {# 찜한 메뉴 — 제목 칸 자체를 색칠하고, 그 밑줄로 구분 #}
+                {% if my_bobpick %}
+                <div class="mybobpick-subhead">
+                    <span>찜한 메뉴</span>
+                    <a href="{% url 'menus:liked' %}" class="text-decoration-none">전체 보기 &gt;</a>
+                </div>
+                <div class="card-body py-2">
+                    <ul class="mybobpick-liked-list list-unstyled mb-0">
+                        {% for menu in my_bobpick %}
+                        <li class="mybobpick-liked-item">
+                            <a href="{% url 'menus:detail' menu.pk %}" class="text-decoration-none text-body">{{ menu.name }}</a>
+                            <span class="badge text-bg-light border">{{ menu.cuisine.name }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
                 {% else %}
-                <div class="card-body text-muted small border-top">
+                <div class="mybobpick-subhead">찜한 메뉴</div>
+                <div class="card-body text-muted small">
                     아직 좋아요한 메뉴가 없습니다. 메뉴 카드의 ♥ 버튼을 눌러보세요.
                 </div>
                 {% endif %}
 
-                <div class="card-body border-top">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="small fw-semibold">📊 많이 먹은 음식</span>
-                        <a href="{% url 'accounts:profile' %}" class="small text-decoration-none">전체 통계 &gt;</a>
-                    </div>
+                <div class="mybobpick-subhead">
+                    <span>📊 많이 먹은 음식</span>
+                    <a href="{% url 'records:food_stats' %}" class="text-decoration-none">전체 통계 &gt;</a>
+                </div>
+                <div class="card-body py-2">
                     {% if food_stats %}
                     <div class="food-bars">
                         {% for f in food_stats %}
@@ -332,7 +348,7 @@
 <div class="modal fade" id="addRecordModal" tabindex="-1" aria-labelledby="addRecordModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <!-- 💡 모달 바탕색 흰색 강제 고정 -->
-        <form method="post" action="{% url 'records:create' %}" class="modal-content" style="background-color: #ffffff !important;">
+        <form method="post" action="{% url 'records:create' %}" class="modal-content" style="background-color: var(--surface) !important;">
             {% csrf_token %}
             <div class="modal-header">
                 <h5 class="modal-title" id="addRecordModalLabel">🍚 오늘 먹은 음식 기록하기</h5>
@@ -343,7 +359,7 @@
                 <!-- 💡 1. 날짜 입력칸 추가 -->
                 <div class="mb-3">
                     <label for="record_date" class="form-label fw-semibold">식사 날짜</label>
-                    <input type="date" id="record_date" name="record_date" class="form-control" style="background-color: #ffffff !important;" required>
+                    <input type="date" id="record_date" name="record_date" class="form-control" style="background-color: var(--surface) !important;" required>
                 </div>
 
                 <div class="mb-3">
@@ -371,7 +387,7 @@
                 {% include "records/_food_combobox.html" %}
                 <div class="mb-3">
                     <label for="rating" class="form-label fw-semibold">만족도</label>
-                    <select id="rating" name="rating" class="form-select" style="background-color: #ffffff !important;">
+                    <select id="rating" name="rating" class="form-select" style="background-color: var(--surface) !important;">
                         <option value="5">⭐⭐⭐⭐⭐ (최고였어요!)</option>
                         <option value="4">⭐⭐⭐⭐ (맛있어요)</option>
                         <option value="3">⭐⭐⭐ (무난해요)</option>
@@ -381,7 +397,7 @@
                 </div>
                 <div class="mb-3">
                     <label for="comment" class="form-label fw-semibold">한줄평</label>
-                    <textarea id="comment" name="comment" class="form-control" rows="3" style="background-color: #ffffff !important;" placeholder="맛이나 식당 정보 등 가벼운 메모를 남겨보세요."></textarea>
+                    <textarea id="comment" name="comment" class="form-control" rows="3" style="background-color: var(--surface) !important;" placeholder="맛이나 식당 정보 등 가벼운 메모를 남겨보세요."></textarea>
                 </div>
             </div>
             <div class="modal-footer">
@@ -396,7 +412,7 @@
 <div class="modal fade" id="dayDetailModal" tabindex="-1" aria-labelledby="dayDetailTitle" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <!-- 💡 상세 모달 바탕색 흰색 강제 고정 -->
-        <div class="modal-content" style="background-color: #ffffff !important;">
+        <div class="modal-content" style="background-color: var(--surface) !important;">
             <div class="modal-header">
                 <h5 class="modal-title" id="dayDetailTitle">식사 기록</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -404,7 +420,7 @@
             <div class="modal-body" id="dayDetailBody"></div>
             <div class="modal-footer">
                 <a href="{% url 'records:history' %}" class="btn btn-outline-secondary btn-sm fw-semibold">
-                    📋 식사 히스토리 전체보기
+                    📋 식사 히스토리 전체 보기
                 </a>
             </div>
         </div>
@@ -423,7 +439,7 @@
     var modalEl = document.getElementById('dayDetailModal');
     var titleEl = document.getElementById('dayDetailTitle');
     var bodyEl = document.getElementById('dayDetailBody');
-    var mealBadge = { '아침': 'text-bg-warning', '점심': 'text-bg-primary', '저녁': 'text-bg-dark', '간식': 'text-bg-info' };
+    var mealBadge = { '아침': 'badge-breakfast', '점심': 'badge-lunch', '저녁': 'badge-dinner', '간식': 'badge-snack' };
     function esc(s) {
         return (s || '').replace(/[&<>"']/g, function (c) {
             return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -494,10 +510,16 @@
 </script>
 {% endif %}
 
-{# 추천 카드 새로고침(AJAX) — 카드만 교체해 화면이 상단으로 튀지 않게. 비로그인도 동작. #}
+{# 추천 카드 새로고침/고정(AJAX) — 카드만 교체해 화면이 상단으로 튀지 않게. 비로그인도 동작. #}
 <script>
 (function () {
-    var endpoint = "{% url 'menus:reroll' %}";
+    var rerollEndpoint = "{% url 'menus:reroll' %}";
+    var pinEndpoint = "{% url 'menus:toggle_pin' %}";
+
+    function getCookie(name) {
+        var m = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+        return m ? m.pop() : '';
+    }
 
     function currentCuisineQS() {
         var params = new URLSearchParams(window.location.search);
@@ -506,44 +528,80 @@
         return qs;
     }
 
-    // 카드 하나 재추첨 → 카드 DOM 교체(교체된 카드의 버튼 재바인딩).
+    // 카드 하나 재추첨 → 카드 DOM 교체(교체된 카드의 버튼 재바인딩). 고정된 카드는 버튼이 없어 스킵.
+    // (data-reroll-slot 속성으로 찾는다 — 클래스는 고정 버튼과 스타일을 공유하므로 클래스 셀렉터는 쓰지 않는다.)
     function reroll(box) {
-        var btn = box && box.querySelector('.rec-box-reroll');
+        var btn = box && box.querySelector('[data-reroll-slot]');
         if (!btn) return Promise.resolve();
         var qs = currentCuisineQS();
         qs.set('slot', btn.getAttribute('data-reroll-slot'));
-        btn.textContent = '…';
-        return fetch(endpoint + '?' + qs.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        return fetch(rerollEndpoint + '?' + qs.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 if (!data.html) throw new Error('no html');
-                var tmp = document.createElement('div');
-                tmp.innerHTML = data.html.trim();
-                var newBox = tmp.firstElementChild;
-                box.replaceWith(newBox);
-                bind(newBox);
+                replaceBox(box, data.html);
             })
             .catch(function () { window.location.href = btn.getAttribute('href'); });  // 폴백: 링크 이동
     }
 
-    function bind(box) {
-        var btn = box.querySelector('.rec-box-reroll');
-        if (!btn) return;
-        btn.addEventListener('click', function (e) {
-            e.preventDefault();
-            reroll(box);
-        });
+    // 고정/해제 토글 → 카드 DOM 교체(화면에 보이던 메뉴는 그대로, 버튼 상태만 바뀜).
+    function togglePin(box) {
+        var btn = box && box.querySelector('[data-pin-slot]');
+        if (!btn) return Promise.resolve();
+        var qs = currentCuisineQS();
+        qs.set('slot', btn.getAttribute('data-pin-slot'));
+        qs.set('menu_id', btn.getAttribute('data-menu-id'));
+        return fetch(pinEndpoint, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: qs.toString(),
+        })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data.html) throw new Error('no html');
+                replaceBox(box, data.html);
+            })
+            .catch(function () { alert('고정 처리에 실패했습니다. 다시 시도해 주세요.'); });
     }
 
-    document.querySelectorAll('.rec-box-reroll').forEach(function (btn) {
+    function replaceBox(box, html) {
+        var tmp = document.createElement('div');
+        tmp.innerHTML = html.trim();
+        var newBox = tmp.firstElementChild;
+        box.replaceWith(newBox);
+        bind(newBox);
+    }
+
+    function bind(box) {
+        var rerollBtn = box.querySelector('[data-reroll-slot]');
+        if (rerollBtn) {
+            rerollBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                reroll(box);
+            });
+        }
+        var pinBtn = box.querySelector('[data-pin-slot]');
+        if (pinBtn) {
+            pinBtn.addEventListener('click', function () {
+                togglePin(box);
+            });
+        }
+    }
+
+    document.querySelectorAll('[data-reroll-slot], [data-pin-slot]').forEach(function (btn) {
         bind(btn.closest('.rec-box'));
     });
 
-    // 전체 새로고침: 재추첨 가능한 3개 카드를 동시에 교체
+    // 전체 새로고침: 재추첨 가능하면서 '고정' 안 된 카드만 동시에 교체(고정된 카드는 새로고침
+    // 버튼 자체가 없으므로 아래 셀렉터에 자동으로 안 잡혀 제외된다).
     var allBtn = document.getElementById('rerollAll');
     if (allBtn) {
         allBtn.addEventListener('click', function () {
-            document.querySelectorAll('.rec-box-reroll').forEach(function (btn) {
+            document.querySelectorAll('[data-reroll-slot]').forEach(function (btn) {
                 reroll(btn.closest('.rec-box'));
             });
         });
@@ -573,7 +631,7 @@
     .hscroll-btn {
         position: absolute; top: 38%; transform: translateY(-50%);
         width: 34px; height: 34px; border-radius: 50%; border: none;
-        background: rgba(255,255,255,.94); color: #2b1b12; font-size: 1.35rem; line-height: 1;
+        background: rgba(255,255,255,.94); color: #2B1B12; font-size: 1.35rem; line-height: 1;
         box-shadow: 0 2px 8px rgba(0,0,0,.22); cursor: pointer; z-index: 3;
         display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .15s;
     }

@@ -4,6 +4,110 @@
 
 ---
 
+## 2026-07-23
+
+- **대시보드 카드 헤더에 은은한 동일계열 그라데이션**
+  단색 헤더가 무겁고 밋밋하다는 피드백 → 각 헤더를 자기 색 계열의 미세한 명도 그라데이션(위 ~12% 밝게 → 기존 색)으로 교체해 광택·입체감 부여(색 정체성은 유지). 예전에 뺐던 "두 색 섞는" 그라데이션과 달리 같은 계열이라 튀지 않음. 6개 컬러 헤더(점심/저녁/BEST/취향/실시간=테라코타/음식후기) + 기본 card-header(옅은 피치)까지. 다크모드에선 기본 card-header 그라데이션 top이 밝게 뜨는 것과 저녁 헤더가 어두운 카드에 묻히는 것만 override로 보정. CSS-only(재시작 불필요).
+
+- **대시보드 카드 헤더 색 웜 램프로 재정리 + 토글/글씨 두께 마감**
+  여러 번 손보며 뒤엉킨 헤더 색(스왑·저녁 인디고 등)을 따뜻한 컬러 램프로 재정렬(전부 웜톤): 실시간 인기 순위=테라코타, 점심=오렌지, 저녁=진한 에스프레소(`--chip-dark` 인디고 #4B3A6B→#5C3A28, 순검정 아님), BEST=골드, 취향=딥오렌지, 음식 후기=캐러멜(원복). 음식 후기 헤더가 다시 어두워져 일간/주간 토글도 반투명 흰색 버전으로 원복. 저녁은 캘린더 배지와 변수 공유라 함께 반영(다크모드 override #7E5A40).
+  - 다크모드 토글 라이트 트랙이 너무 검은색(#2B1B12) → 부드러운 웜 다크브라운(#5F4A3B)으로 완화.
+  - 실시간 인기 순위 글씨만 두껍던 것: `.card-header` 두께 700→500(rec-box 헤더와 통일) + 마크업의 `fw-semibold`(600!important) 제거(실시간 인기 순위·MY 밥픽 2곳).
+  - 적용 등 버튼 글씨 두꺼움: `.btn` 기본 두께 600→500(GmarketSans Bold→Medium). `fw-bold` 명시 버튼(게임 등)은 700 유지.
+
+- **게임/대시보드 자잘한 UI 다듬기 (다크모드 후속 포함)**
+  - 게임 서브페이지(돌림판/사다리/월드컵) 상단 "메인으로" 버튼 삭제(게임 목록만 남김).
+  - 돌림판 "돌리기"/"다시 섞기" 버튼 앞 이모지(🎯/🔀) 제거로 깔끔하게. "메뉴 직접 추가하기"의 "추가" 버튼이 세로로 줄바꿈되던 것 → `flex-shrink-0 text-nowrap`으로 가로 고정.
+  - 음식 이상형 월드컵 카드 배경이 `#fff` 하드코딩이라 다크모드에서 흰 카드+밝은 글자로 안 보이던 것 → `var(--surface)`로 교체.
+  - 대시보드 캘린더 끼니 배지를 Bootstrap `text-bg-*`(저녁=`text-bg-dark`라 다크모드에서 배경과 겹쳐 안 보임) → 커스텀 웜 클래스(`badge-breakfast/lunch/dinner/snack`, `--chip-dark` 등 다크 대응)로 교체. `badge-snack` 신규.
+  - 음식 후기 카드의 일간/주간 토글 색을 흰색 → "+오늘 뭐 먹었어?"와 같은 브랜드 오렌지(활성)+반투명(비활성)으로 통일(`.period-toggle`).
+  - 실시간 인기 순위 옆 후기가 칸이 남았는데도 24자에서 잘리던 것 → 서버 truncate 24→80 + `flex-fill`/`min-width:0`으로 실제 남은 폭까지 채우고 그 지점에서만 말줄임.
+
+- **다크모드 추가 (웜 다크브라운, 토글=우측 상단 회원정보 영역)**
+  팔레트가 전부 CSS 변수라 `html[data-theme="dark"]`에서 변수(`--cream`/`--surface`/`--ink`/`--muted`/`--line`/`--brand-soft`/`--badge-bg-light`/그림자)만 재정의해 전 페이지가 다크로 전환. 웜 다크브라운(배경 #1E1813, 카드 #2A231D, 글자 웜 오프화이트), 브랜드 오렌지 포인트는 유지.
+  - `base.html`: `<head>`에 플래시(FOUC) 방지 인라인 스크립트(CSS 로드 전 localStorage 테마를 `<html>`의 `data-theme`+`data-bs-theme`에 세팅), `</body>` 앞 토글 JS(클릭 시 토글+localStorage 저장). Bootstrap 컴포넌트(모달/폼/리스트/테이블)는 `data-bs-theme="dark"`로 자동 다크.
+  - 토글 버튼: 우측 상단 회원정보 영역 + 미니헤더(로그인/회원가입)에 해/달 SVG 아이콘(`_theme_toggle.html` 공용 partial, CSS가 테마별로 아이콘 하나만 표시).
+  - 하드코딩 밝은색 처리: `dashboard.html` 인라인 `#ffffff/#fcfcfc !important` 8곳(캘린더·모달·폼) → `var(--surface) !important`(다크 자동 적응), `.card`/`.rec-box` 흰색 그라데이션 → 다크용 override.
+  - **var(--ink) 뒤집힘 버그 수정**: 배너(`.navbar-pill`)·저녁 카드헤더·저녁 배지·hscroll 화살표가 `--ink`를 배경/아이콘색으로 써서 다크에서 밝게 뒤집혀 깨졌음 → 배너는 고정 다크브라운(#2B1B12)으로, 저녁 헤더/배지는 안 뒤집히는 전용 토큰 `--chip-dark`(라이트 #2B1B12 / 다크 #6A5340, 흰 글자 유지)로 교체.
+
+- **G마켓 산스 적용 후 글자가 전반적으로 위로 떠 보이던 문제 — @font-face 메트릭 오버라이드로 전역 세로 중앙 보정**
+  카드 헤더·버튼·배지·추천 카드 헤더·탭·서브헤드·링크 등에서 글자가 미묘하게 위로 올라가 보였음. 원인은 GmarketSans의 hhea 메트릭이 ascent 84.7%/descent 34%로 비대칭(디자이너 typo 메트릭은 80/20)이라 세로 중앙보다 높게 렌더된 것. 요소마다 땜질하는 대신 `@font-face`에 `ascent-override: 82%; descent-override: 18%; line-gap-override: 0%`를 줘서 전 요소 한 번에 보정(폰트 실제 메트릭은 fonttools로 확인). 앞서 랭킹 숫자에 넣었던 개별 `padding-top` 땜질은 중복이라 제거. 배너/회원정보 폰트는 각자 폰트라 영향 없음.
+- **"전체보기" → "전체 보기" 띄어쓰기**(찜한 메뉴 등 대시보드·마이페이지 section-link 전부). 템플릿 변경이라 gunicorn 재시작 후 반영.
+
+- **콘텐츠 폰트를 G마켓 산스로 교체(배너·회원정보 영역 제외)**
+  기존 본문이 `Pretendard`로 지정돼 있었으나 실제 폰트 파일이 없어 system 기본 폰트로 폴백돼 밋밋했음. G마켓 산스와 페이퍼로지를 자가 호스팅(woff2, jsDelivr `fonts-archive`에서 받아 `static/fonts/`에 저장)으로 둘 다 설치해 `--ui-font` 변수로 A/B 비교 후 **G마켓 산스로 확정**(페이퍼로지 파일·@font-face 정리). 콘텐츠 폰트 지정은 `body`(theme.css) + accounts `.title` 3곳뿐이라 `var(--ui-font)`로 바꾸니 제목·카드·본문·버튼 전체가 상속으로 따라옴. 배너 폰트(MungyeongGamhongApple 로고·Cafe24MoyaMoya 영문·RomanticGumi 한글)와 상단 회원정보(GamwulchiFreeGothic)는 각자 폰트를 명시 지정하고 있어 그대로 유지됨. G마켓 산스 굵기 매핑: Medium=400~500(본문), Bold=600~800(제목).
+
+- **색상 웜 팔레트로 통일(재배치) + 입체감 살짝 낮춤**
+  배너(navbar-pill)·상단 회원정보 영역(`.user-area`)은 그대로 두고, 나머지 색이 서로 잘 어울리게 재배치(색만 조정, `theme.css` 한 파일, CSS-only).
+  - **추천 카드 헤더 6종**을 오렌지·브라운·골드·빨강 제각각 → 웜 램프로 통일(6종 구분 유지): 점심=오렌지(`--brand`), 저녁=다크브라운(`--ink`), 취향=딥오렌지(`--brand-dark`), best=골드(`--gold`), 인기=테라코타(신규 `--terracotta #C25E3A`, 기존 쿨 레드 `--danger`에서 변경), 후기=소프트브라운(신규 `--warm-brown #9E6B4A`, 기존 `--danger`에서 변경). 빨강 제거.
+  - **차가운 색 전부 웜화**: 아침 배지 파랑(`--meal-breakfast #6FA3EF`)→허니/앰버(`#E3A24A`), 좋아요 하트 핑크(`--like #EC4899`)→웜 로즈코랄(`#E86A70`, `--like-dark`도 `#D4525A`로), 좋아요 아웃라인 버튼의 핑크 테두리(`#F7B6D2`)→웜 코랄 틴트(`#F3C0AC`).
+  - **입체감 살짝 낮춤**: 강화했던 그림자 토큰(`--shadow-sm`/`--shadow-md`)을 약 70% 수준으로 완화(배너 pill 자체 그림자는 유지).
+  - `--danger`(삭제/에러)·`--success`(성공)·카드헤더/서브헤드/그래프/별점(이미 웜)은 그대로 둠.
+
+- **배경색을 채도 있는 크림/피치(#F8DFC4) → 차분한 웜 그레이베이지(#EFE7DC)로 변경**
+  입체감 강화 후에도 "티가 덜 난다"는 피드백 — 배경 채도가 높아 흰 카드와의 대비가 애매했던 게 원인. `--cream`을 웜 그레이베이지로 낮춰서 흰 카드·그림자가 확실히 떠 보이고 대시보드가 더 차분·고급스러워짐. 브랜드 오렌지 포인트(`--brand`)와 소프트 피치 액센트(`--brand-soft`: 카드 헤더·배지·그래프 트랙 등)는 그대로 둬서 브랜드 정체성 유지. (배경은 CSS 변수 `--cream` 한 곳만 바꿔 전 페이지 일괄 반영)
+
+- **사이트 전반 입체감(깊이감) 강화 — 은은하고 고급스럽게**
+  카드·배너·추천카드가 다소 납작해 보인다는 요청. 색/레이아웃/구조는 그대로 두고 `theme.css`만 손봄(전부 CSS 값 조정이라 gunicorn 재시작 불필요). ① 그림자 토큰(`--shadow-sm`/`--shadow-md`)을 단일 레이어 → 3겹 부드러운 레이어로 업그레이드(가까운 곳 또렷·먼 곳 넓고 옅게, 실제 조명처럼) — `.card`/`.rec-box`/`.navbar-pill`/버튼 등에 자동 반영. ② `.card`·`.rec-box` 배경을 순백→미세 세로 그라데이션(위 밝고 아래 살짝 따뜻)+상단 하이라이트 라인(inset). ③ 배너 pill에 상단 모서리 빛반사(inset)+더 깊은 그림자, 배경도 윗면만 살짝 밝은 미세 그라데이션. ④ 음식 그래프: 트랙은 inset으로 음각, 채움은 같은 브랜드 hue 상단광+미세 그림자로 볼록. ⑤ 순위 원형 배지·`.btn-primary`에 상단 inset 하이라이트로 살짝 볼록. 추천 카드 헤더(`.rec-box-head`)는 이전에 사용자가 "그라데이션 빼줘"라고 한 걸 존중해 두 색 그라데이션 재도입 없이 inset 상/하 음영으로만 입체 처리(색 정체성 유지).
+
+- **브라우저 창 크기를 바꾸면 레이아웃이 늘어나거나 줄어들며 깨지던 문제 — 전체 폭을 픽셀로 완전 고정**
+  "창을 좁히면 레이아웃이 줄지 말고 잘리면서 가로 스크롤이 뜨게 해달라"는 요청. 여러 번 시행착오 끝(입력장치 기반 `@media hover/pointer` 분기, `body min-width`, `.container max-width` 등은 전부 실패)에 최종 원인·해결 확정:
+  - **핵심 원인**: Bootstrap `.container`는 기본이 `width: 100%`라, `max-width`만 걸면 창을 좁힐 때 그대로 같이 줄어든다(고정이 안 됨). → `max-width`가 아니라 **`.container { width: 1320px }`로 폭 자체를 픽셀로 못 박음** + `body { min-width: 1320px }` + `html { overflow-x: auto }`로 창이 좁으면 가로 스크롤이 뜨게 함. 게임/찜한메뉴/기록 등 인라인 `style="max-width:…"`·`.page-narrow`로 더 좁게 잡은 컨테이너는 `max-width`가 이 `width`를 더 작게 눌러줘서 그대로 유지됨.
+    - **추가 함정(GAME 잘림·안쪽 변형 재발)**: `width:1320px`만으론 부족했다 — Bootstrap이 뷰포트 구간마다 `.container`에 거는 `max-width`(`@media 992px↑=960`, `1200px↑=1140` …)가 이 `width`를 도로 눌러서, 창을 좁히면 컨테이너가 1140→960으로 줄어들고(그래서 GAME이 잘리고 안쪽 카드도 변형됨). `.container { max-width: none }`으로 그 캡 자체를 풀어야 1320px이 창 크기와 무관하게 유지된다(`.page-narrow`/인라인 `max-width`는 이 규칙보다 뒤·우선순위라 그대로 더 좁게 유지). 컨테이너가 1140일 땐 네비바(총 폭 약 1192px)가 넘쳐 GAME이 잘렸고, 1320으로 고정되면 여유있게 들어감.
+  - **폭 값 1320px**: 1140px로 잡았더니 네비바(nav-cell 여백이 큰 디자인)엔 너무 좁아 "GAME"이 잘렸음 → 배너 원래 디자인 폭인 1320px로 올려 여유있게 들어가게 함.
+  - **그리드 적층 방지**: `.col-lg-8/4`, `.col-md-4/5/6/7`, `.row-cols-sm-2/md-3/lg-4`는 뷰포트 기준 `@media` 안에서만 폭이 정해져서 창을 좁히면 규칙이 풀려 세로로 쌓임 → 뷰포트와 무관하게 데스크톱 폭으로 `!important` 고정.
+  - **네비바 세로 적층 방지**: Bootstrap `.navbar-nav`는 기본이 `flex-direction: column`이고 `row`로 바꾸는 규칙도 `@media(min-width:992px)` 안에만 있어(햄버거 토글 없음) 창 좁히면 메뉴/후기/랭킹/게임이 세로로 쌓였음 → `.navbar-pill .nav-cells`를 항상 `flex-direction: row`, 감싸는 `.container-fluid`를 `flex-wrap: nowrap`으로 고정.
+  - 참고: 입력장치로 데스크톱/모바일을 구분하려던 `@media (hover)/(pointer)`·`(any-hover)/(any-pointer)`는 실기기(터치스크린 노트북 등)에서 안 먹혀 전부 제거하고 무조건 적용으로 바꿈(모바일 최적화보다 "고정 레이아웃" 요구를 우선).
+
+- **"후기"/"메뉴 랭킹" 등 페이지 제목이 계속 두껍게 깨져 보이던 문제 — 근본 원인은 폰트 자체, `h1~h4` 전역 규칙에서 Black Han Sans를 아예 제거**
+  `.page-title`/`.title`만 개별적으로 고쳐도 재발해서, 전체 코드베이스의 `<h1>`~`<h4>` 사용처를 전수 조사(`grep -rn "<h[1-4]"`)한 결과 Black Han Sans(`--display-font`)를 실제로 득 보며 쓰는 곳이 사이트 어디에도 없다는 걸 확인(네비바 로고는 별도로 `MungyeongGamhongApple`을 직접 지정해서 씀). `h1, h2, h3, h4` 전역 규칙 자체에서 `--display-font`를 빼고 본문 폰트(Pretendard, `font-weight: 700`)로 통일 — `.section-title`(마이페이지), `.modal-title`(회원가입 완료 팝업), 클래스 없는 `<h4>`(메뉴 상세의 "후기 (n)")까지 전부 한 번에 해결됨. 이제 아무데서도 안 쓰는 `--display-font` 변수와 `base.html`에서 로드하던 Black Han Sans 구글 폰트 `<link>`도 함께 제거.
+
+- **돌림판 화살표 원복 + 조각 색깔을 다양하게(홀/짝 상관없이 인접 조각 겹침 방지)**
+  화살표(▼)를 흰 원형 배지로 감쌌던 걸 되돌려 원래의 단순한 텍스트 화살표(고동색)로 복귀. 조각 색은 오렌지/고동색 2색 교대 대신 사다리타기 게임과 같은 8색 팔레트(`--ladder-1~8`)를 순서대로 배정하고, 조각 수가 바뀔 때마다 마지막 조각과 첫 조각이 원형으로 맞닿으며 같은 색이 되는 경우(예: 짝수 팔레트에 홀수 개수)만 감지해서 다른 색으로 교체하는 로직 추가 — 2~12개 전 구간에서 인접 조각 색 겹침 없음 확인. 라벨 글자색도 배경색 밝기를 계산해 밝으면 잉크색, 어두우면 흰색으로 자동 선택해 가독성 확보.
+
+- **메뉴 돌림판/사다리타기 게임 대폭 보강**
+  - 돌림판: 캔버스를 320px→560px로 키우고, 메뉴 이름이 길면 6글자로 자르던 것을 없애고 대신 `ctx.measureText()`로 실제 폭을 재서 안 잘리게 글자 크기를 자동으로 줄이는 방식으로 교체(`fitFontSize`) — 이름이 아무리 길어도 안 깨짐. 중앙 상단 화살표(`.roulette-pointer`)가 원판 조각 색(오렌지/고동색)과 겹쳐 안 보이던 문제는, 화살표를 흰 원형 배지 안에 넣어(`background: var(--surface)`, 그림자) 원판 어떤 색이 걸리든 항상 대비되게 수정.
+  - 돌림판에 메뉴를 직접 입력하거나(자유 텍스트) 전체 메뉴 중에서 골라서(`<datalist>`) 원판에 추가/삭제할 수 있는 편집 UI 추가(최소 2개~최대 12개). 전체 메뉴와 이름이 일치하면 실제 메뉴로 연결(상세보기 가능), 아니면 커스텀 항목으로 취급(상세보기 링크 숨김). 스핀 중엔 편집 버튼 비활성화.
+  - 사다리타기: 인원수가 4/6/8 중 고정 선택이던 것을 숫자 입력(2~10명 자유 설정, `menus/views.py`의 `game_ladder` 뷰 범위 검증 변경)으로 교체.
+  - 사다리타기 시작 전에 사다리 가로줄(rung)이 미리 다 보여서 경로를 눈으로 추적할 수 있던 문제 수정 — "게임 시작" 버튼을 누르기 전엔 캔버스를 비워두고(참가자 이름·메뉴 이름만 입력받음), 시작 버튼을 눌러야 그때 처음 사다리 모양이 그려지고 각 참가자별 "▼ 시작" 버튼이 나타나도록 변경.
+  - 사다리타기의 메뉴 이름도 돌림판과 동일하게 직접 입력하거나 전체 메뉴 중에서 선택(`<datalist>`)해서 바꿔치기할 수 있도록 하단 라벨을 입력창으로 변경, "게임 시작" 시점에 값을 확정(전체 메뉴와 이름이 일치하면 실제 메뉴로 연결).
+
+- **추천 카드 메뉴 이름 글씨가 두꺼워서 깨져 보이던 버그 수정**
+  대시보드 추천 카드(`.rec-box-name`)가 짧고 고정된 제목에만 써야 하는 초굵은 단일 굵기 디스플레이 폰트(Black Han Sans)를 실제 메뉴 이름(길이가 제각각인 실데이터)에 그대로 쓰고 있어서, 획이 많은 메뉴명은 글자가 뭉개져 보였음. 본문 폰트(Pretendard, `font-weight: 700`)로 교체.
+
+- **MY밥픽 "전체보기"/"전체 통계" 링크가 마이페이지를 거치지 않고 실제 전체 페이지로 바로 이동하도록 수정**
+  대시보드 MY밥픽 카드의 "찜한 메뉴 전체보기"는 `accounts:profile#liked-menus`(마이페이지 앵커, 거기서도 또 "전체보기"를 눌러야 진짜 찜한 메뉴 목록으로 감)로, "많이 먹은 음식 전체 통계"는 그냥 `accounts:profile`로 가고 있어서 한 번 더 거쳐야 했음. 각각 실제 목적지인 `menus:liked`/`records:food_stats`로 바로 연결되게 수정.
+
+- **마이페이지(마이페이지) 세로 스크롤 단축 — 2열 그리드로 재배치**
+  식사 히스토리·찜한 메뉴·음식 통계·알러지/호불호 4개 미리보기 카드가 전부 세로로 한 줄씩 쌓여 있어 페이지가 너무 길었음. 4개를 `row g-4` + `col-md-6` 2×2 그리드로 재배치(카드 높이는 `h-100`으로 맞춤), 마이페이지 컨테이너 폭도 700px→920px로 넓힘(`.profile-wide` 클래스, 회원탈퇴 확인 페이지는 기존 700px 그대로 유지). 최근 본 후기·계정 관리 영역은 내용이 가로로 넓어서 기존대로 전체 폭 유지.
+
+- **콘텐츠 페이지 제목 폰트가 가짜 볼드로 깨져 보이던 버그 수정**
+  `.page-title`(새로 추가한 공용 제목 클래스)과 accounts의 `.title`이 `font-weight: 800`/`bold`였는데, 두 클래스 다 Black Han Sans(굵기 한 가지뿐인 폰트)를 쓰는 `h1~h4`에 적용되면서 브라우저가 가짜 볼드를 합성해 획이 뭉개져 보였음. 전부 `font-weight: 400`으로 수정(`theme.css`에 이미 있던 "Black Han Sans는 굵게 주면 안 된다"는 규칙과 통일). 같은 패턴(`<h3 class="fw-bold">`)이 있던 게임 페이지 3개(돌림판/사다리타기/월드컵)·후기의 "최근 본 후기"·랭킹 페이지 제목도 전부 `.page-title`로 교체하며 함께 수정.
+
+- **로그인/회원가입 로고를 그림 → 글씨(BOBPICK 워드마크)로 교체 + 상단 미니헤더 제거**
+  카드 안 그림 로고(`accounts/images/logo.png`)를 네비바와 같은 워드마크 폰트(`MungyeongGamhongApple`)로 그린 "BOBPICK" 글씨 로고로 교체. 위쪽에 따로 있던 미니 헤더(로고만 있는 버전)는 카드 안 로고와 중복이라 `{% block header %}{% endblock %}`로 비워서 제거(find_id/find_pw는 그대로 유지, 범위 밖).
+
+- **콘텐츠 페이지(메뉴목록/상세·후기·기록·통계·게임허브) 비주얼 통일**
+  대시보드·랭킹·accounts 페이지는 이미 디자인이 입혀져 있었지만, 나머지 콘텐츠 페이지들은 순수 Bootstrap 기본 마크업이거나 테마 변수를 인라인 `style=`로만 반복 사용 중이었음(재사용 클래스 없음). `theme.css`에 공용 컴포넌트 4종 추가: `.page-title`(accounts `.title`과 같은 브랜드색 밑줄 제목), `.empty-state`(+`-icon`/`-title`/`-text`, 여러 페이지에 복붙돼 있던 빈 상태 블록 통합), `.page-narrow`(`max-width:800px` 반복 제거), `.star-rating-static`(리뷰 별점, Bootstrap 기본 노랑 대신 `--accent` 허니 앰버). 이 클래스들을 `menu_list`/`menu_detail`/`liked_menus`/`games/hub`/`review_list`/`review_form`/`_review_item`/`history`/`food_stats`에 적용. 부수적으로 `review_form.html`의 별점 위젯 로컬 `<style>`(`#ddd`/`#ffc107` 하드코딩)과 `games/hub.html`의 로컬 `<style>`(`.game-hub-card` 호버)을 theme.css로 이전, `history.html`의 끼니 배지 인라인 색상을 `.badge-lunch`/`.badge-dinner`/`.badge-breakfast` 클래스로, 반복되던 `background-color: var(--surface); border: 1px solid var(--line);` 카드 흉내 스타일은 원래 있던 `.card`가 이미 같은 스타일을 내므로 인라인 자체를 삭제. `food_stats.html`/`liked_menus.html`의 빈 상태 배경이 `white`(테마 변수 아님, drift)로 하드코딩돼 있던 것도 `.empty-state`로 교체하며 함께 정리됨.
+
+- **사이트 전체 디자인 통일 (색상 + 타이포 + 여백)**
+  대시보드 위주로 색을 반복적으로 손보다가, 사실 이 프로젝트가 **두 개의 분리된 디자인 시스템**으로 나뉘어 있었다는 걸 발견: (A) `base.html`+`theme.css` — menus/records/reviews 전체가 씀, CSS 변수 팔레트·자체 호스팅 폰트·Bootstrap 리매핑까지 갖춤. (B) `accounts/*` — login/signup/find_id/find_pw/profile/delete_confirm이 각자 독립 `<head>`+독립 CSS 파일(다른 폰트, theme.css 변수 전혀 안 씀)로 따로 놀고 있었음.
+  - **System B를 System A로 편입**: 6개 accounts 템플릿을 `{% extends "base.html" %}`로 전환. login/signup/find_id/find_pw는 로그인 화면에 로그인 링크가 또 뜨는 중복을 피하려고 **로고만 있는 미니멀 헤더**(`templates/partials/_minimal_header.html`, `base.html`에 새로 만든 `{% block header %}`를 오버라이드)를 붙이고, profile/delete_confirm(로그인 후 페이지)은 전체 navbar 그대로 사용. 4개 accounts CSS 파일의 독립 hex 팔레트·`Apple SD Gothic Neo` 폰트 선언을 전부 theme.css 변수(`var(--brand)`/`var(--ink)`/`var(--line)` 등)로 교체, profile.html의 반복되던 인라인 헤더 스타일은 `.section-header`/`.section-link`/`.field-label`/`.muted-note`/`.allergy-badge` 클래스로 정리.
+  - **타이포·여백 스케일 토큰화**: `theme.css` `:root`에 `--fs-*`(6단계)/`--sp-*`(9단계) 추가, 새/수정 규칙에 적용(기존 규칙 전면 재작성은 안 함).
+  - **하드코딩 hex → 시맨틱 변수 승격**: `--danger`/`--success`/`--like`/`--badge-bg-light`/`--gold`/`--meal-breakfast`/`--ladder-1~8` 추가, 이미 같은 값을 쓰던 곳(버튼·배지·좋아요 버튼·추천 카드 헤더 등)을 값 변경 없이 변수 참조로 치환. 게임 페이지(`roulette.html`/`ladder.html`)의 캔버스 JS도 하드코딩 hex 대신 `getComputedStyle(...).getPropertyValue('--변수').trim()`으로 팔레트 참조하도록 수정.
+  - **drift 버그 수정**: `reviews/review_list.html`의 `#ff6b4a`(브랜드색과 미묘하게 다른 값) 인라인 스타일 삭제(이미 `.btn-primary`가 `var(--brand)` 적용 중이라 순수 잔재), `records/history.html`의 끼니 배지 3종(`#E8623D`/`#2C2118`/`#6FA3EF`)을 `var(--brand)`/`var(--ink)`/`var(--meal-breakfast)`로, `#fcfcfc`/`white` 배경들을 `var(--surface)`로 통일. `accounts`의 에러색 `#FF5A5A`와 delete_confirm.html에서 안 쓰이고 있던 `.danger-color` 클래스(정의가 아예 없어 무동작이던 버그)도 `var(--danger)`로 실제 동작하게 수정.
+  - **죽은 파일 정리**: `accounts/templates/accounts/record.html`(빈 파일), `menus/static/menus/dashboard.css`·`records/static/records/history.css`(둘 다 어디서도 참조 안 되고, 각자 theme.css와 다른 낡은 팔레트를 가진 완전히 별개의 방치된 CSS였음) 삭제.
+  - **대시보드 인라인 `!important` 흰색 배경 정리**: 11곳 중 `.card`/`.card-body` 2곳은 theme.css가 이미 흰 배경이라 순수 중복이라 삭제, 캘린더 카드 헤더는 흰 배경 유지가 의도적이라 `.card-header-plain` 클래스로 대체. 나머지 7곳(테이블·td·모달·폼 컨트롤 3개)은 Bootstrap 컴파일 CSS를 직접 확인해 `--bs-body-bg`(테마에서 크림색으로 리매핑됨)를 그대로 물려받는 구조라 흰 배경 강제가 실제로 필요했음을 확인하고 그대로 유지.
+  - 전 페이지(로그인/비로그인 상태 모두, menus/records/reviews/accounts/games 전부) 200 응답 + 육안 확인.
+
+- **'메뉴 고정' 버튼 클릭 시 404 뜨던 버그 수정 + UI 다듬기**
+  전날 추가한 고정 버튼에 새로고침 버튼과 스타일을 맞추려고 `rec-box-reroll` 클래스를 같이 붙였는데, 그 바람에 JS의 `bind()`/`reroll()`가 새로고침 버튼을 **클래스명**으로 찾다가 고정 버튼까지 같이 잡아버렸다. 그 결과 고정 버튼을 누르면 고정 처리(성공, `POST /pin/` 200)와 동시에 엉뚱한 새로고침 요청(`?slot=null`, 400)이 같이 발동했고, 그 실패 폴백(`window.location.href = btn.getAttribute('href')`)이 `<button>`엔 `href`가 없어 `null`을 그대로 대입 → 브라우저가 `/null` 경로로 이동하며 **404**로 튀었다(gunicorn 로그로 정확한 요청 흐름 확인 후 원인 특정).
+  - 해결: JS 셀렉터를 클래스가 아니라 **`data-reroll-slot`/`data-pin-slot` 속성** 기준으로 명확히 분리(`bind`·`reroll`·`togglePin`·전체 새로고침 전부). CSS는 `.rec-box-reroll, .rec-box-pin` 그룹 셀렉터로 계속 스타일만 공유.
+  - 고정 버튼 검은 테두리 제거: `border: none` 외에 `outline: none` + `appearance: none`(`-webkit-appearance` 포함)까지 리셋해 `<button>` 기본 크롬을 확실히 지움.
+  - 새로고침 버튼과의 간격: `.rec-box-foot`의 `gap`을 `.5rem` → `.75rem`로 살짝 띄움.
+  - 추가로 발견한 버그: `dashboard.html`이 카드를 `{% include %}`할 때 `is_pinned` 컨텍스트를 안 넘기고 있어서, 고정 직후(AJAX 응답)엔 정상 반영되지만 **페이지를 새로 열면(F5) 고정 상태가 화면에 안 보이던** 문제도 함께 수정(`is_pinned=pinned_slots.lunch/dinner/taste` 전달). 데이터(고정된 메뉴)는 원래도 유지되고 있었지만 UI가 그 사실을 안 보여주고 있었음.
+  - 검증: 고정 후 F5 3회 반복 시 메뉴 그대로 유지 + 새로고침 버튼 없음(정확한 카드 경계로 재확인) + "고정 해제" 버튼만 노출, 해제 후 새로고침 버튼 복귀 확인.
+
 ## 2026-07-22
 
 - **MY밥픽 찜한 메뉴 5개로 축소 + 랜덤픽 버튼 제거**
@@ -14,6 +118,16 @@
 
 - **유튜브 음식 리뷰 스트립 스크롤 안 되던 버그 수정**
   대시보드 "🎬 유튜브 음식 리뷰 추천" 스트립에서 마우스 휠로 스크롤이 안 움직이던 문제. 원인은 `.yt-strip`/`.yt-card`에만 걸려 있던 `scroll-snap-type: x proximity` + `scroll-snap-align: start`가, 휠→가로스크롤 변환 JS(`scrollLeft += e.deltaY`)의 작은 증분과 충돌해 매번 스냅 포인트로 되돌아간 것(칼럼 스트립엔 이 속성이 없어 정상 동작). 스냅 속성 제거로 두 스트립 모두 동일하게 자유 스크롤.
+
+- **오늘의 점심/저녁 추천 라벨·로직 원복**
+  "🍽️ 오늘의 추천"/"🎲 또 다른 추천"(끼니 구분 없는 통합 랜덤)을 "☀️ 오늘의 점심 추천"/"🌙 오늘의 저녁 추천"으로 되돌림. 라벨만이 아니라 `recommender.py`의 `meal_time` 필터도 함께 복원해, 점심 카드는 다시 점심 시간대(LUNCH+ANY) 메뉴에서만, 저녁 카드는 저녁 시간대(DINNER+ANY) 메뉴에서만 뽑히도록 함(라벨과 실제 동작 불일치 방지).
+
+- **추천 카드 '메뉴 고정' 기능 + 새로고침(F5) 시 기본 재추첨으로 전환**
+  오늘의 점심 추천·오늘의 저녁 추천·당신의 취향 카드 하단, "새로고침" 버튼 왼쪽에 "📌 메뉴 고정" 버튼 추가. 클릭하면 그 슬롯이 세션에 고정되어 F5·전체 새로고침에도 바뀌지 않고, 다시 누르면("고정 해제") 원래대로 돌아간다.
+  - 기존엔 세션에 마지막 추천 결과를 항상 저장해 **F5해도 안 바뀌는 게 기본값**이었는데, 이번에 뒤집어 **F5하면 기본적으로 재추첨되고 '고정'한 슬롯만 예외로 유지**되게 바꿈. `menus/views.py`의 `_resolve_recs()`가 세션(`pinned_recs`)에 "사용자가 명시적으로 고정한 슬롯"만 저장·복원하도록 변경(매 요청 세션 쓰기 제거).
+  - 신규 AJAX 엔드포인트 `menus:toggle_pin`(`/pin/`)이 화면에 보이는 메뉴는 그대로 두고 고정 상태만 토글, 카드 partial만 교체.
+  - 고정된 카드는 새로고침 버튼 자체가 안 보이므로 "전체 새로고침" 버튼(고정 안 된 카드만 도는 `.rec-box-reroll` 셀렉터 기반)에서도 자동으로 제외되고, `reroll`/`toggle_pin` 양쪽 서버 로직에서 고정된 슬롯은 강제 재추첨되지 않도록 방어.
+  - 검증: F5 10회 반복 시 고정된 슬롯은 정확히 1개 메뉴만 유지, 고정 안 된 슬롯은 매번 다른 메뉴(10/10 다양), 고정 해제 후 재추첨 재개 확인.
 
 - **게임 3종 신규: 메뉴 돌림판 · 메뉴 사다리타기 · 음식 이상형 월드컵**
   네비게이션에 `GAME`/`게임` 셀 추가, 허브 페이지("메뉴 골라보기") + 게임 3종 구현. `menus/urls.py`에 `games`/`game_roulette`/`game_ladder`/`game_worldcup` 4개 라우트, `menus/templates/menus/games/` 신설. 결과를 DB에 저장하지 않는 순수 클라이언트 게임(후보 메뉴만 서버가 `catalog.menu_list_queryset(main_only=True)`에서 랜덤 추출해 JSON으로 임베드).

@@ -37,18 +37,44 @@
     font-display: swap;
 }
 
+/* 본문(콘텐츠) 폰트 — 배너/회원정보 영역 제외한 전체에 --ui-font 로 적용. 자가 호스팅.
+   G마켓 산스(무료, 상업적 이용 가능) — Medium을 본문 기본, Bold를 굵기 700 */
+/* GmarketSans는 hhea ascent 84.7%/descent 34%로 비대칭이라 글자가 세로 중앙보다
+   위로 뜬다(버튼·헤더·배지·플렉스 정렬 전반). ascent/descent-override로 디자이너
+   typo 메트릭(80/20)에 가깝게 살짝 더 눌러 전 요소가 한 번에 정중앙에 오게 보정. */
+@font-face {
+    font-family: 'GmarketSans';
+    src: url('../fonts/GmarketSansMedium.woff2') format('woff2');
+    font-weight: 400 500;
+    font-display: swap;
+    ascent-override: 84%;
+    descent-override: 16%;
+    line-gap-override: 0%;
+}
+@font-face {
+    font-family: 'GmarketSans';
+    src: url('../fonts/GmarketSansBold.woff2') format('woff2');
+    font-weight: 600 800;
+    font-display: swap;
+    ascent-override: 84%;
+    descent-override: 16%;
+    line-gap-override: 0%;
+}
+
 :root {
     /* 브랜드 팔레트 — accounts 페이지(로그인/회원가입)의 오렌지와 통일 */
     --brand: #F36235;          /* 오렌지 */
     --brand-dark: #DE632E;
-    --brand-soft: #FDEEE5;     /* 아주 옅은 배경 */
-    --accent: #E9A23B;         /* 허니 앰버 */
+    --brand-soft: #FCE7D8;     /* 옅은 웜 피치 — 카드헤더·서브헤드·배지·그래프트랙(살짝 생기있게) */
+    --accent: #F0A93E;         /* 허니 앰버(살짝 밝고 선명하게) */
     --ink: #2B1B12;            /* 다크 에스프레소 브라운 (본문·네비바) */
     --muted: #8C7568;          /* 웜 브라운 그레이 */
-    --cream: #F8DFC4;          /* 배경 피치/살구 */
+    --cream: #F6EEE1;          /* 배경 밝은 웜 크림 — 회색기 빼서 칙칙함 제거(카드 대비는 그림자로 확보) */
     --surface: #FFFFFF;
-    --line: #EAD9C4;           /* 경계선 */
-    --display-font: "Black Han Sans", "Pretendard Variable", sans-serif;
+    --line: #EEDECA;           /* 경계선(배경 톤에 맞춰 살짝 밝게) */
+
+    /* 콘텐츠(본문·제목·카드 등) 폰트 — 배너/회원정보 영역 제외 전체에 적용. G마켓 산스 확정. */
+    --ui-font: 'GmarketSans', system-ui, -apple-system, "Segoe UI", sans-serif;
 
     /* Bootstrap 토큰 리매핑 → utility/badge/bg-primary/link 등에 반영 */
     --bs-primary: var(--brand);
@@ -61,20 +87,148 @@
     --bs-tertiary-bg: var(--cream);
     --bs-border-color: var(--line);
     --bs-link-color: var(--brand-dark);
+    --bs-link-color-rgb: 222, 99, 46;    /* --brand-dark(#DE632E)의 rgb. Bootstrap의 a 리셋이 실제로
+                                             참조하는 건 -color가 아니라 -color-rgb라 이것도 맞춰야 함 */
     --bs-link-hover-color: var(--brand);
+    --bs-link-hover-color-rgb: 243, 98, 53; /* --brand(#F36235)의 rgb */
 
-    /* 미니멀한 그림자 (기존보다 옅고 절제됨) */
-    --shadow-sm: 0 1px 2px rgba(43, 27, 18, .05), 0 2px 8px rgba(43, 27, 18, .05);
-    --shadow-md: 0 8px 20px rgba(43, 27, 18, .1);
+    /* 입체감 있는 3겹 그림자 — 가까운 곳은 또렷, 먼 곳은 넓고 옅게(실제 조명 물리처럼
+       겹쳐서 "떠 있는" 느낌). 배경이 웜 베이지(--cream)라 투명도를 낮게 주면 안 보여서
+       또렷하게 보이도록 세게 잡음. .card/.rec-box/.navbar-pill/버튼 등에 자동 반영. */
+    --shadow-sm:
+        0 1px 3px rgba(43, 27, 18, .09),
+        0 5px 12px rgba(43, 27, 18, .10),
+        0 14px 26px rgba(43, 27, 18, .07);
+    --shadow-md:
+        0 5px 12px rgba(43, 27, 18, .13),
+        0 16px 30px rgba(43, 27, 18, .14),
+        0 28px 46px rgba(43, 27, 18, .10);
     --radius: .75rem;
+
+    /* 타이포 스케일 — 사이트 전반에 이미 쓰이던 값들을 문서화 + 이름 부여 */
+    --fs-xs: .72rem;
+    --fs-sm: .82rem;
+    --fs-base: 1rem;
+    --fs-md: 1.3rem;
+    --fs-lg: 2.1rem;
+    --fs-xl: 2.6rem;
+
+    /* 여백 스케일 — 기존에 지배적으로 쓰이던 rem 값 기준. 새/수정 규칙에만 적용,
+       기존 규칙 전면 재작성은 하지 않는다. */
+    --sp-1: .25rem;
+    --sp-2: .5rem;
+    --sp-3: .75rem;
+    --sp-4: 1rem;
+    --sp-5: 1.25rem;
+    --sp-6: 1.5rem;
+    --sp-7: 2rem;
+    --sp-8: 2.5rem;
+    --sp-9: 3.5rem;
+
+    /* 시맨틱 색상 — 이미 여러 곳에서 반복되던 hex 값에 이름만 부여(값 변경 없음) */
+    --danger: #D6455D;
+    --danger-dark: #bf3a50;
+    --success: #5B8C5A;
+    --success-dark: #4d784c;
+    --like: #E86A70;           /* 좋아요 하트 — 웜 로즈코랄(기존 핑크 #EC4899에서 변경) */
+    --like-dark: #D4525A;
+    --badge-bg-light: #F7E6D5;   /* 요리종류 배지 배경 — 살짝 더 진한 웜 피치(또렷하게) */
+    --gold: #C99700;
+    --terracotta: #C25E3A;     /* 인기 카드 헤더 — 벽돌빛 웜 */
+    --warm-brown: #9E6B4A;     /* 후기 카드 헤더 — 소프트 캐러멜 브라운 */
+    --meal-breakfast: #E3A24A; /* 아침 배지 — 허니/앰버(기존 파랑 #6FA3EF에서 변경) */
+    --chip-dark: #5C3A28;      /* 저녁 색 — 저녁 추천 헤더·저녁 배지(흰 글자). 순검정 아닌 진한 에스프레소 브라운(웜 램프). 다크에서 안 뒤집히는 전용 토큰 */
+
+    /* 사다리타기 게임 전용 팔레트(기존 8색 그대로, 이름만 부여) */
+    --ladder-1: #F36235;
+    --ladder-2: #2B1B12;
+    --ladder-3: #3A6EA5;
+    --ladder-4: #2C8C8C;
+    --ladder-5: #DE632E;
+    --ladder-6: #8C7568;
+    --ladder-7: #C97B3D;
+    --ladder-8: #E9A23B;
+}
+
+/* ===== 다크모드 (웜 다크브라운) — 팔레트 변수만 재정의하면 전 페이지가 따라온다 =====
+   토글이 <html>에 data-theme="dark"(+ data-bs-theme="dark")를 세팅한다. */
+html[data-theme="dark"] {
+    --cream:  #1E1813;   /* 페이지 배경 */
+    --surface:#2A231D;   /* 카드/입력/모달 */
+    --ink:    #F3EAE0;   /* 본문·제목 글자(웜 오프화이트) */
+    --muted:  #B3A093;   /* 보조 텍스트 */
+    --line:   #3C332B;   /* 경계선 */
+    --brand-soft:     #3B2B21;  /* 카드헤더·서브헤드·배지·그래프트랙 배경(다크 웜) */
+    --badge-bg-light: #35291F;  /* 요리종류 배지 배경 */
+    --chip-dark: #7E5A40;       /* 다크모드에선 저녁 에스프레소를 살짝 밝게(어두운 카드 위에서도 보이게, 흰 글자 유지) */
+    /* 브랜드 오렌지·앰버·골드·테라코타·danger/success/like 등 포인트색은 다크에서도
+       잘 보이므로 유지. */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, .45), 0 6px 16px rgba(0, 0, 0, .40);
+    --shadow-md: 0 8px 22px rgba(0, 0, 0, .55), 0 18px 40px rgba(0, 0, 0, .45);
+}
+/* 카드/추천카드 표면 그라데이션(라이트는 흰색 하드코딩)도 다크용으로 교체 */
+html[data-theme="dark"] .card,
+html[data-theme="dark"] .rec-box {
+    background: linear-gradient(180deg, #2E271F 0%, #241E18 100%);
+}
+/* 요리종류 배지 다크 보더 */
+html[data-theme="dark"] .badge.text-bg-light { border-color: #4A3D30 !important; }
+/* 기본 card-header 그라데이션 top이 하드코딩 밝은색(#FDEFE6)이라 다크에서 밝게 뜨는 것 방지 */
+html[data-theme="dark"] .card-header {
+    background: linear-gradient(180deg, #46352A 0%, var(--brand-soft) 100%);
+}
+/* 저녁 헤더(가장 어두운 에스프레소)만 다크 카드에 묻히지 않게 살짝 밝은 에스프레소로 */
+html[data-theme="dark"] .rec-box-dinner .rec-box-head {
+    background: linear-gradient(180deg, #997253 0%, #7E5A40 100%);
 }
 
 body {
-    font-family: "Pretendard Variable", "Pretendard", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-family: var(--ui-font);
     background-color: var(--cream);
     color: var(--ink);
     letter-spacing: -0.01em;
 }
+
+/* ===== 레이아웃 폭 완전 고정 (창 크기 바꿔도 안 늘어나고 안 줄어듦, 넘치면 가로 스크롤) =====
+   요구사항: 창을 좁히거나 넓혀도 디자인이 그대로고, 좁으면 잘리며 가로 스크롤이 뜬다.
+
+   핵심: Bootstrap의 .container 는 기본이 width:100% 라서 max-width 만 걸면 창을 좁힐 때
+   같이 줄어든다(고정이 안 됨). 그래서 max-width 가 아니라 width 를 픽셀로 못 박아
+   창 폭과 무관하게 항상 1320px 이 되게 한다. 창이 그보다 좁으면 body(min-width)가
+   버티고 html 이 가로 스크롤을 낸다.
+   - 게임/찜한메뉴/기록 등 인라인 style="max-width:…" 또는 .page-narrow 로 더 좁게
+     잡아둔 컨테이너는 max-width 가 이 width 를 더 작게 눌러주므로 그대로 유지된다.
+   - .col-*/.row-cols-* 는 뷰포트 기준 @media 안에서만 폭이 정해지므로, 창을 좁히면
+     규칙이 풀려 세로로 쌓인다 → 뷰포트와 무관하게 데스크톱 폭으로 못 박아야 한다. */
+html { overflow-x: auto; }
+body { min-width: 1320px; }
+/* width 로 폭을 박되, Bootstrap 이 뷰포트 구간마다 .container 에 거는 max-width
+   (@media 992px↑=960, 1200px↑=1140 …)가 이 width 를 도로 눌러 컨테이너를 줄여버리므로
+   max-width 캡 자체를 none 으로 풀어야 창을 좁혀도 1320px 이 그대로 유지된다.
+   (게임/기록 등 인라인 style="max-width:…" 와 .page-narrow{max-width:800px} 는
+   이 규칙보다 뒤/우선순위라서 그대로 더 좁게 유지됨) */
+.container { width: 1320px; max-width: none; }
+
+/* 대시보드 좌(추천)/우(MY밥픽) 2단 */
+.col-lg-8 { flex: 0 0 auto !important; width: 66.66666667% !important; }
+.col-lg-4 { flex: 0 0 auto !important; width: 33.33333333% !important; }
+
+/* 마이페이지 2열 그리드, 게임 허브 3열, 메뉴 상세 이미지/정보 2단 */
+.col-md-4 { flex: 0 0 auto !important; width: 33.33333333% !important; }
+.col-md-5 { flex: 0 0 auto !important; width: 41.66666667% !important; }
+.col-md-6 { flex: 0 0 auto !important; width: 50% !important; }
+.col-md-7 { flex: 0 0 auto !important; width: 58.33333333% !important; }
+
+/* 메뉴 목록 카드 그리드(4열) */
+.row-cols-sm-2 > * { flex: 0 0 auto !important; width: 50% !important; }
+.row-cols-md-3 > * { flex: 0 0 auto !important; width: 33.33333333% !important; }
+.row-cols-lg-4 > * { flex: 0 0 auto !important; width: 25% !important; }
+
+/* Bootstrap .navbar-nav 는 기본이 flex-direction:column(세로 쌓임)이고 row로 바꾸는
+   규칙도 @media(min-width:992px) 안에만 있어서, 창을 좁히면 메뉴/후기/랭킹/게임이
+   세로로 쌓였다(토글 버튼이 없어 그냥 깨진 것처럼 보임). 항상 가로 한 줄로 고정. */
+.navbar-pill .nav-cells { flex-direction: row !important; flex-wrap: nowrap !important; }
+.navbar-pill > .container-fluid { flex-wrap: nowrap !important; }
 
 main.container {
     padding-top: 2.5rem;
@@ -82,8 +236,11 @@ main.container {
 }
 
 h1, h2, h3, h4 {
-    font-family: var(--display-font);
-    font-weight: 400; /* Black Han Sans 자체가 두꺼운 단일 굵기 */
+    /* Black Han Sans(예전 --display-font)는 짧은 고정 문구에서도 계속 글자가
+       붙어 보이는 문제가 반복돼 완전히 뺐다 — 실제로 이 폰트를 써서 득 보는
+       곳이 사이트 어디에도 없었다(네비바 로고는 별도로 MungyeongGamhongApple을
+       직접 지정해서 씀). 본문 폰트로 통일. */
+    font-weight: 700;
     color: var(--ink);
     letter-spacing: -0.01em;
 }
@@ -114,9 +271,16 @@ h5 {
 
 /* ===== Navbar — 로고+메뉴만 담는 고동색 라운드 사각 박스 ===== */
 .navbar-pill {
-    background: var(--ink) !important;
+    /* 윗면 4% 밝게 → 다크브라운: 거의 단색처럼 보이되 윗면이 살짝 산다.
+       배너는 라이트/다크 모드 무관하게 항상 어두워야 하므로 --ink(다크에서 밝게 뒤집힘)
+       대신 고정 다크브라운을 쓴다. */
+    background: linear-gradient(180deg, #34241a 0%, #2B1B12 60%) !important;
     border-radius: 1.5rem;
-    box-shadow: var(--shadow-sm);
+    /* 상단 모서리 빛반사(어두운 표면 위 은은한 sheen) + 더 깊은 그림자 */
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .12),
+        0 8px 22px rgba(43, 27, 18, .24),
+        0 18px 40px rgba(43, 27, 18, .18);
     padding-top: .9rem;
     padding-bottom: .9rem;
 }
@@ -181,6 +345,74 @@ h5 {
     padding-top: 1.25rem;
 }
 
+/* 로그인/회원가입/아이디·비밀번호 찾기 전용 — 메뉴·유저 영역 없이 로고만 있는
+   얇은 헤더(navbar-pill 전체를 붙이면 로그인 화면에 로그인 링크가 또 뜨는 중복이 생김) */
+.minimal-header {
+    display: flex;
+    justify-content: center;
+    padding: var(--sp-6) 0 var(--sp-2);
+}
+.minimal-header-brand {
+    font-family: 'MungyeongGamhongApple', sans-serif;
+    font-weight: 400;
+    font-size: var(--fs-lg);
+    color: var(--brand);
+    text-decoration: none;
+    letter-spacing: -0.01em;
+}
+.minimal-header { position: relative; }
+.minimal-header .theme-toggle { position: absolute; right: 0; top: 50%; transform: translateY(-50%); }
+
+/* 다크/라이트 토글 — 슬라이드 스위치(노브가 좌우로 미끄러지며 해↔달로 바뀜) */
+.theme-toggle {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 26px;
+    flex-shrink: 0;
+    padding: 0;
+    border-radius: 999px;
+    cursor: pointer;
+    vertical-align: middle;
+    transition: background-color .2s ease, border-color .2s ease;
+    /* 반전 배색: 라이트 모드에선 어두운 트랙(밝은 페이지에서 잘 보이게),
+       다크 모드에선 밝은 트랙(어두운 페이지에서 잘 보이게).
+       라이트 트랙은 순검정 대신 부드러운 웜 다크브라운. */
+    background: #5F4A3B;
+    border: 1px solid #5F4A3B;
+}
+html[data-theme="dark"] .theme-toggle {
+    background: #EADDCB;
+    border-color: #EADDCB;
+}
+.theme-toggle .knob {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .35);
+    transition: transform .22s cubic-bezier(.4, 0, .2, 1);
+    /* 라이트: 밝은 노브 + 브랜드색 달 아이콘 */
+    background: #FBEFE2;
+    color: var(--brand);
+}
+html[data-theme="dark"] .theme-toggle .knob {
+    transform: translateX(24px);
+    /* 다크: 어두운 노브 + 앰버 해 아이콘 */
+    background: #2B1B12;
+    color: #F0B84A;
+}
+.theme-toggle svg { width: 13px; height: 13px; }
+/* 라이트=달 아이콘(다크로 전환 예고), 다크=해 아이콘. 노브 안에서 하나만 표시 */
+.theme-toggle .icon-sun { display: none; }
+html[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+html[data-theme="dark"] .theme-toggle .icon-sun { display: inline-flex; }
+
 /* ===== 우측 상단 사용자 영역 — 버튼 아니고 텍스트 링크 ===== */
 .user-area {
     font-family: 'GamwulchiFreeGothic', sans-serif;
@@ -215,21 +447,33 @@ h5 {
 .card {
     border: 1px solid var(--line);
     border-radius: var(--radius);
-    background: var(--surface);
-    box-shadow: var(--shadow-sm);
+    /* 위는 순백, 아래는 아주 살짝 따뜻하게 — 위에서 빛 받는 느낌(거의 안 보일 정도로 은은) */
+    background: linear-gradient(180deg, #ffffff 0%, #fffcf8 100%);
+    /* 상단 하이라이트 라인 + 3겹 그림자 → 표면이 살짝 떠 보인다 */
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .7), var(--shadow-sm);
     transition: transform .18s ease, box-shadow .18s ease;
     overflow: hidden;
 }
 .card.shadow-sm:hover {
     transform: translateY(-4px);
-    box-shadow: var(--shadow-md);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .7), var(--shadow-md);
 }
 .card-body { padding: 1.15rem 1.2rem; }
 .card-header {
-    background: var(--brand-soft);
+    background: linear-gradient(180deg, #FDEFE6 0%, var(--brand-soft) 100%);
     border-bottom: 1px solid var(--line);
-    font-weight: 700;
+    font-weight: 500;   /* rec-box 헤더(500)와 두께 통일 — 실시간 인기 순위만 두꺼워 보이던 것 해결 */
     color: var(--brand-dark);
+}
+/* 대시보드 달력 카드처럼 헤더를 브랜드 톤 대신 흰 배경으로 유지해야 하는 예외 케이스 */
+.card-header-plain {
+    background: var(--surface);
+    color: var(--ink);
+}
+/* 실시간 인기 순위 헤더 — 테라코타 동일계열 그라데이션+흰 글자(상단 카드라 살짝 강조) */
+.card-header.card-header-brown {
+    background: linear-gradient(180deg, #D6764E 0%, #C25E3A 100%);
+    color: #fff;
 }
 
 /* 카드 이미지 & 플레이스홀더 — 비율 통일 */
@@ -260,7 +504,7 @@ h5 {
 /* ===== Buttons — 알약형, 통일 ===== */
 .btn {
     border-radius: 999px;
-    font-weight: 600;
+    font-weight: 500;   /* GmarketSans Bold(600↑)는 버튼에서 두꺼워 보여 Medium(500)으로. fw-bold 명시 버튼은 그대로 700 */
     padding-inline: 1.15rem;
     transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease;
 }
@@ -276,7 +520,8 @@ h5 {
     --bs-btn-active-border-color: var(--brand-dark);
     --bs-btn-disabled-bg: var(--brand);
     --bs-btn-disabled-border-color: var(--brand);
-    box-shadow: 0 3px 10px rgba(243, 98, 53, .24);
+    /* 상단 inset 하이라이트로 알약 버튼이 살짝 볼록해 보이게 + 브랜드 그림자 */
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25), 0 3px 10px rgba(243, 98, 53, .28);
 }
 .btn-outline-primary {
     --bs-btn-color: var(--brand-dark);
@@ -287,25 +532,25 @@ h5 {
     --bs-btn-active-border-color: var(--brand-dark);
 }
 .btn-success {
-    --bs-btn-bg: #5B8C5A;
-    --bs-btn-border-color: #5B8C5A;
-    --bs-btn-hover-bg: #4d784c;
-    --bs-btn-hover-border-color: #4d784c;
-    --bs-btn-active-bg: #4d784c;
+    --bs-btn-bg: var(--success);
+    --bs-btn-border-color: var(--success);
+    --bs-btn-hover-bg: var(--success-dark);
+    --bs-btn-hover-border-color: var(--success-dark);
+    --bs-btn-active-bg: var(--success-dark);
 }
 
 /* 좋아요 버튼: JS가 btn-danger ↔ btn-outline-danger 를 토글 → 두 상태 모두 스타일 */
 .btn-outline-danger {
-    --bs-btn-color: #D6455D;
+    --bs-btn-color: var(--danger);
     --bs-btn-border-color: #E7B9C1;
-    --bs-btn-hover-bg: #D6455D;
-    --bs-btn-hover-border-color: #D6455D;
+    --bs-btn-hover-bg: var(--danger);
+    --bs-btn-hover-border-color: var(--danger);
 }
 .btn-danger {
-    --bs-btn-bg: #D6455D;
-    --bs-btn-border-color: #D6455D;
-    --bs-btn-hover-bg: #bf3a50;
-    --bs-btn-hover-border-color: #bf3a50;
+    --bs-btn-bg: var(--danger);
+    --bs-btn-border-color: var(--danger);
+    --bs-btn-hover-bg: var(--danger-dark);
+    --bs-btn-hover-border-color: var(--danger-dark);
 }
 
 /* ===== Badges — 통일 ===== */
@@ -316,9 +561,9 @@ h5 {
     letter-spacing: -.01em;
 }
 .badge.text-bg-light {
-    color: var(--muted) !important;
-    background: #F4EDE4 !important;
-    border-color: var(--line) !important;
+    color: var(--brand-dark) !important;   /* 회색 → 브랜드 브라운으로 또렷하게 */
+    background: var(--badge-bg-light) !important;
+    border-color: #E7C7AC !important;      /* 배지 톤에 맞춘 웜 보더 */
 }
 
 /* ===== Forms ===== */
@@ -335,34 +580,36 @@ h5 {
     border-color: var(--brand);
 }
 
-/* ===== 메뉴 목록 카드 이미지 위 좋아요 버튼 (분홍 하트) ===== */
-/* stretched-link(::after z-index:1) 위에 오도록 z-index 상향 — 안 그러면 클릭 가로챔 */
+/* ===== 좋아요 버튼 (메뉴목록 플로팅 하트 + 후기 좋아요) =====
+   라이트/다크 무관하게 동일: 미좋아요=흰 배경+코랄 하트, 좋아요=코랄 배경+흰 하트.
+   (배경을 var(--surface) 같은 테마 변수로 두면 다크에서 검게 떠서 어색 → 고정 흰색) */
+.like-btn.btn-outline-danger {
+    --bs-btn-color: var(--like);
+    --bs-btn-border-color: #F3C0AC;   /* 웜 코랄 틴트 */
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--like);
+    --bs-btn-hover-border-color: var(--like);
+    --bs-btn-active-bg: var(--like);
+    --bs-btn-active-border-color: var(--like);
+    background: #fff;
+}
+.like-btn.btn-danger {
+    --bs-btn-bg: var(--like);
+    --bs-btn-border-color: var(--like);
+    --bs-btn-hover-bg: var(--like-dark);
+    --bs-btn-hover-border-color: var(--like-dark);
+    color: #fff;
+}
+/* 메뉴 목록 이미지 위 플로팅 하트 — stretched-link(::after z-index:1) 위에 오도록 z-index 상향 */
 .like-btn-float {
     z-index: 2;
     border-radius: 999px;
     font-weight: 700;
     box-shadow: var(--shadow-sm);
 }
-/* 미좋아요: 흰 배경 + 분홍 하트 (JS가 btn-outline-danger를 토글) */
-.like-btn-float.btn-outline-danger {
-    --bs-btn-color: #EC4899;
-    --bs-btn-border-color: #F7B6D2;
-    --bs-btn-hover-color: #fff;
-    --bs-btn-hover-bg: #EC4899;
-    --bs-btn-hover-border-color: #EC4899;
-    --bs-btn-active-bg: #EC4899;
-    --bs-btn-active-border-color: #EC4899;
-    background: #fff;
-}
-/* 좋아요: 분홍 배경 + 흰 하트 (JS가 btn-danger를 토글) */
-.like-btn-float.btn-danger {
-    --bs-btn-bg: #EC4899;
-    --bs-btn-border-color: #EC4899;
-    --bs-btn-hover-bg: #DB2777;
-    --bs-btn-hover-border-color: #DB2777;
-}
+.like-btn-float.btn-outline-danger { background: #fff; }   /* 다크에서도 흰 배경 고정(검게 안 뜨게) */
 /* '몇 명이 좋아합니다' 텍스트 — 하트색(분홍)에 맞춤 */
-.like-count-text { color: #EC4899; }
+.like-count-text { color: var(--like); }
 
 /* ===== 대시보드 추천 카드 (제목 헤더 + 메뉴 1개) ===== */
 .rec-box {
@@ -371,34 +618,58 @@ h5 {
     flex-direction: column;
     border-radius: var(--radius);
     overflow: hidden;
-    background: var(--surface);
-    box-shadow: var(--shadow-sm);
+    background: linear-gradient(180deg, #ffffff 0%, #fffcf8 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .7), var(--shadow-sm);
     transition: transform .18s ease, box-shadow .18s ease;
 }
 .rec-box:hover {
     transform: translateY(-4px);
-    box-shadow: var(--shadow-md);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .7), var(--shadow-md);
 }
 .rec-box-head {
     padding: .6rem 1rem;
-    font-weight: 700;
+    font-weight: 500;   /* GmarketSans Bold(700)는 너무 두꺼워 Medium(500)으로 낮춤 */
     font-size: 1rem;
     color: #fff;
+    /* 색은 그대로(그라데이션 재도입 금지) — 윗면 살짝 반짝, 아랫면 살짝 그늘로만
+       본문에서 떠 보이게 한다. */
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), inset 0 -1px 0 rgba(0, 0, 0, .10);
 }
-.rec-box-lunch   .rec-box-head { background: linear-gradient(90deg, #F5A733, var(--brand)); }
-.rec-box-dinner  .rec-box-head { background: linear-gradient(90deg, #2B1B12, #4B3A6B); }
-.rec-box-best    .rec-box-head { background: linear-gradient(90deg, #C99700, #E9A23B); }
-.rec-box-popular .rec-box-head { background: linear-gradient(90deg, #D6455D, #F0865A); }
-.rec-box-taste   .rec-box-head { background: linear-gradient(90deg, var(--brand-dark), var(--brand)); }
-.rec-box-review .rec-box-head { background: linear-gradient(90deg, #D6455D, #F0865A); }
-/* 새로고침: 카드 하단 우측 텍스트 버튼(아이콘 아님, 가독성 우선) */
+/* 음식 후기 카드 헤더(캐러멜 배경)의 일간/주간 토글 — 활성은 +오늘 버튼과 같은 브랜드
+   오렌지, 비활성은 어두운 헤더 위에서 은은한 반투명 흰색. 두 버튼 동일 최소폭. */
+.rec-box-head .btn-group .btn { min-width: 2.8rem; text-align: center; }
+.rec-box-head .period-toggle {
+    background: rgba(255, 255, 255, .16);
+    border: 1px solid rgba(255, 255, 255, .35);
+    color: #fff;
+}
+.rec-box-head .period-toggle:hover { background: rgba(255, 255, 255, .28); color: #fff; }
+.rec-box-head .period-toggle.active {
+    background: var(--brand);
+    border-color: var(--brand);
+    color: #fff;
+}
+/* 웜 램프 + 동일계열 은은한 그라데이션(위 살짝 밝게→아래 기존색): 색 정체성 유지, 광택·입체감만 추가 */
+.rec-box-lunch   .rec-box-head { background: linear-gradient(180deg, #F8794F 0%, #F36235 100%); }  /* 오렌지 */
+.rec-box-dinner  .rec-box-head { background: linear-gradient(180deg, #78503A 0%, #5C3A28 100%); }  /* 에스프레소 */
+.rec-box-taste   .rec-box-head { background: linear-gradient(180deg, #E97D48 0%, #DE632E 100%); }  /* 딥오렌지 */
+.rec-box-best    .rec-box-head { background: linear-gradient(180deg, #E3AC16 0%, #C99700 100%); }  /* 골드 */
+.rec-box-popular .rec-box-head { background: linear-gradient(180deg, #D6764E 0%, #C25E3A 100%); }  /* 테라코타 */
+.rec-box-review  .rec-box-head { background: linear-gradient(180deg, #B7825E 0%, #9E6B4A 100%); }  /* 캐러멜 */
+/* 새로고침·고정: 카드 하단 우측 텍스트 버튼(아이콘 아님, 가독성 우선). 둘이 같은 모양이되
+   구분되도록 살짝 간격을 둔다. 고정 버튼은 <button>이라 브라우저 기본 테두리/외곽선을
+   확실히 지운다(appearance 리셋 포함 — border만으론 일부 브라우저에서 안 지워짐). */
 .rec-box-foot {
     display: flex;
     justify-content: flex-end;
+    align-items: center;
+    gap: .75rem;
     padding: .45rem .8rem .7rem;
 }
-.rec-box-reroll {
+.rec-box-reroll,
+.rec-box-pin {
     text-decoration: none;
+    font: inherit;
     font-size: .82rem;
     font-weight: 600;
     line-height: 1;
@@ -406,9 +677,21 @@ h5 {
     border-radius: 999px;
     color: var(--brand-dark);
     background: var(--brand-soft);
+    border: none;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
     transition: background-color .12s ease, color .12s ease;
 }
-.rec-box-reroll:hover { background: var(--brand); color: #fff; }
+.rec-box-reroll:hover,
+.rec-box-pin:hover { background: var(--brand); color: #fff; }
+/* 고정된 상태만 색을 진하게 해 구분한다. */
+.rec-box-pin.active,
+.rec-box-pin.active:hover {
+    background: var(--brand-dark);
+    color: #fff;
+}
 .rec-box-body {
     display: flex;
     flex-direction: column;
@@ -431,9 +714,12 @@ h5 {
     padding: .9rem 1rem;
     flex: 1;
 }
+/* 메뉴 이름은 실제 음식 이름이라 길이가 제각각이라, 한 굵기뿐인 두꺼운 디스플레이
+   폰트(Black Han Sans)를 쓰면 글자가 빽빽해져 획이 겹쳐 보인다(짧은 고정 제목에만
+   적합). 본문 폰트(Pretendard, 여러 굵기 지원)로 굵게 처리해 안전하게 강조한다. */
 .rec-box-name {
-    font-family: var(--display-font);
     font-size: 1.3rem;
+    font-weight: 700;
     color: var(--ink);
     line-height: 1.3;
     margin-bottom: .45rem;
@@ -448,6 +734,7 @@ h5 {
     padding: 2rem 1rem;
     color: var(--muted);
     font-size: .9rem;
+    word-break: keep-all;   /* 한국어를 단어(공백) 단위로 줄바꿈 → "없어요." 의 "요."만 홀로 내려가는 것 방지 */
 }
 
 /* 음식 후기 카드(일간/주간) — '지금 인기' 자리 대체 */
@@ -469,9 +756,51 @@ h5 {
 .review-mini-text { font-size: .8rem; margin-top: .15rem; }
 
 /* ===== MY밥픽 개인 요약 ===== */
-.mybobpick-num { font-weight: 700; font-size: 1rem; color: var(--ink); line-height: 1.2; }
+/* 하트/접시/연필 이모지가 본문 커스텀 한글 폰트(가물치 무료고딕)의 흑백 글리프로
+   가로채지지 않도록, 이 요소 안에서는 컬러 이모지 폰트를 최우선으로 둔다. */
+.mybobpick-num {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--ink);
+    line-height: 1.2;
+    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Segoe UI Symbol", sans-serif;
+}
 .mybobpick-lbl { font-size: .72rem; color: var(--muted); }
 #mybobpickResult { font-size: .9rem; color: var(--ink); }
+
+/* MY밥픽 내 '선호하는 음식 분야' / '찜한 메뉴' / '많이 먹은 음식' 소제목 바.
+   카드 헤더(.card-header)와 같은 톤 + 밑줄로, 제목이 있는 영역 자체를 하나의
+   칸으로 색칠한다 — 내용(그래프·리스트)은 흰 배경 그대로 두고 제목 칸만 강조. */
+.mybobpick-subhead {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--brand-soft);
+    color: var(--brand-dark);
+    font-weight: 700;
+    font-size: .82rem;
+    padding: .5rem 1.2rem;
+    border-bottom: 1px solid var(--line);
+}
+.mybobpick-subhead a { font-weight: 600; font-size: .78rem; }
+
+/* 찜한 메뉴 목록 — 다른 두 칸(막대그래프)과 같은 브랜드 소프트 톤 + 크기로 통일.
+   list-group 대신 커스텀 마크업을 써서 Bootstrap list-group의 자체 border/padding과
+   싸우지 않게 한다. */
+.mybobpick-liked-list {
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+}
+.mybobpick-liked-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: .4rem .7rem;
+    font-size: .8rem;
+    border-bottom: 1px solid var(--line);
+}
+.mybobpick-liked-item:last-child { border-bottom: none; }
 
 /* ===== 음식 이름 검색형 콤보박스 ===== */
 .food-combobox-list {
@@ -505,6 +834,13 @@ h5 {
     text-align: center;
     padding: .15rem;
     height: 3.2rem;
+}
+/* 캘린더 끼니 배지(간식/아침/점심/저녁) — 글자가 위로 뜨지 않게 플렉스로 정중앙 정렬 */
+.meal-badges .badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
 }
 .meal-calendar .cal-day {
     display: block;
@@ -566,12 +902,15 @@ h5 {
     border-radius: 999px;
     height: .7rem;
     overflow: hidden;
+    box-shadow: inset 0 1px 2px rgba(43, 27, 18, .13); /* 파인(음각) 느낌 */
 }
 .food-bar-fill {
     height: 100%;
-    background: var(--brand);
+    /* 같은 브랜드 hue 상단 하이라이트 → 살짝 볼록 */
+    background: linear-gradient(180deg, #ff7d52 0%, var(--brand) 100%);
     border-radius: 999px;
     min-width: .5rem;
+    box-shadow: 0 1px 2px rgba(222, 99, 46, .35);
 }
 .food-bar-value {
     font-size: .72rem;
@@ -591,11 +930,32 @@ h5 {
     background: var(--brand-soft);
     color: var(--brand-dark);
     font-weight: 700;
+    line-height: 1;
+    /* 윗면 하이라이트 + 아래 그림자 → 살짝 떠 보이는 원형 배지 */
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25), 0 2px 4px rgba(43, 27, 18, .15);
 }
 .ranking-rank-top {
     background: var(--brand);
     color: #fff;
 }
+/* 1·2·3위는 금·은·동 메달색으로 구분(단조로운 주황 일괄 → 화사한 포디움).
+   .ranking-rank 를 가진 리스트(대시보드 인기순위·랭킹 페이지)의 1~3번째 항목에만 적용.
+   nth-child 규칙(specificity 0,3,0)이 .ranking-rank-top/-first(0,1,0)를 이긴다. */
+.list-group-item:nth-child(1) .ranking-rank {
+    background: linear-gradient(180deg, #F7C948 0%, #E3A81C 100%);
+    color: #4A3005;
+}
+.list-group-item:nth-child(2) .ranking-rank {
+    background: linear-gradient(180deg, #DDE1E7 0%, #B4BAC4 100%);
+    color: #3E4149;
+}
+.list-group-item:nth-child(3) .ranking-rank {
+    background: linear-gradient(180deg, #DB9152 0%, #B76B2C 100%);
+    color: #fff;
+}
+/* 인기순위 줄(칸) 배경을 캘린더 날짜 칸과 동일한 순백(--surface)으로.
+   :has(.ranking-rank) 로 순위 리스트 행에만 적용(카드 그라데이션 대신 흰색 고정). */
+.list-group-item:has(.ranking-rank) { background: var(--surface); }
 
 /* ===== Pagination ===== */
 .pagination {
@@ -607,6 +967,91 @@ h5 {
     --bs-pagination-focus-box-shadow: 0 0 0 .2rem rgba(243, 98, 53, .16);
     --bs-pagination-border-color: var(--line);
 }
+
+/* 미식 칼럼(미슐랭/블루리본) '더보기' — 밑줄 텍스트 링크 대신 옅은 브랜드 칩 */
+.more-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .1rem;
+    font-size: .68rem;
+    font-weight: 700;
+    line-height: 1;
+    padding: .18rem .5rem;
+    border-radius: 999px;
+    background: var(--brand-soft);
+    color: var(--brand-dark);
+    text-decoration: none;
+    vertical-align: middle;
+    transition: background-color .12s ease, color .12s ease;
+}
+.more-chip:hover { background: var(--brand); color: #fff; }
+
+/* ===== 콘텐츠 페이지 공용 컴포넌트 (메뉴목록/상세·후기·기록·통계·게임허브) ===== */
+/* 페이지 제목 — accounts 페이지 .title과 같은 룩(브랜드색 밑줄 포인트)으로 통일 */
+.page-title {
+    /* font-family/font-weight/letter-spacing/color는 h1~h4 전역 규칙에서 상속
+       (Pretendard, 700) — 여기선 이 컴포넌트 전용 크기와 브랜드 밑줄 포인트만 추가 */
+    font-size: 1.5rem;
+    border-bottom: 2px solid var(--brand);
+    padding-bottom: var(--sp-3);
+    display: inline-block;
+    margin-bottom: var(--sp-6);
+}
+
+/* 빈 상태(empty state) — 여러 페이지에 인라인으로 복붙돼 있던 블록을 통합 */
+.empty-state {
+    text-align: center;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: var(--sp-8) var(--sp-6);
+}
+.empty-state-icon { font-size: 3rem; margin-bottom: var(--sp-4); }
+.empty-state-title { color: var(--ink); font-weight: 700; margin-bottom: var(--sp-2); }
+.empty-state-text { color: var(--muted); margin-bottom: var(--sp-6); }
+
+/* 본문 폭 제한 컨테이너 — style="max-width:800px;margin:0 auto;" 반복 제거 */
+.page-narrow { max-width: 800px; margin: 0 auto; }
+
+/* 게임 허브 카드 — games/hub.html 로컬 style이었던 것을 이전 */
+.game-hub-card { transition: transform .15s ease, box-shadow .15s ease; }
+.game-hub-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+.game-hub-card-label { color: var(--ink); }
+
+/* 별점(리뷰) — Bootstrap 기본 노랑/하드코딩 hex 대신 브랜드 팔레트의 허니 앰버 사용 */
+.star-rating-static { color: var(--accent); }
+.record-rating { font-size: .9rem; }
+
+/* 식사 기록 한줄평 인용 박스 — history.html에 인라인으로 반복되던 것 */
+.record-comment {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    padding: var(--sp-4);
+    border-radius: .5rem;
+}
+
+/* 끼니 구분 배지 — history.html 인라인 색상을 클래스로 승격 */
+.badge-lunch { background-color: var(--brand); color: #fff; }
+.badge-dinner { background-color: var(--chip-dark); color: #fff; }
+.badge-breakfast { background-color: var(--meal-breakfast); color: #fff; }
+.badge-snack { background-color: #B5793C; color: #fff; }   /* 간식 — 웜 캐러멜(라이트/다크 모두 보임) */
+
+/* 별점 입력 위젯(후기 작성 폼) — review_form.html 로컬 style이었던 것을 이전 */
+.star-rating { display: inline-flex; flex-direction: row-reverse; font-size: 2rem; line-height: 1; }
+.star-rating input { display: none; }
+.star-rating label { color: var(--line); cursor: pointer; padding: 0 .05em; }
+.star-rating input:checked ~ label,
+.star-rating label:hover,
+.star-rating label:hover ~ label { color: var(--accent); }
+
+/* 종류 탭(후기 등) — Bootstrap 기본 파랑 액티브 대신 브랜드색 */
+.nav-tabs .nav-link.active {
+    color: var(--brand-dark);
+    border-color: var(--line) var(--line) var(--surface);
+    font-weight: 600;
+}
+.nav-tabs .nav-link:not(.active):hover { color: var(--brand); border-color: transparent; }
 
 /* ===== Alerts / Breadcrumb ===== */
 .alert { border-radius: var(--radius); }

@@ -3,10 +3,10 @@
 {% block title %}음식 통계 · 밥픽{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width: 800px; margin: 0 auto;">
+<div class="container page-narrow">
 
     <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
-        <h3 class="fw-bold m-0" style="color: var(--ink);">📊 음식 통계</h3>
+        <h3 class="page-title m-0">📊 음식 통계</h3>
         <div class="d-flex gap-2">
             <a href="{% url 'records:history' %}" class="btn btn-outline-secondary fw-bold px-3">식사 히스토리</a>
             <a href="{% url 'accounts:profile' %}" class="btn btn-outline-dark fw-bold px-3">마이페이지</a>
@@ -31,10 +31,10 @@
         </div>
     </div>
     {% else %}
-    <div class="text-center py-5 my-5 rounded shadow-sm" style="background-color: white; border: 1px solid var(--line);">
-        <div style="font-size: 3rem; margin-bottom: 1rem;">🍽️</div>
-        <h5 class="fw-bold" style="color: var(--ink);">아직 기록된 식사가 없어요</h5>
-        <p class="text-muted mb-4">식사를 기록하면 음식별 통계를 볼 수 있어요.</p>
+    <div class="empty-state my-5">
+        <div class="empty-state-icon">🍽️</div>
+        <div class="empty-state-title">아직 기록된 식사가 없어요</div>
+        <div class="empty-state-text">식사를 기록하면 음식별 통계를 볼 수 있어요.</div>
         <a href="{% url 'menus:dashboard' %}" class="btn btn-primary px-4 fw-bold">메인으로 가기</a>
     </div>
     {% endif %}

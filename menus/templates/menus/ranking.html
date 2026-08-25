@@ -3,9 +3,8 @@
 {% block title %}랭킹 · 메뉴 추천{% endblock %}
 
 {% block content %}
-<div class="eyebrow-label">후기 평점 TOP {{ menus|length }}</div>
-<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-    <h3 class="mb-0">메뉴 랭킹</h3>
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 mt-3">
+    <h3 class="page-title mb-0">메뉴 랭킹</h3>
     <div class="btn-group" role="group" aria-label="기간">
         <a href="?" class="btn btn-sm {% if not period %}btn-primary{% else %}btn-outline-primary{% endif %}">전체</a>
         <a href="?period=today" class="btn btn-sm {% if period == 'today' %}btn-primary{% else %}btn-outline-primary{% endif %}">오늘</a>
@@ -27,7 +26,6 @@
             </a>
             <div class="mt-1">
                 <span class="badge text-bg-secondary">{{ menu.cuisine.name }}</span>
-                <span class="badge text-bg-light border">{{ menu.course.name }}</span>
             </div>
         </div>
         <div class="text-end">
@@ -38,8 +36,11 @@
     {% endfor %}
 </div>
 {% else %}
-<div class="alert alert-secondary">
-    {% if period %}이 기간에는 후기가 달린 메뉴가 없습니다.{% else %}아직 후기가 달린 메뉴가 없습니다.{% endif %}
+<div class="empty-state">
+    <div class="empty-state-icon">🏆</div>
+    <div class="empty-state-title">
+        {% if period %}이 기간에는 후기가 달린 메뉴가 없습니다{% else %}아직 후기가 달린 메뉴가 없습니다{% endif %}
+    </div>
 </div>
 {% endif %}
 {% endblock %}

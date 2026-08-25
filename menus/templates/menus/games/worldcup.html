@@ -6,10 +6,9 @@
 <div class="container" style="max-width: 720px; margin: 0 auto;">
 
     <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
-        <h3 class="fw-bold m-0" style="color: var(--ink);">🏆 음식 이상형 월드컵</h3>
+        <h3 class="page-title m-0">🏆 음식 이상형 월드컵</h3>
         <div class="d-flex gap-2">
             <a href="{% url 'menus:games' %}" class="btn btn-outline-secondary fw-bold px-3">게임 목록</a>
-            <a href="{% url 'menus:dashboard' %}" class="btn btn-outline-dark fw-bold px-3">메인으로</a>
         </div>
     </div>
 
@@ -41,7 +40,7 @@
 <style>
     .wc-card {
         cursor: pointer; border: 2px solid var(--line); border-radius: var(--radius);
-        overflow: hidden; background: #fff; transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease;
+        overflow: hidden; background: var(--surface); transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease;
         max-width: 260px;
     }
     .wc-card:hover { transform: translateY(-4px); border-color: var(--brand); box-shadow: var(--shadow-md); }

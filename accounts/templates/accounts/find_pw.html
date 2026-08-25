@@ -1,14 +1,14 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <title>밥픽 - 비밀번호 찾기</title>
-    <!-- 아이디 찾기와 디자인이 완전히 똑같으므로 만들어두신 find_id.css를 그대로 재활용합니다! -->
-    <link rel="stylesheet" href="{% static 'accounts/find_id.css' %}">
-</head>
-<body>
+{% block title %}밥픽 - 비밀번호 찾기{% endblock %}
+{% block header %}{% include "partials/_minimal_header.html" %}{% endblock %}
+{% block extra_css %}
+<!-- 아이디 찾기와 디자인이 완전히 똑같으므로 만들어두신 find_id.css를 그대로 재활용합니다! -->
+<link rel="stylesheet" href="{% static 'accounts/find_id.css' %}">
+{% endblock %}
 
+{% block content %}
+<div class="find-page">
     <div class="find-container">
         <img src="{% static 'accounts/images/logo.png' %}" alt="밥픽 로고" class="logo-img">
         <h1 class="title">비밀번호 찾기</h1>
@@ -50,16 +50,16 @@
                 {% csrf_token %}
                 <!-- 뷰에서 step이 '1'이라는 것을 알 수 있도록 숨겨서 보냅니다 -->
                 <input type="hidden" name="step" value="1">
-                
+
                 <div class="input-group">
                     <input type="text" name="username" value="{{ username|default:'' }}" placeholder="가입한 아이디" required autofocus>
                     <input type="text" name="last_name" value="{{ last_name|default:'' }}" placeholder="성" required>
                     <input type="text" name="first_name" value="{{ first_name|default:'' }}" placeholder="이름" required>
                     <input type="email" name="email" value="{{ email|default:'' }}" placeholder="가입 시 입력한 이메일" required>
                 </div>
-                
+
                 <!-- 지난번처럼 핀셋 이모티콘을 사용해 친절한 안내 문구를 추가했습니다 -->
-                <div class="help-text" style="font-size: 12px; color: #8C756A; text-align: left; margin: -15px 5px 25px 5px; word-break: keep-all; line-height: 1.6;">
+                <div class="help-text">
                     📌 가입 시 입력하신 아이디, 이름, 이메일이 모두 일치해야 비밀번호를 재설정할 수 있습니다.
                 </div>
 
@@ -78,13 +78,12 @@
 
                 <button type="submit" class="submit-btn">다음 단계</button>
             </form>
-            
+
             <div class="bottom-links">
-                <a href="{% url 'accounts:login' %}">로그인</a> | 
+                <a href="{% url 'accounts:login' %}">로그인</a> |
                 <a href="{% url 'accounts:find_id' %}">아이디 찾기</a>
             </div>
         {% endif %}
     </div>
-
-</body>
-</html>
+</div>
+{% endblock %}

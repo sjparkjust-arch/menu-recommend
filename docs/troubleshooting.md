@@ -810,3 +810,188 @@ SELECT user, host FROM mysql.user WHERE user='menuuser';   -- 확인
 **배운 것**
 - DB 접속 실패 시 가장 먼저 볼 것은 **비밀번호가 아니라** `SELECT user, host FROM mysql.user`로 **"그 출발지의 계정이 존재하는가"** 이다.
 - 계정 단위가 아니라 **(계정 + host) 단위**라는 점이 IP 변경 시 장애의 원인이 된다.
+
+---
+
+## [2026-07-23 | 템플릿(.html) 수정이 실서버에 반영 안 됨 — collectstatic만으론 부족, gunicorn 재시작 필요]
+
+**증상**
+- 사이트 전체 디자인 통일 작업 중, 로그인/회원가입 창의 그림 로고를 글씨 로고로 바꿨는데 사용자가 "적용된거임? 뭐가 달라진거야 그대론데"라고 함.
+- CSS(`theme.css`)는 이미 이 세션에서 `collectstatic` 후 실제 반영을 여러 번 확인한 상태라 "또 collectstatic 안 돌렸나" 가설은 아니었음.
+
+**시도한 것 (원인 추적 과정)**
+1. `curl -sk https://192.168.32.74/static/css/theme.css` 로 실서버가 서빙하는 CSS를 직접 받아 로컬 `staticfiles/css/theme.css`와 `diff` → **완전히 동일**. CSS 쪽은 문제없음을 확인.
+2. `curl -sk https://192.168.32.74/accounts/login/`로 실서버 HTML을 직접 받아 `grep`했더니 `logo-text`가 **0건** — 방금 고친 내용이 실제 응답엔 없었다. 로컬 파일(`accounts/templates/accounts/login.html`)엔 분명 반영돼 있는데, 실제 서빙되는 HTML만 예전 그대로.
+3. `ps aux | grep gunicorn`으로 gunicorn 프로세스 시작 시각을 보니 `date` 기준 현재 시각과 거의 같은 시각(12:05)에 막 시작돼 있었음 — 즉 "최근에 재시작된 적은 있다"는 뜻인데, 그 재시작 **이후에** 로고 관련 템플릿을 추가로 수정했으니 그 사이 변경분만 캐시에 안 잡힌 것.
+4. `config/settings.py`의 `TEMPLATES` 설정을 확인 → `OPTIONS`에 `'loaders'`가 명시돼 있지 않음. Django의 `DjangoTemplates` 백엔드는 `'loaders'`를 명시하지 않고 `DEBUG=False`일 때 **기본 로더를 자동으로 `django.template.loaders.cached.Loader`로 감싼다** — 즉 한 번 컴파일된 템플릿을 워커 프로세스 메모리에 캐싱하고, 그 뒤로는 파일이 바뀌어도 다시 읽지 않는다.
+5. `systemctl status gunicorn`의 access 로그(`journalctl` 없이 `systemctl status`만으로도 최근 로그 일부가 보임)에서 실제로 사용자 브라우저가 `GET /accounts/login/` 200을 받아간 기록을 확인 — 캐시 탓에 정말로 옛 버전을 서빙하고 있었음을 최종 확인.
+
+**원인**
+`DEBUG=False`(운영 설정) + `TEMPLATES.OPTIONS.loaders` 미지정 조합에서 Django가 자동으로 템플릿 캐싱 로더(`cached.Loader`)를 적용한다. 이 캐시는 **정적 파일(collectstatic)과는 별개의 캐시 레이어**라서, `.html` 템플릿을 수정한 뒤에는 `collectstatic`만으로는 부족하고 **gunicorn 워커를 재시작(`systemctl restart gunicorn`)해야만** 새 템플릿이 반영된다.
+
+**해결**
+```
+sudo systemctl restart gunicorn
+```
+(Claude Code 세션에선 sudo 비밀번호가 없어 직접 재시작이 불가능했음 — 사용자가 직접 실행)
+
+**배운 것**
+- **정적 파일(CSS/JS)** 변경 → `collectstatic` 필요 (nginx가 `staticfiles/`를 직접 서빙).
+- **템플릿(.html) 변경** → `DEBUG=False`인 이상 **gunicorn 재시작이 별도로 필요** (캐싱 로더 때문). 이 둘은 서로 다른 캐시 레이어이므로 헷갈리지 않을 것.
+- "적용한 것 같은데 그대로다"라는 보고를 받으면, 브라우저 캐시부터 의심하기 전에 **`curl`로 실서버 응답을 직접 받아 로컬 파일과 비교**하는 게 가장 빠른 확인 방법이다(둘 다 확인해야 "서버가 stale인지" "브라우저가 stale인지" 구분됨).
+
+---
+
+## [2026-07-23 | 콘텐츠 페이지 제목에 글씨가 굵게 깨져 보임 — Black Han Sans + fw-bold/font-weight:800 충돌]
+
+**증상**
+- 콘텐츠 페이지 디자인 통일 작업(공용 `.page-title` 클래스 추가) 직후, 사용자가 "바꾼거 폰트 볼드체 잘 확인해봐 글씨가 굵어서 다 깨져"라고 함.
+
+**시도한 것 (원인 추적 과정)**
+1. `static/css/theme.css`에서 전역 제목 규칙을 다시 확인: `h1, h2, h3, h4 { font-family: var(--display-font); font-weight: 400; /* Black Han Sans 자체가 두꺼운 단일 굵기 */ }` — **이미 주석으로 "Black Han Sans는 굵게 주면 안 된다"고 명시돼 있었다.**
+2. 방금 추가한 `.page-title` 클래스를 확인 → `font-weight: 800;`으로 정의돼 있었음. `.page-title`은 클래스 선택자(specificity 0,1,0)라 태그 선택자인 `h1~h4`(0,0,1)보다 우선순위가 높아, 명시적으로 피하라고 적어둔 규칙을 그대로 덮어써버리고 있었다.
+3. accounts 페이지들의 `.title` 클래스(`profile.css`/`signup.css`/`find_id.css`)도 같은 패턴(`font-weight: 800`/`bold`)임을 확인 — 이 페이지들은 이전 작업에서 `base.html`을 상속하게 바뀌면서 처음으로 전역 `h1~h4` 규칙(Black Han Sans)을 적용받게 됐는데, 그때 `.title`의 굵기 값을 그대로 옮겨온 게 문제였다(마이그레이션 당시엔 accounts가 아직 다른 폰트(`Apple SD Gothic Neo`, 여러 굵기 지원)를 쓰고 있어서 문제가 없었음).
+4. `grep -rn "<h[1-4][^>]*fw-bold"`로 전체 템플릿을 훑어 같은 패턴이 더 있는지 확인 → `games/roulette.html`/`ladder.html`/`worldcup.html`/`reviews/recent_viewed.html`의 `<h3 class="fw-bold ...">`도 동일 버그(Bootstrap의 `.fw-bold`는 `font-weight:700 !important`라 마찬가지로 덮어씀).
+
+**원인**
+Black Han Sans는 굵기가 한 가지(사실상 이미 매우 두꺼움)뿐인 폰트라, CSS에서 `font-weight`를 400보다 높게 지정하면 브라우저가 없는 굵기를 억지로 합성(가짜 볼드, synthetic bold)해서 그려야 한다. 한글처럼 획이 많은 글자에서 가짜 볼드는 획이 뭉개지거나 겹쳐 보여 "글씨가 깨진" 것처럼 보인다. `h1~h4`에 이미 `font-weight:400`으로 이 문제를 피하도록 규칙이 있었는데, 그보다 specificity가 높은 클래스(`.page-title`, `.title`)와 유틸리티(`.fw-bold`)가 다시 700~800으로 덮어써서 재발했다.
+
+**해결**
+`.page-title`(theme.css), accounts의 `.title`(profile.css/signup.css/find_id.css) 전부 `font-weight: 400`으로 수정. `games/roulette.html`/`ladder.html`/`worldcup.html`/`reviews/recent_viewed.html`의 `<h3 class="fw-bold ...">`는 `.page-title`로 교체(불필요한 `fw-bold` 제거).
+
+**배운 것**
+- Black Han Sans(또는 이런 "이미 두꺼운 단일 굵기" 디스플레이 폰트) 관련 규칙을 건드릴 땐, **새 클래스나 유틸리티가 h1~h4에 `font-weight`를 다시 지정하지 않는지** 항상 확인한다 — specificity 때문에 전역 규칙의 의도가 조용히 무력화될 수 있다.
+- 기존 컴포넌트(`.title` 등)를 다른 폰트 체계(base.html+theme.css)로 옮길 때는, 그 컴포넌트의 스타일 값이 **원래 폰트 환경에서만 안전했던 값인지** 확인해야 한다 — 폰트가 바뀌면 이전엔 괜찮던 `font-weight: bold` 같은 값이 새 환경에서 깨질 수 있다.
+- 새 공용 클래스를 추가할 때 `grep -rn "<h[1-4][^>]*fw-bold"` 같은 걸로 **같은 버그 패턴이 이미 다른 곳에도 있는지** 훑어보는 게 좋다(이번에 게임 3페이지·최근 본 후기 페이지에서 추가로 발견됨).
+
+---
+
+## [2026-07-23 | 추천 카드 메뉴 이름 글씨가 두꺼워서 깨져 보임 — Black Han Sans를 가변 길이 실데이터에 사용]
+
+**증상**
+- 사용자가 "메뉴 추천에 있는 메뉴 이름 글씨체 두꺼워서 깨져"라고 함. 대상은 대시보드
+  추천 카드(`_rec_card.html`)의 메뉴 이름(`.rec-box-name`).
+
+**시도한 것 (원인 추적 과정)**
+1. 먼저 위에 기록된 것과 같은 패턴(클래스가 `font-weight`를 700/800으로 덮어씀)인지
+   확인 → `.rec-box-name`엔 `font-weight`가 아예 지정돼 있지 않았다. 상위 요소
+   (`.rec-box-body`, `.rec-box-info`)에도 font-weight 관련 규칙 없음 — **이번엔
+   "덮어쓰기" 버그가 아니었다.**
+2. `.rec-box-name`의 `font-family: var(--display-font)`(Black Han Sans)를 확인.
+   `grep -n "display-font"`로 이 변수가 쓰이는 곳을 전부 찾아보니 딱 두 곳:
+   `h1~h4`(페이지 제목 — 전부 "메뉴 랭킹"/"찜한 메뉴"처럼 **짧고 고정된 문구**)와
+   `.rec-box-name`(**실제 음식 이름 — 글자 수가 메뉴마다 제각각인 가변 데이터**).
+3. Black Han Sans는 원래 굵기 자체가 하나뿐인 초굵은("black") 디스플레이 서체다.
+   짧고 정해진 제목엔 문제없지만, "치킨시저샐러드"처럼 획이 많고 긴 실제 메뉴명에
+   1.3rem 크기로 적용하면 글자 간격이 좁아 획끼리 맞닿아 뭉개져 보인다 — 이전에
+   고쳤던 "가짜 볼드" 버그와 증상은 비슷하지만 **원인은 다르다**(이번엔 폰트 자체의
+   태생적인 두께 문제이지, CSS가 없는 굵기를 억지로 합성한 게 아님).
+
+**원인**
+Black Han Sans급 "한 굵기뿐인 초굵은 디스플레이 폰트"는 워딩이 고정된 짧은
+제목에만 써야 안전하고, 실제 사용자 데이터처럼 길이를 예측할 수 없는 콘텐츠(메뉴
+이름)에 그대로 쓰면 폰트의 태생적 두께 때문에 뭉개져 보일 위험이 있다.
+
+**해결**
+`static/css/theme.css`의 `.rec-box-name`에서 `font-family: var(--display-font)`를
+제거(본문 폰트 Pretendard 상속)하고 `font-weight: 700`을 명시(Pretendard Variable은
+여러 굵기를 정상 지원하므로 진짜 볼드로 안전하게 렌더링됨). 크기(`1.3rem`)는 그대로
+유지.
+
+**배운 것**
+- 사이트 전체에서 "이 특수 디스플레이 폰트가 어디에 쓰이는지" `grep -n
+  "display-font"`(또는 해당 폰트 변수명)로 항상 전수 확인한다. 짧고 고정된
+  텍스트(제목·라벨)에만 한정해서 써야 하고, **실제 데이터(사용자 입력, DB 값 등
+  길이가 가변인 콘텐츠)에는 절대 쓰지 않는다** — 두 사례(제목 가짜볼드, 메뉴 이름
+  뭉개짐) 모두 이 원칙을 어겨서 생겼다.
+
+**추가로 밝혀진 것 (같은 날 재발)**: `.page-title`(메뉴목록/후기/메뉴 랭킹 등)과
+accounts의 `.title`(마이페이지/회원가입 등)에 `font-weight`/`letter-spacing`/
+`font-size`를 아무리 조정해도 "후기"처럼 짧고 **고정된** 문구에서마저 글자가
+붙어 보인다는 신고가 반복됐다. 즉 "가변 길이 데이터에만 쓰지 마라"는 규칙으로는
+부족했다 — **Black Han Sans는 사실상 네비바 로고 워드마크("BOBPICK") 하나에만
+써야 안전하고, 그 외의 모든 제목류(페이지 타이틀 포함)는 처음부터 본문 폰트
+(Pretendard)를 써야 한다.** 처음엔 `.page-title`/`.title` 클래스에 각각
+`font-family: Pretendard`를 개별로 덮어써서 대응했으나, `grep -rn "<h[1-4]"`로
+전체 템플릿을 전수 조사해보니 `.section-title`(마이페이지)·`.modal-title`(회원가입
+완료 팝업)·클래스 없는 `<h4>`(메뉴 상세 "후기 (n)")까지 전부 같은 문제를 안고
+있었다(그때그때 개별로 고치면 계속 재발할 패턴). **최종 해결**: 개별 클래스를
+고치는 대신 `h1, h2, h3, h4` 전역 규칙 자체에서 `--display-font`를 빼서 근본
+해결(본문 폰트로 통일). 사이트 전체에서 이 폰트로 득 보는 곳이 실제로 하나도
+없었다는 걸 확인한 뒤(네비바 로고는 `MungyeongGamhongApple`을 별도 지정해서
+씀), 이제 아무데서도 안 쓰는 `--display-font` 변수와 `base.html`의 Black Han
+Sans 구글 폰트 `<link>`도 함께 제거했다.
+- 특정 클래스 하나를 고쳤는데 같은 증상이 다른 곳에서 또 나오면, **그 클래스만
+  다시 고치지 말고 같은 원인(전역 규칙·공용 변수)을 쓰는 다른 곳이 더 있는지
+  먼저 전수 조사**한다. 그래야 한 곳씩 땜질하다 끝나지 않는다.
+
+---
+
+## [2026-07-23 | 데스크톱 창을 좁히면 네비바가 깨짐 — body min-width만으론 부족, Bootstrap 반응형 클래스는 뷰포트 기준]
+
+**증상**
+- "웹사이트 사이즈 커서로 움직여서 줄이거나 늘리면 원래 디자인이 깨진다"는 신고.
+- 1차 대응으로 `body { min-width: 1200px; overflow-x: auto; }`(데스크톱 전용,
+  `@media (hover:hover) and (pointer:fine)`로 모바일 제외)을 걸었는데도, "위에
+  배너(로고·메뉴·후기·랭킹·게임)는 그대로 막 변형된다"는 재신고.
+
+**시도한 것 (원인 추적 과정)**
+1. body에 min-width를 걸면 body 자체는 안 줄어드는데, 왜 그 **자식인 네비바**가
+   여전히 줄바꿈되는지 의문 → 네비바 DOM 구조를 다시 봄: `<div class="container
+   page-header">`(Bootstrap `.container`) → `<nav class="navbar-pill">` →
+   `<div class="container-fluid ...">`(nav-cells가 flex-wrap으로 배치됨).
+2. Bootstrap의 `.container` 자체가 `@media (min-width: 576/768/992/1200px)`
+   구간마다 다른 `max-width`를 갖는 걸 확인. 그런데 이 미디어쿼리는 **body의
+   렌더링 폭이 아니라 브라우저 뷰포트(window.innerWidth) 자체**를 본다 — CSS
+   미디어쿼리는 항상 그렇다는 걸 재확인. 그래서 body를 아무리 넓게 고정해도,
+   `.container`는 실제 창이 좁으면 여전히 좁은 tier의 max-width를 적용받고,
+   그 안의 `.navbar-pill`도 따라서 좁아져 nav-cells가 flex-wrap으로 줄바꿈됨.
+3. 같은 논리로 대시보드의 `.col-lg-8`/`.col-lg-4`, 메뉴목록의 `.row-cols-*`,
+   마이페이지의 `.col-md-6` 등도 전부 각자 자기 미디어쿼리(`@media (min-width:
+   992px)` 등)로 폭이 정해지므로, 컨테이너만 넓혀선 그 안의 grid는 여전히 좁은
+   뷰포트 기준으로 적층된다는 걸 확인.
+
+**원인**
+CSS 미디어쿼리(`@media (min-width/max-width: ...)`)는 **항상 브라우저 뷰포트를
+기준으로 평가**하며, 조상 요소의 실제 계산된 폭과는 무관하다. 그래서 "부모(body)를
+넓게 고정하면 자식(Bootstrap 반응형 클래스)도 넓어지겠지"라는 가정이 틀렸다 —
+Bootstrap의 `.container`/`.col-*`/`.row-cols-*`는 각자 자기만의 뷰포트 기준
+미디어쿼리로 폭이 결정되고, 부모의 폭을 참고하지 않는다.
+
+**해결**
+`static/css/theme.css`의 같은 `@media (hover:hover) and (pointer:fine)` 블록
+안에, 실제로 쓰이는 반응형 클래스마다 "가장 넓은(데스크톱) 단계의 값"을 뷰포트와
+무관하게 고정: `.container { max-width: 1140px; }`(단, 게임 페이지처럼 인라인
+`style="max-width:…"`로 일부러 더 좁게 잡아둔 곳은 인라인이 항상 우선이라 안
+건드려짐), `.col-lg-8/4`, `.col-md-4/5/6/7`, `.row-cols-sm-2/md-3/lg-4 > *`를
+전부 `!important`로 고정 폭 지정.
+
+**배운 것**
+- **"부모 요소의 폭을 고정하면 자식의 반응형도 따라간다"는 가정은 틀렸다** —
+  CSS 미디어쿼리는 항상 뷰포트 기준이다. Bootstrap 같은 그리드 프레임워크의
+  반응형 동작을 특정 조건(여기선 "데스크톱에서 창을 좁혀도 안 깨지게")에서
+  무력화하려면, 그 프레임워크가 실제로 쓰는 반응형 클래스 하나하나를 찾아서
+  개별적으로 고정해야 한다 — 상위 컨테이너 하나만 고쳐서 끝나지 않는다.
+- 이런 수정을 할 땐 `grep`으로 실제 템플릿에 쓰인 반응형 클래스 목록부터 뽑는
+  게 안전하다(짐작으로 일부만 고치면 나중에 또 재발 신고를 받는다).
+
+**추가로 밝혀진 것 (같은 날 재발)**: 위 수정 후에도 "네비바(메뉴/후기/랭킹/게임)가
+그대로 세로로 쌓인다"는 재신고를 받음. `.container` 폭 고정은 사실 이 증상과
+무관했다 — 진짜 원인은 `templates/base.html`의 nav-cells가 Bootstrap의
+`.navbar-nav` 클래스를 그대로 쓰고 있는데, `.navbar-nav`의 **기본값 자체가
+`flex-direction: column`**(모바일 첫 번째 상태 — 세로 쌓임)이고,
+`.navbar-expand-lg .navbar-nav { flex-direction: row }`(가로로 바꾸는 규칙)도
+`@media (min-width: 992px)` 안에만 있다는 것. 이 프로젝트 네비바엔 햄버거
+토글 버튼이 없어서, 창이 992px 아래로 좁혀지면 그냥 조용히 세로 목록으로
+바뀌어버렸다(`.container`의 max-width와는 완전히 별개의 메커니즘).
+`/tmp`에 Bootstrap CDN CSS를 직접 `curl`로 받아서 `grep -o
+'\.navbar-nav{[^}]*}'`/`'\.navbar-expand-lg[^{]*\{[^}]*\}'`로 실제 컴파일된
+규칙을 확인하고 나서야 정확한 지점을 찾았다(추측 대신 실제 소스를 봐서 해결).
+**해결**: `.navbar-pill .nav-cells { flex-direction: row !important; flex-wrap:
+nowrap !important; }` + `.navbar-pill > .container-fluid { flex-wrap: nowrap
+!important; }`를 같은 데스크톱 전용 미디어쿼리에 추가.
+- Bootstrap 컴포넌트(네비바 등)의 반응형 동작을 끄려면, 그 컴포넌트가 내부적으로
+  의존하는 유틸리티 클래스(`.navbar-nav`, `.navbar-expand-*` 등)까지 전부 확인
+  해야 한다 — 겉에서 보이는 `.container`/`.row`/`.col-*`만 고치는 걸로는 안 되는
+  컴포넌트도 있다. **CDN CSS를 직접 `curl`로 받아 `grep`으로 실제 컴파일된 규칙을
+  확인하는 게, 짐작보다 훨씬 빠르고 정확하다.**

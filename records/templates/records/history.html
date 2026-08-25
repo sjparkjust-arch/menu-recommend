@@ -5,11 +5,11 @@
 {% block title %}식사 히스토리 · 밥픽{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width: 800px; margin: 0 auto;">
-    
+<div class="container page-narrow">
+
     <!-- 상단 헤더 및 이동 버튼 영역 (레이아웃 깨짐 복구) -->
     <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
-        <h3 class="fw-bold m-0" style="color: var(--ink);">🕒 식사 히스토리</h3>
+        <h3 class="page-title m-0">🕒 식사 히스토리</h3>
         <div class="d-flex gap-2">
             <!-- 💡 모달 창 띄우기 버튼 -->
             <button type="button" class="btn btn-primary fw-bold px-3" data-bs-toggle="modal" data-bs-target="#addRecordModal">
@@ -28,9 +28,9 @@
     {% if records %}
         <div class="d-flex flex-column gap-3">
             {% for record in records %}
-            <div class="card shadow-sm border-0" style="background-color: #fcfcfc;">
+            <div class="card shadow-sm border-0">
                 <div class="card-body p-4 position-relative">
-                    
+
                     <!-- 삭제 버튼 (우측 상단 고정) -->
                     <form action="{% url 'records:delete' record.pk %}" method="post" class="position-absolute top-0 end-0 m-3">
                         {% csrf_token %}
@@ -41,20 +41,20 @@
 
                     <!-- 식사 구분 뱃지 (점심, 저녁 등) -->
                     {% if record.meal_type == 'LUNCH' %}
-                        <span class="badge mb-2" style="background-color: #E8623D;">점심</span>
+                        <span class="badge mb-2 badge-lunch">점심</span>
                     {% elif record.meal_type == 'DINNER' %}
-                        <span class="badge mb-2" style="background-color: #2C2118;">저녁</span>
+                        <span class="badge mb-2 badge-dinner">저녁</span>
                     {% elif record.meal_type == 'BREAKFAST' %}
-                        <span class="badge mb-2" style="background-color: #6FA3EF;">아침</span>
+                        <span class="badge mb-2 badge-breakfast">아침</span>
                     {% else %}
                         <span class="badge mb-2 bg-secondary">{{ record.get_meal_type_display }}</span>
                     {% endif %}
 
                     <!-- 음식 이름 -->
-                    <h5 class="fw-bold mb-2" style="color: var(--ink);">{{ record.food_name }}</h5>
-                    
+                    <h5 class="fw-bold mb-2">{{ record.food_name }}</h5>
+
                     <!-- 만족도 (별점) -->
-                    <div class="text-warning mb-2" style="font-size: 0.9rem;">
+                    <div class="star-rating-static record-rating mb-2">
                         {% if record.rating == 5 %}⭐⭐⭐⭐⭐
                         {% elif record.rating == 4 %}⭐⭐⭐⭐
                         {% elif record.rating == 3 %}⭐⭐⭐
@@ -65,7 +65,7 @@
 
                     <!-- 한줄평 -->
                     {% if record.comment %}
-                    <div class="p-3 rounded mb-2" style="background-color: white; border: 1px solid var(--line); color: var(--ink);">
+                    <div class="record-comment mb-2">
                         " {{ record.comment }} "
                     </div>
                     {% endif %}
@@ -103,10 +103,10 @@
         {% endif %}
     {% else %}
         <!-- 기록이 없을 때 빈 화면 안내 -->
-        <div class="text-center py-5 my-5 rounded shadow-sm" style="background-color: white; border: 1px solid var(--line);">
-            <div style="font-size: 3rem; margin-bottom: 1rem;">🍽️</div>
-            <h5 class="fw-bold" style="color: var(--ink);">아직 기록된 식사가 없어요</h5>
-            <p class="text-muted mb-4">메인 화면에서 맛있는 식사를 추천받고 기록을 남겨보세요!</p>
+        <div class="empty-state my-5">
+            <div class="empty-state-icon">🍽️</div>
+            <div class="empty-state-title">아직 기록된 식사가 없어요</div>
+            <div class="empty-state-text">메인 화면에서 맛있는 식사를 추천받고 기록을 남겨보세요!</div>
             <a href="{% url 'menus:dashboard' %}" class="btn btn-primary px-4 fw-bold">메인으로 가기</a>
         </div>
     {% endif %}

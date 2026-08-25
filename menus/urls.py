@@ -8,6 +8,7 @@ urlpatterns = [
     # 루트('')로 마운트된다. 메인 대시보드.
     path('', views.dashboard, name='dashboard'),
     path('reroll/', views.reroll_slot, name='reroll'),  # 추천 카드 1개 재추첨(AJAX)
+    path('pin/', views.toggle_pin, name='toggle_pin'),  # 추천 카드 고정/해제 토글(AJAX)
     path('menus/', views.menu_list, name='list'),
     path('menus/liked/', views.liked_menus_view, name='liked'),  # 찜한 메뉴 전체보기
     path('menus/ranking/', views.ranking, name='ranking'),

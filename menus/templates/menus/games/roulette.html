@@ -3,13 +3,12 @@
 {% block title %}메뉴 돌림판 · 밥픽{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width: 640px; margin: 0 auto;">
+<div class="container" style="max-width: 720px; margin: 0 auto;">
 
     <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
-        <h3 class="fw-bold m-0" style="color: var(--ink);">🎯 메뉴 돌림판</h3>
+        <h3 class="page-title m-0">🎯 메뉴 돌림판</h3>
         <div class="d-flex gap-2">
             <a href="{% url 'menus:games' %}" class="btn btn-outline-secondary fw-bold px-3">게임 목록</a>
-            <a href="{% url 'menus:dashboard' %}" class="btn btn-outline-dark fw-bold px-3">메인으로</a>
         </div>
     </div>
 
@@ -17,17 +16,30 @@
         <div class="card-body text-center py-4">
             <div class="roulette-wrap mx-auto">
                 <div class="roulette-pointer">▼</div>
-                <canvas id="rouletteCanvas" width="320" height="320"></canvas>
+                <canvas id="rouletteCanvas" width="560" height="560"></canvas>
             </div>
 
             <div class="d-flex justify-content-center gap-2 mt-4">
-                <button type="button" class="btn btn-primary fw-bold px-4" id="spinBtn">🎯 돌리기</button>
-                <a href="?{{ request.GET.urlencode }}" class="btn btn-outline-secondary fw-bold px-4" id="reshuffleBtn">🔀 다시 섞기</a>
+                <button type="button" class="btn btn-primary fw-bold px-4" id="spinBtn">돌리기</button>
+                <a href="?{{ request.GET.urlencode }}" class="btn btn-outline-secondary fw-bold px-4" id="reshuffleBtn">다시 섞기</a>
             </div>
 
             <div id="rouletteResult" class="mt-4" hidden>
                 <div class="fs-5">오늘은 <span id="rouletteResultName" class="fw-bold"></span> 어때요?</div>
                 <a id="rouletteResultLink" href="#" class="btn btn-sm btn-outline-primary mt-2">메뉴 상세보기 →</a>
+            </div>
+
+            {# 메뉴 직접 추가/선택 — 자유 입력 또는 전체 메뉴 중에서 골라 원판에 넣을 수 있다 #}
+            <div class="roulette-editor mt-4 pt-4 border-top text-start mx-auto">
+                <div class="small fw-semibold mb-2">메뉴 직접 추가하기 (최소 2개 · 최대 12개)</div>
+                <div class="d-flex gap-2 mb-2">
+                    <input type="text" id="rouletteNameInput" class="form-control form-control-sm"
+                           list="rouletteMenuOptions" placeholder="메뉴 이름을 입력하거나 목록에서 선택">
+                    <button type="button" class="btn btn-sm btn-outline-primary flex-shrink-0 text-nowrap" id="rouletteAddBtn">추가</button>
+                </div>
+                <datalist id="rouletteMenuOptions"></datalist>
+                <ul class="list-unstyled d-flex flex-wrap gap-2 mb-2" id="rouletteItemList"></ul>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="rouletteResetBtn">기본 메뉴로 초기화</button>
             </div>
         </div>
     </div>
@@ -35,16 +47,28 @@
 </div>
 
 {{ menus_json|json_script:"roulette-menus" }}
+{{ all_menus_json|json_script:"roulette-all-menus" }}
 
 <style>
-    .roulette-wrap { position: relative; width: 320px; height: 320px; }
+    .roulette-wrap { position: relative; width: 100%; max-width: 560px; aspect-ratio: 1 / 1; margin: 0 auto; }
     .roulette-pointer {
         position: absolute; top: -6px; left: 50%; transform: translateX(-50%);
         font-size: 1.8rem; color: var(--ink); z-index: 2; line-height: 1;
     }
     #rouletteCanvas {
+        width: 100%; height: 100%;
         border-radius: 50%; box-shadow: var(--shadow-md);
         transition: transform 4.5s cubic-bezier(0.17, 0.67, 0.12, 1);
+    }
+    .roulette-editor { max-width: 480px; }
+    .roulette-chip {
+        display: inline-flex; align-items: center; gap: .4rem;
+        background: var(--brand-soft); color: var(--brand-dark);
+        border-radius: 999px; padding: .3rem .5rem .3rem .8rem; font-size: .85rem;
+    }
+    .roulette-chip button {
+        border: none; background: none; color: var(--brand-dark); font-weight: 700;
+        line-height: 1; cursor: pointer; padding: 0 .2rem;
     }
 </style>
 {% endblock %}
@@ -52,7 +76,12 @@
 {% block extra_js %}
 <script>
 (function () {
-    var data = JSON.parse(document.getElementById('roulette-menus').textContent || '[]');
+    var originalData = JSON.parse(document.getElementById('roulette-menus').textContent || '[]');
+    var allMenus = JSON.parse(document.getElementById('roulette-all-menus').textContent || '[]');
+    var data = originalData.slice();
+    var MIN_ITEMS = 2;
+    var MAX_ITEMS = 12;
+
     var canvas = document.getElementById('rouletteCanvas');
     var ctx = canvas.getContext('2d');
     var spinBtn = document.getElementById('spinBtn');
@@ -60,15 +89,76 @@
     var resultName = document.getElementById('rouletteResultName');
     var resultLink = document.getElementById('rouletteResultLink');
     var detailBase = "{% url 'menus:detail' 0 %}";  // /menus/0/ → id 치환
+    var nameInput = document.getElementById('rouletteNameInput');
+    var addBtn = document.getElementById('rouletteAddBtn');
+    var resetBtn = document.getElementById('rouletteResetBtn');
+    var itemList = document.getElementById('rouletteItemList');
+    var datalistEl = document.getElementById('rouletteMenuOptions');
 
-    var n = data.length;
-    if (!n) { spinBtn.disabled = true; return; }
-    var sliceAngle = 360 / n;
-    var radius = canvas.width / 2;
-    // 클래식 룰렛 느낌: 주황/잉크 두 색 교대 (인접 조각 대비 확보, 브랜드 팔레트 유지)
-    var colors = ['#F36235', '#2B1B12'];
+    allMenus.forEach(function (m) {
+        var opt = document.createElement('option');
+        opt.value = m.name;
+        datalistEl.appendChild(opt);
+    });
+
+    var rootStyle = getComputedStyle(document.documentElement);
+    function cssVar(name) { return rootStyle.getPropertyValue(name).trim(); }
+    // 조각마다 다른 색(사다리타기 게임과 같은 팔레트) — 2색 교대 때 홀수 개수면
+    // 마지막-첫 조각이 원형으로 맞닿아 같은 색이 되던 문제를 없애기 위해 색을 늘림.
+    var palette = ['--ladder-1', '--ladder-2', '--ladder-3', '--ladder-4', '--ladder-5', '--ladder-6', '--ladder-7', '--ladder-8'].map(cssVar);
+
+    function hexToRgb(hex) {
+        hex = hex.replace('#', '');
+        return [parseInt(hex.substr(0, 2), 16), parseInt(hex.substr(2, 2), 16), parseInt(hex.substr(4, 2), 16)];
+    }
+    function relativeLuminance(hex) {
+        var rgb = hexToRgb(hex).map(function (c) {
+            c /= 255;
+            return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+        });
+        return 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
+    }
+    // 조각 배경이 밝으면 잉크색 글자, 어두우면 흰 글자 — 어떤 색이 걸려도 가독성 확보
+    function textColorFor(bgHex) {
+        return relativeLuminance(bgHex) > 0.4 ? cssVar('--ink') : cssVar('--surface');
+    }
+    // 팔레트를 순서대로 배정하되, 원형으로 이어지는 마지막-첫 조각만 예외적으로
+    // 같은 색이 될 수 있어(조각 수가 홀/짝으로 바뀔 때마다 발생 조건이 달라짐) 그 경우만 교체.
+    function assignSliceColors(count) {
+        var colors = [];
+        for (var i = 0; i < count; i++) colors.push(palette[i % palette.length]);
+        if (count > 1 && colors[count - 1] === colors[0]) {
+            var prev = colors[count - 2 >= 0 ? count - 2 : 0];
+            for (var p = 0; p < palette.length; p++) {
+                if (palette[p] !== colors[0] && palette[p] !== prev) {
+                    colors[count - 1] = palette[p];
+                    break;
+                }
+            }
+        }
+        return colors;
+    }
+
+    var n, sliceAngle, radius;
+    var currentRotation = 0;
+    var spinning = false;
+
+    // 조각 폭에 안 맞으면 이름을 자르지 않고 글자 크기를 줄여서 그대로 다 보여준다.
+    function fitFontSize(text, maxWidth) {
+        var size = 16;
+        ctx.font = '600 ' + size + 'px "Pretendard Variable", sans-serif';
+        while (size > 9 && ctx.measureText(text).width > maxWidth) {
+            size -= 1;
+            ctx.font = '600 ' + size + 'px "Pretendard Variable", sans-serif';
+        }
+        return size;
+    }
 
     function drawWheel() {
+        n = data.length;
+        sliceAngle = 360 / n;
+        radius = canvas.width / 2;
+        var sliceColors = assignSliceColors(n);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         for (var i = 0; i < n; i++) {
             var start = (-90 + i * sliceAngle) * Math.PI / 180;
@@ -77,44 +167,98 @@
             ctx.moveTo(radius, radius);
             ctx.arc(radius, radius, radius - 2, start, end);
             ctx.closePath();
-            ctx.fillStyle = colors[i % colors.length];
+            ctx.fillStyle = sliceColors[i];
             ctx.fill();
 
-            // 라벨: 조각 중앙 각도를 따라 바깥쪽으로 향하게
+            // 라벨: 조각 중앙 각도를 따라 바깥쪽으로 향하게, 안 잘리게 폭에 맞춰 축소
             var mid = start + (end - start) / 2;
+            var maxWidth = (radius - 34) * 1.15; // 안쪽 여백 뺀 반경만큼 텍스트 폭 허용
+            var fontSize = fitFontSize(data[i].name, maxWidth);
             ctx.save();
             ctx.translate(radius, radius);
             ctx.rotate(mid);
             ctx.textAlign = 'right';
             ctx.textBaseline = 'middle';
-            ctx.fillStyle = '#fff';
-            ctx.font = '600 13px "Pretendard Variable", sans-serif';
-            var label = data[i].name.length > 6 ? data[i].name.slice(0, 6) + '…' : data[i].name;
-            ctx.fillText(label, radius - 14, 0);
+            ctx.fillStyle = textColorFor(sliceColors[i]);
+            ctx.font = '600 ' + fontSize + 'px "Pretendard Variable", sans-serif';
+            ctx.fillText(data[i].name, radius - 18, 0);
             ctx.restore();
         }
     }
     drawWheel();
 
-    var currentRotation = 0;
-    var spinning = false;
+    function renderItemList() {
+        itemList.innerHTML = '';
+        data.forEach(function (item, idx) {
+            var li = document.createElement('li');
+            li.className = 'roulette-chip';
+            li.innerHTML = '<span>' + item.name + '</span>';
+            var removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.setAttribute('aria-label', '삭제');
+            removeBtn.textContent = '×';
+            removeBtn.addEventListener('click', function () {
+                if (spinning || data.length <= MIN_ITEMS) return;
+                data.splice(idx, 1);
+                drawWheel();
+                renderItemList();
+            });
+            li.appendChild(removeBtn);
+            itemList.appendChild(li);
+        });
+        spinBtn.disabled = data.length < MIN_ITEMS;
+        addBtn.disabled = data.length >= MAX_ITEMS;
+    }
+    renderItemList();
+
+    function addItem(name) {
+        name = (name || '').trim();
+        if (spinning || !name || data.length >= MAX_ITEMS) return;
+        // 전체 메뉴 목록에 같은 이름이 있으면 그 id를 연결(상세보기 가능), 없으면 커스텀(id null)
+        var matched = allMenus.find(function (m) { return m.name === name; });
+        data.push({ id: matched ? matched.id : null, name: name });
+        drawWheel();
+        renderItemList();
+        nameInput.value = '';
+        nameInput.focus();
+    }
+
+    addBtn.addEventListener('click', function () { addItem(nameInput.value); });
+    nameInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); addItem(nameInput.value); }
+    });
+    resetBtn.addEventListener('click', function () {
+        if (spinning) return;
+        data = originalData.slice();
+        drawWheel();
+        renderItemList();
+    });
 
     canvas.addEventListener('transitionend', function () {
         spinning = false;
-        spinBtn.disabled = false;
+        spinBtn.disabled = data.length < MIN_ITEMS;
+        resetBtn.disabled = false;
+        addBtn.disabled = data.length >= MAX_ITEMS;
         var normalized = ((currentRotation % 360) + 360) % 360;
         var targetAngle = (360 - normalized) % 360;
         var idx = Math.floor(targetAngle / sliceAngle) % n;
         var pick = data[idx];
         resultName.textContent = pick.name;
-        resultLink.href = detailBase.replace(/0\/$/, pick.id + '/');
+        if (pick.id) {
+            resultLink.href = detailBase.replace(/0\/$/, pick.id + '/');
+            resultLink.hidden = false;
+        } else {
+            resultLink.hidden = true;
+        }
         result.hidden = false;
     });
 
     spinBtn.addEventListener('click', function () {
-        if (spinning) return;
+        if (spinning || data.length < MIN_ITEMS) return;
         spinning = true;
         spinBtn.disabled = true;
+        addBtn.disabled = true;
+        resetBtn.disabled = true;
         result.hidden = true;
         currentRotation += 1800 + Math.floor(Math.random() * 1440);  // 5~9바퀴 + 랜덤
         canvas.style.transform = 'rotate(' + currentRotation + 'deg)';

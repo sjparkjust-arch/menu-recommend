@@ -3,8 +3,8 @@
 뷰에는 비즈니스 로직을 넣지 않는다(CLAUDE.md 코드 스타일). 추천은 이 모듈에서만.
 
 recommend_dashboard()는 대시보드에 보여줄 5개 카드를 서로 다른 방식으로 각 1개씩 뽑는다:
-    1. 오늘의 추천      — 전체 메뉴 중 무작위 (끼니 구분 없음)
-    2. 또 다른 추천     — 전체 메뉴 중 무작위 (1번과 중복 없음)
+    1. 점심 랜덤        — 점심 후보 중 무작위
+    2. 저녁 랜덤        — 저녁 후보 중 무작위
     3. 오늘의 BEST     — 평균 평점이 높은(잘 검증된) 메뉴
     4. 지금 인기 있는  — 좋아요가 많은 메뉴
     5. 당신의 취향을 담은 — 협업(나와 취향 겹치는 사용자) + 요리종류 선호도 개인화
@@ -65,9 +65,8 @@ def recommend_dashboard(user, cuisine_ids=None, pinned=None, reroll=None):
     def pin(slot):
         return None if slot in reroll else pinned.get(slot)
 
-    # 점심/저녁 구분 없이 둘 다 전체 메뉴에서 무작위(서로 중복 없음). 슬롯 키는 식별자로만 유지.
-    lunch = take(_pick_meal(user, None, cuisine_ids, used, pin('lunch')))
-    dinner = take(_pick_meal(user, None, cuisine_ids, used, pin('dinner')))
+    lunch = take(_pick_meal(user, Menu.MealTime.LUNCH, cuisine_ids, used, pin('lunch')))
+    dinner = take(_pick_meal(user, Menu.MealTime.DINNER, cuisine_ids, used, pin('dinner')))
     taste = take(_pick_taste(user, cuisine_ids, used, pin('taste')))
     best = take(_pick_best(user, used))
     popular = take(_pick_popular(user, used))

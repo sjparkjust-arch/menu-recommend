@@ -1,573 +1,330 @@
-/* accounts/static/accounts/profile.css */
+/* accounts/static/accounts/profile.css — delete_confirm.html도 함께 사용.
+   폰트·배경·전체 여백은 base.html + theme.css(사이트 공통 디자인 시스템)가 담당. */
 
-
-
-/* 전체 배경: 따뜻하고 부드러운 오트밀 베이지 */
-
-body {
-
-    background-color: #FAF6F0;
-
-    margin: 0;
-
-    padding: 40px 20px;
-
-    font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
-
+/* 마이페이지 전체 컨테이너 */
+.profile-page {
     display: flex;
-
     justify-content: center;
-
-    align-items: flex-start; /* 위에서부터 자연스럽게 내려오도록 */
-
-    min-height: 100vh;
-
-    box-sizing: border-box;
-
+    padding: var(--sp-8) var(--sp-4) var(--sp-9);
 }
-
-
-
-/* 마이페이지 전체 컨테이너 (넓고 시원하게 확장) */
-
 .profile-container {
-
-    background-color: #ffffff;
-
+    background-color: var(--surface);
     width: 100%;
-
-    max-width: 700px; /* 기존 480px에서 700px로 대폭 확장 */
-
-    padding: 50px 40px;
-
+    max-width: 700px;
+    padding: var(--sp-8) var(--sp-7);
     border-radius: 20px; /* 좀 더 둥글고 부드러운 느낌 */
-
     box-shadow: 0 10px 30px rgba(140, 117, 106, 0.05); /* 은은한 갈색 음영 */
-
     box-sizing: border-box;
-
 }
+/* 마이페이지는 카드를 2열로 배치해 세로 스크롤을 줄이므로 더 넓게(회원탈퇴 확인
+   페이지는 좁은 폭 그대로 유지 — .profile-container만 공유, 폭은 이 클래스로만 확장) */
+.profile-container.profile-wide { max-width: 920px; }
 
-
-
-/* 상단 타이틀 (중앙 정렬 탈피, 좌측 정렬로 감성적이게) */
-
+/* 상단 타이틀 (좌측 정렬) */
 .title {
-
+    font-family: var(--ui-font); /* 사이트 공통 콘텐츠 폰트(theme.css --ui-font) */
     font-size: 28px;
-
-    font-weight: 800;
-
-    color: #4A3022;
-
+    font-weight: 700;
+    color: var(--ink);
     margin-top: 0;
-
-    margin-bottom: 35px;
-
+    margin-bottom: var(--sp-7);
     text-align: left;
-
-    border-bottom: 2px solid #F37943; /* 포인트 밑줄 */
-
-    padding-bottom: 15px;
-
+    border-bottom: 2px solid var(--brand);
+    padding-bottom: var(--sp-4);
     display: inline-block;
-
 }
-
-
+/* 회원탈퇴 페이지 전용 — 경고의 의미로 danger 톤 강조 */
+.title.danger-color {
+    color: var(--danger);
+    border-color: var(--danger);
+}
 
 .info-card {
-
-    background: linear-gradient(135deg, #FFFDFB 0%, #FFF9F2 100%);
-
-    border: 1px solid #EADCC9;
-
+    background: linear-gradient(135deg, var(--surface) 0%, var(--brand-soft) 100%);
+    border: 1px solid var(--line);
     border-radius: 16px;
-
-    padding: 30px;
-
-    margin-bottom: 30px;
-
+    padding: var(--sp-7);
+    margin-bottom: var(--sp-7);
     display: flex;
-
     align-items: center;
-
-    gap: 25px;
-
+    gap: var(--sp-6);
 }
-
-
 
 .avatar {
-
     font-size: 50px;
-
-    background-color: #ffffff;
-
+    background-color: var(--surface);
     width: 90px;
-
     height: 90px;
-
     display: flex;
-
     align-items: center;
-
     justify-content: center;
-
     border-radius: 50px;
-
-    box-shadow: 0 4px 10px rgba(243, 121, 67, 0.1);
-
-    border: 1px solid #EADCC9;
-
+    box-shadow: 0 4px 10px rgba(243, 98, 53, .1);
+    border: 1px solid var(--line);
     flex-shrink: 0;
-
 }
-
-
 
 .info-details {
-
     flex: 1;
-
     display: flex;
-
     flex-direction: column;
-
-    gap: 12px; /* 닉네임과 정보창 간격 */
-
+    gap: var(--sp-3); /* 닉네임과 정보창 간격 */
     overflow: hidden; /* 영역 밖으로 튀어나가지 않게 방지 */
-
 }
-
-
 
 .user-id {
-
     font-size: 20px;
-
     font-weight: bold;
-
-    color: #4A3022;
-
+    color: var(--ink);
     margin: 0;
-
 }
-
-
 
 /* 성명과 이메일 박스가 아래로 하나씩 쌓이도록 설정 */
-
 .info-grid {
-
     display: flex;
-
     flex-direction: column;
-
-    gap: 8px; /* 위아래 줄간격 */
-
+    gap: var(--sp-2); /* 위아래 줄간격 */
 }
-
-
 
 .info-row {
-
     font-size: 14px;
-
     display: flex;
-
     align-items: center;
-
-    border-bottom: 1px dashed #EADCC9;
-
-    padding-bottom: 6px;
-
+    border-bottom: 1px dashed var(--line);
+    padding-bottom: var(--sp-2);
 }
-
-
 
 .info-row:last-child {
-
     border-bottom: none;
-
     padding-bottom: 0;
-
 }
-
-
 
 /* 왼쪽 항목 타이틀 (성명, 이메일) */
-
 .info-row .label {
-
-    color: #8C756A;
-
+    color: var(--muted);
     font-weight: bold;
-
     width: 60px; /* 고정 크기를 주어 줄 시작위치를 정렬함 */
-
     flex-shrink: 0;
-
 }
-
-
 
 /* 오른쪽 실제 값 */
-
 .info-row .value {
-
-    color: #333333;
-
+    color: var(--ink);
     font-weight: bold;
-
 }
-
-
-
-
 
 /* 2. 먹은 메뉴 & 추천 내역 섹션 (대시보드 스타일) */
-
 .history-card {
-
-    background-color: #ffffff;
-
-    border: 1px solid #EADCC9;
-
+    background-color: var(--surface);
+    border: 1px solid var(--line);
     border-radius: 16px;
-
-    padding: 30px;
-
-    margin-bottom: 35px;
-
+    padding: var(--sp-7);
+    margin-bottom: var(--sp-8);
 }
-
-
 
 .section-title {
-
     font-size: 18px;
-
-    color: #4A3022;
-
+    color: var(--ink);
     margin-top: 0;
-
-    margin-bottom: 20px;
-
+    margin-bottom: var(--sp-5);
     font-weight: bold;
-
     display: flex;
-
     align-items: center;
-
-    gap: 8px;
-
+    gap: var(--sp-2);
 }
 
+/* 섹션 제목 + '전체보기 >' 링크를 한 줄에 배치하는 공용 헤더 행
+   (각 카드마다 인라인 style로 반복되던 것을 하나의 클래스로 통일) */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--sp-5);
+}
+.section-header .section-title { margin-bottom: 0; }
+.section-link {
+    color: var(--brand);
+    font-weight: bold;
+    text-decoration: none;
+    font-size: 14px;
+}
+.section-link:hover { color: var(--brand-dark); }
 
+/* 카드 안 소제목(알러지/호불호 등) — 반복되던 인라인 font-weight/color 통일 */
+.field-label {
+    font-weight: bold;
+    color: var(--ink);
+    margin-bottom: var(--sp-2);
+}
+
+/* 데이터가 없을 때 공통으로 쓰는 옅은 안내 문구 */
+.muted-note {
+    color: var(--muted);
+    font-size: 14px;
+}
+
+/* 알러지 태그 배지 */
+.allergy-badge {
+    display: inline-block;
+    background: #FFE5E5;
+    color: var(--danger);
+    border-radius: 20px;
+    padding: 4px 12px;
+    margin: 0 var(--sp-2) var(--sp-2) 0;
+    font-size: 13px;
+}
 
 /* 타임라인 스타일 리스트 */
-
 .record-list {
-
     list-style: none;
-
     padding: 0;
-
     margin: 0;
-
 }
-
-
 
 /* 데이터가 없을 때의 카드 디자인 */
-
 .record-empty {
-
     text-align: center;
-
-    color: #8C756A;
-
+    color: var(--muted);
     font-size: 15px;
-
-    padding: 40px 0;
-
+    padding: var(--sp-8) 0;
     line-height: 1.8;
-
-    background-color: #FFF9F2;
-
+    background-color: var(--brand-soft);
     border-radius: 12px;
-
-    border: 1px dashed #EADCC9;
-
+    border: 1px dashed var(--line);
 }
-
-
 
 /* 나중에 데이터가 추가되었을 때 들어갈 항목 디자인 */
-
 .record-item {
-
     display: flex;
-
     justify-content: space-between;
-
     align-items: center;
-
-    padding: 15px 10px;
-
-    border-bottom: 1px solid #FAF6F0;
-
+    padding: var(--sp-4) var(--sp-2);
+    border-bottom: 1px solid var(--cream);
 }
-
-
 
 .record-item:last-child {
-
     border-bottom: none;
-
 }
 
-
+.record-item a { color: inherit; text-decoration: none; }
 
 .food-name {
-
     font-weight: bold;
-
-    color: #F37943;
-
+    color: var(--brand);
 }
-
-
 
 .record-date {
-
     font-size: 13px;
-
-    color: #8C756A;
-
+    color: var(--muted);
 }
-
-
-
-
 
 /* 3. 하단 네비게이션 및 탈퇴 영역 */
-
 .account-actions {
-
     display: flex;
-
     justify-content: space-between; /* 양 끝으로 분산 배치 */
-
     align-items: center;
-
-    border-top: 1px solid #FAF6F0;
-
-    padding-top: 25px;
-
+    border-top: 1px solid var(--cream);
+    padding-top: var(--sp-6);
 }
 
-
-
-/* 메인으로 가기 버튼 (답답한 주황색 꽉 찬 버튼 탈피 -> 세련된 라인 버튼) */
-
+/* 메인으로 가기 버튼 (라인 버튼) */
 .back-btn {
-
     display: inline-block;
-
-    padding: 12px 24px;
-
+    padding: var(--sp-3) var(--sp-6);
     background-color: transparent;
-
-    color: #F37943;
-
-    border: 2px solid #F37943;
-
+    color: var(--brand);
+    border: 2px solid var(--brand);
     text-align: center;
-
     text-decoration: none;
-
     font-weight: bold;
-
     border-radius: 30px; /* 알약 모양 */
-
     font-size: 15px;
-
     transition: all 0.2s ease;
-
 }
-
-
 
 .back-btn:hover {
-
-    background-color: #F37943;
-
+    background-color: var(--brand);
     color: white;
-
 }
-
-
 
 /* 탈퇴 영역 */
-
 .delete-area {
-
     margin: 0;
-
     font-size: 14px;
-
-    color: #8C756A;
-
+    color: var(--muted);
 }
-
-
 
 .delete-link {
-
     color: #C0A99D;
-
     text-decoration: none;
-
-    margin-left: 10px;
-
+    margin-left: var(--sp-3);
     transition: color 0.2s;
-
 }
-
-
 
 .delete-link:hover {
-
-    color: #FF5A5A;
-
+    color: var(--danger);
     text-decoration: underline;
-
 }
 
-
-
 /* ------------------------------------- */
-
 /* 회원 탈퇴 확인 페이지 전용 스타일 */
-
 /* ------------------------------------- */
-
 .text-center {
-
     text-align: center;
-
 }
-
-
 
 .warning-card {
-
     border: 1px solid #FFD3D3;
-
     background-color: #FFF8F8;
-
     border-radius: 16px;
-
-    padding: 30px;
-
-    margin-bottom: 30px;
-
+    padding: var(--sp-7);
+    margin-bottom: var(--sp-7);
 }
-
-
 
 .warning-text {
-
-    color: #555;
-
+    color: var(--ink);
     line-height: 1.8;
-
     font-size: 15px;
-
     margin: 0;
-
 }
-
-
 
 /* 탈퇴 확인용 제출 버튼 */
-
 .delete-btn {
-
     display: inline-block;
-
     width: auto;
-
-    padding: 14px 35px;
-
-    background-color: #FF5A5A;
-
+    padding: var(--sp-4) var(--sp-8);
+    background-color: var(--danger);
     color: white;
-
     border: none;
-
     border-radius: 30px;
-
     font-size: 15px;
-
     font-weight: bold;
-
     cursor: pointer;
-
     transition: background-color 0.2s;
-
-    margin-right: 15px;
-
+    margin-right: var(--sp-4);
 }
-
-
 
 .delete-btn:hover {
-
-    background-color: #E04444;
-
+    background-color: var(--danger-dark);
 }
-
-
 
 /* 탈퇴 취소 버튼 */
-
 .cancel-btn {
-
     display: inline-block;
-
     width: auto;
-
-    padding: 13px 35px;
-
-    background-color: #ffffff;
-
-    color: #8C756A;
-
-    border: 1px solid #EADCC9;
-
+    padding: 13px var(--sp-8);
+    background-color: var(--surface);
+    color: var(--muted);
+    border: 1px solid var(--line);
     text-align: center;
-
     text-decoration: none;
-
     font-weight: bold;
-
     border-radius: 30px;
-
     font-size: 15px;
-
     box-sizing: border-box;
-
     transition: background-color 0.2s;
-
 }
 
-
-
 .cancel-btn:hover {
-
-    background-color: #FAF6F0;
-
+    background-color: var(--cream);
 }

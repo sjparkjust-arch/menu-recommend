@@ -1,14 +1,15 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <title>밥픽 - 회원가입</title>
-    <link rel="stylesheet" href="{% static 'accounts/signup.css' %}">
-</head>
-<body>
+{% block title %}밥픽 - 회원가입{% endblock %}
+{% block header %}{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'accounts/signup.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="signup-page">
     <div class="signup-container">
-        <img src="{% static 'accounts/images/logo.png' %}" alt="밥픽 로고" class="logo-img">
+        <div class="logo-text">BOBPICK</div>
         <h1 class="title">회원가입</h1>
 
         <form method="post" action="{% url 'accounts:signup' %}">
@@ -21,13 +22,13 @@
                 <input type="password" name="password1" placeholder="비밀번호" autocomplete="off" minlength="8" required>
                 <input type="password" name="password2" placeholder="비밀번호 확인" autocomplete="off" minlength="8" required>
             </div>
-            
+
             <!-- 추가된 부분: 입력창 바로 밑에 고정될 안내 문구 -->
             <div class="help-text">
                 * 아이디: 4자 이상 영문(소문자), 숫자, _ 허용<br>
                 * 비밀번호: 8자 이상, 영문(대/소문자)과 숫자 혼합 필수 (특수문자 사용 가능)
             </div>
-            
+
             <!-- 기존의 에러 메시지 출력 영역 (그대로 유지) -->
             {% if errors.username %}
                 <div class="error-msg">{{ errors.username }}</div>
@@ -53,10 +54,10 @@
             <div class="input-group">
                 <!-- 성 -->
                 <input type="text" name="last_name" value="{{ last_name|default:'' }}" placeholder="성(선택)" autocomplete="family-name">
-                
+
                 <!-- 이름 -->
                 <input type="text" name="first_name" value="{{ first_name|default:'' }}" placeholder="이름(선택)" autocomplete="given-name">
-                
+
                 <!-- 이메일 -->
                 <input type="email" name="email" value="{{ email|default:'' }}" placeholder="이메일(선택)" autocomplete="email">
             </div>
@@ -72,16 +73,15 @@
             이미 계정이 있으신가요? <a href="{% url 'accounts:login' %}">로그인</a>
         </div>
     </div>
+</div>
 
-    {% if signup_success %}
-    <div class="modal-overlay active">
-        <div class="modal-window">
-            <h2 class="modal-title">🎉 회원가입 완료</h2>
-            <p class="modal-message">가입이 완료됐어요. 확인을 누르면 대시보드로 이동합니다.</p>
-            <a href="{% url 'menus:dashboard' %}" class="modal-confirm-btn">확인</a>
-        </div>
+{% if signup_success %}
+<div class="modal-overlay active">
+    <div class="modal-window">
+        <h2 class="modal-title">🎉 회원가입 완료</h2>
+        <p class="modal-message">가입이 완료됐어요. 확인을 누르면 대시보드로 이동합니다.</p>
+        <a href="{% url 'menus:dashboard' %}" class="modal-confirm-btn">확인</a>
     </div>
-    {% endif %}
-
-</body>
-</html>
+</div>
+{% endif %}
+{% endblock %}

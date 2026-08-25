@@ -1,17 +1,13 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <title>밥픽 - 마이페이지</title>
-    <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-        rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'accounts/profile.css' %}">
-</head>
-<body>
+{% block title %}밥픽 - 마이페이지{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'accounts/profile.css' %}">
+{% endblock %}
 
-    <div class="profile-container">
+{% block content %}
+<div class="profile-page">
+    <div class="profile-container profile-wide">
         <h1 class="title">마이페이지</h1>
 
         <!-- 1. 내 정보 카드 섹션 -->
@@ -21,131 +17,141 @@
                 <!-- 아이디 대신 실제 이름(last_name + first_name)이 들어가도록 수정 -->
                 <div class="user-id">
                     {{ request.user.last_name|default:"" }}{{ request.user.first_name|default:"사용자" }}님 반가워요!
-            </div>
-            <div class="info-grid">
-                <!-- 성명 자리 대신 아이디(username)를 보여주도록 수정 -->
-                <div class="info-row id-row">
-                    <span class="label">아이디</span>
-                    <span class="value">{{ request.user.username }}</span>
                 </div>
-                <!-- 이메일은 그대로 유지 -->
-                <div class="info-row email-row">
-                    <span class="label">이메일</span>
-                    <span class="value">{{ request.user.email|default:"미입력" }}</span>
+                <div class="info-grid">
+                    <!-- 성명 자리 대신 아이디(username)를 보여주도록 수정 -->
+                    <div class="info-row id-row">
+                        <span class="label">아이디</span>
+                        <span class="value">{{ request.user.username }}</span>
+                    </div>
+                    <!-- 이메일은 그대로 유지 -->
+                    <div class="info-row email-row">
+                        <span class="label">이메일</span>
+                        <span class="value">{{ request.user.email|default:"미입력" }}</span>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-        <!-- 2. 메뉴 추천 및 식사 기록 섹션 -->
-
-        <div class="history-card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 class="section-title" style="margin: 0;">🕒 식사 히스토리</h2>
-                <!-- 📌 전체 식사 기록 페이지로 이동하는 링크 추가! -->
-                <a href="{% url 'records:history' %}" style="color: #F37943; font-weight: bold; text-decoration: none; font-size: 14px;">전체보기 &gt;</a>
-            </div>
-                <ul class="record-list">
-                <!-- 실제 데이터가 연결되기 전 보여줄 임시 예시 리스트입니다 -->
-                {% if meal_records %}
-                    {% for record in meal_records %}
-                        <li class="record-item">
-                            <span class="food-name">{{ record.food_name }}</span>
-                            <span class="record-date">{{ record.created_at|date:"Y-m-d" }}</span>
-                        </li>
-                    {% endfor %}
-                {% else %}
-                    <!-- 데이터가 없을 때 뜰 예쁜 예시 안내창 -->
-                    <li class="record-empty">
-                        아직 추천받거나 기록한 메뉴가 없어요.<br>
-                        오늘 첫 메뉴 추천을 받아보세요! 🍙
-                    </li>
-                {% endif %}
-                </ul>
-        </div>
-
-        <!-- 2.3 찜한 메뉴 (좋아요한 메뉴 미리보기 5개) -->
-        <div class="history-card" id="liked-menus">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <h2 class="section-title" style="margin: 0;">🧡 찜한 메뉴</h2>
-                <a href="{% url 'menus:liked' %}" style="color: #F37943; font-weight: bold; text-decoration: none; font-size: 14px;">전체보기 &gt;</a>
-            </div>
-            {% if liked_menus %}
-                <ul class="record-list">
-                    {% for menu in liked_menus %}
-                    <li class="record-item">
-                        <span class="food-name">
-                            <a href="{% url 'menus:detail' menu.pk %}" style="color:inherit; text-decoration:none;">{{ menu.name }}</a>
-                        </span>
-                        <span class="record-date">{{ menu.cuisine.name }}</span>
-                    </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <span style="color:#8C756A; font-size:14px;">아직 좋아요한 메뉴가 없어요. 메뉴 카드의 ♥ 버튼을 눌러보세요.</span>
-            {% endif %}
-        </div>
-
-        <!-- 2.4 음식별 섭취 통계 (상세) -->
-        <div class="history-card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <h2 class="section-title" style="margin: 0;">📊 음식 통계</h2>
-                <a href="{% url 'records:food_stats' %}" style="color: #F37943; font-weight: bold; text-decoration: none; font-size: 14px;">전체보기 &gt;</a>
-            </div>
-            {% if food_stats %}
-                <ul class="record-list">
-                    {% for f in food_stats %}
-                    <li class="record-item">
-                        <span class="food-name">{{ f.food_name }}</span>
-                        <span class="record-date">{{ f.count }}회</span>
-                    </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <span style="color:#8C756A; font-size:14px;">아직 기록된 식사가 없어요.</span>
-            {% endif %}
-        </div>
-
-        <!-- 2.5 MY밥픽 - 알러지 / 호불호(선호도) -->
-        <div class="history-card">
-            <h2 class="section-title" style="margin: 0 0 16px 0;">🧡 MY밥픽 - 알러지 · 호불호</h2>
-
-            <div style="margin-bottom: 16px;">
-                <div style="font-weight: bold; color: #4A3022; margin-bottom: 8px;">알러지</div>
-                {% if my_allergies %}
-                    {% for a in my_allergies %}
-                    <span style="display:inline-block; background:#FFE5E5; color:#D9534F; border-radius:20px; padding:4px 12px; margin:0 6px 6px 0; font-size:13px;">{{ a.name }}</span>
-                    {% endfor %}
-                {% else %}
-                    <span style="color:#8C756A; font-size:14px;">등록된 알러지가 없어요.</span>
-                {% endif %}
-            </div>
-
-            <div>
-                <div style="font-weight: bold; color: #4A3022; margin-bottom: 8px;">호불호(요리 종류별 선호도)</div>
-                {% if my_preferences %}
+        <!-- 2. 미리보기 카드들 — 세로로 한 줄씩 쌓으면 너무 길어져서 2열 그리드로 배치 -->
+        <div class="row g-4 mb-4">
+            <!-- 2.1 식사 히스토리 -->
+            <div class="col-md-6">
+                <div class="history-card h-100 mb-0">
+                    <div class="section-header">
+                        <h2 class="section-title">🕒 식사 히스토리</h2>
+                        <!-- 📌 전체 식사 기록 페이지로 이동하는 링크 추가! -->
+                        <a href="{% url 'records:history' %}" class="section-link">전체 보기 &gt;</a>
+                    </div>
                     <ul class="record-list">
-                        {% for p in my_preferences %}
-                        <li class="record-item">
-                            <span class="food-name">{{ p.cuisine.name }}</span>
-                            <span class="record-date">
-                                {% for n in "12345"|make_list %}{% if forloop.counter <= p.score %}★{% else %}☆{% endif %}{% endfor %}
-                                <strong style="margin-left:6px; color:#4A3022;">{{ p.score }}점</strong>
-                            </span>
-                        </li>
+                    <!-- 실제 데이터가 연결되기 전 보여줄 임시 예시 리스트입니다 -->
+                    {% if meal_records %}
+                        {% for record in meal_records %}
+                            <li class="record-item">
+                                <span class="food-name">{{ record.food_name }}</span>
+                                <span class="record-date">{{ record.created_at|date:"Y-m-d" }}</span>
+                            </li>
                         {% endfor %}
+                    {% else %}
+                        <!-- 데이터가 없을 때 뜰 예쁜 예시 안내창 -->
+                        <li class="record-empty">
+                            아직 추천받거나 기록한 메뉴가 없어요.<br>
+                            오늘 첫 메뉴 추천을 받아보세요! 🍙
+                        </li>
+                    {% endif %}
                     </ul>
-                {% else %}
-                    <span style="color:#8C756A; font-size:14px;">등록된 선호도가 없어요.</span>
-                {% endif %}
+                </div>
+            </div>
+
+            <!-- 2.2 찜한 메뉴 (좋아요한 메뉴 미리보기 5개) -->
+            <div class="col-md-6">
+                <div class="history-card h-100 mb-0" id="liked-menus">
+                    <div class="section-header">
+                        <h2 class="section-title">🧡 찜한 메뉴</h2>
+                        <a href="{% url 'menus:liked' %}" class="section-link">전체 보기 &gt;</a>
+                    </div>
+                    {% if liked_menus %}
+                        <ul class="record-list">
+                            {% for menu in liked_menus %}
+                            <li class="record-item">
+                                <span class="food-name">
+                                    <a href="{% url 'menus:detail' menu.pk %}">{{ menu.name }}</a>
+                                </span>
+                                <span class="record-date">{{ menu.cuisine.name }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <span class="muted-note">아직 좋아요한 메뉴가 없어요. 메뉴 카드의 ♥ 버튼을 눌러보세요.</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- 2.3 음식별 섭취 통계 (상세) -->
+            <div class="col-md-6">
+                <div class="history-card h-100 mb-0">
+                    <div class="section-header">
+                        <h2 class="section-title">📊 음식 통계</h2>
+                        <a href="{% url 'records:food_stats' %}" class="section-link">전체 보기 &gt;</a>
+                    </div>
+                    {% if food_stats %}
+                        <ul class="record-list">
+                            {% for f in food_stats %}
+                            <li class="record-item">
+                                <span class="food-name">{{ f.food_name }}</span>
+                                <span class="record-date">{{ f.count }}회</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <span class="muted-note">아직 기록된 식사가 없어요.</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- 2.4 MY밥픽 - 알러지 / 호불호(선호도) -->
+            <div class="col-md-6">
+                <div class="history-card h-100 mb-0">
+                    <h2 class="section-title" style="margin-bottom: var(--sp-5);">🧡 MY 밥픽 - 알러지 · 호불호</h2>
+
+                    <div style="margin-bottom: var(--sp-5);">
+                        <div class="field-label">알러지</div>
+                        {% if my_allergies %}
+                            {% for a in my_allergies %}
+                            <span class="allergy-badge">{{ a.name }}</span>
+                            {% endfor %}
+                        {% else %}
+                            <span class="muted-note">등록된 알러지가 없어요.</span>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <div class="field-label">호불호(요리 종류별 선호도)</div>
+                        {% if my_preferences %}
+                            <ul class="record-list">
+                                {% for p in my_preferences %}
+                                <li class="record-item">
+                                    <span class="food-name">{{ p.cuisine.name }}</span>
+                                    <span class="record-date">
+                                        {% for n in "12345"|make_list %}{% if forloop.counter <= p.score %}★{% else %}☆{% endif %}{% endfor %}
+                                        <strong style="margin-left:6px; color: var(--ink);">{{ p.score }}점</strong>
+                                    </span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <span class="muted-note">등록된 선호도가 없어요.</span>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- 2.6 최근 본 후기 (다른 사람이 쓴 후기 중 내가 조회한 것) 미리보기 5개 -->
         <div class="history-card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <h2 class="section-title" style="margin: 0;">👀 최근 본 후기</h2>
-                <a href="{% url 'reviews:recent_viewed' %}" style="color: #F37943; font-weight: bold; text-decoration: none; font-size: 14px;">전체보기 &gt;</a>
+            <div class="section-header">
+                <h2 class="section-title">👀 최근 본 후기</h2>
+                <a href="{% url 'reviews:recent_viewed' %}" class="section-link">전체 보기 &gt;</a>
             </div>
             {% csrf_token %}
             {% if recent_viewed_reviews %}
@@ -153,22 +159,22 @@
                     {% include "reviews/_review_item.html" with show_menu=True %}
                 {% endfor %}
             {% else %}
-                <span style="color:#8C756A; font-size:14px;">최근에 본 다른 사람 후기가 없어요.</span>
+                <span class="muted-note">최근에 본 다른 사람 후기가 없어요.</span>
             {% endif %}
         </div>
 
         <!-- 3. 계정 관리 하단 버튼 및 회원 탈퇴 링크 -->
         <div class="account-actions">
             <a href="{% url 'menus:dashboard' %}" class="back-btn">메인으로 가기</a>
-            
+
             <!-- 회원탈퇴 버튼 클릭 시 확인 페이지(GET)로 이동시킵니다 -->
             <p class="delete-area">
-                아쉬운 점이 있으신가요? 
+                아쉬운 점이 있으신가요?
                 <a href="{% url 'accounts:delete_confirm' %}" class="delete-link">회원탈퇴</a>
             </p>
         </div>
     </div>
+</div>
 
-    {% include "reviews/_like_script.html" %}
-</body>
-</html>
+{% include "reviews/_like_script.html" %}
+{% endblock %}

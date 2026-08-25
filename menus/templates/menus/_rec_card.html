@@ -1,7 +1,8 @@
 {% comment %}
 대시보드 추천 카드 partial. 컨텍스트: menu(또는 None), head(제목), variant(색상),
-reroll_url(선택 — 있으면 카드 하단 우측에 '새로고침' 버튼 표시).
+reroll_url(선택 — 있으면 카드 하단에 '메뉴 고정'+'새로고침' 버튼 표시), is_pinned(고정 여부).
 새로고침은 JS가 있으면 AJAX로 카드만 교체(data-reroll-slot), 없으면 href 폴백.
+고정되면 새로고침 버튼은 숨기고 '고정 해제'만 남는다(F5·전체 새로고침 모두에서 제외).
 {% endcomment %}
 <div class="rec-box rec-box-{{ variant }}">
     <div class="rec-box-head">
@@ -24,7 +25,15 @@ reroll_url(선택 — 있으면 카드 하단 우측에 '새로고침' 버튼 �
     {% endif %}
     {% if reroll_url %}
     <div class="rec-box-foot">
+        {% if menu %}
+        <button type="button" class="rec-box-pin{% if is_pinned %} active{% endif %}"
+                data-pin-slot="{{ variant }}" data-menu-id="{{ menu.pk }}">
+            {% if is_pinned %}고정 해제{% else %}메뉴 고정{% endif %}
+        </button>
+        {% endif %}
+        {% if not is_pinned %}
         <a href="{{ reroll_url }}" class="rec-box-reroll" data-reroll-slot="{{ variant }}">새로고침</a>
+        {% endif %}
     </div>
     {% endif %}
 </div>
