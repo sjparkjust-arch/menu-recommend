@@ -51,7 +51,7 @@ SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 
-# Application definition
+# Application definition12
 
 INSTALLED_APPS = [
     'django.contrib.admin',
