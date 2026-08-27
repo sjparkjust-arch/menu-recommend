@@ -42,12 +42,10 @@ jobs:
           INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups \
             --query "AutoScalingGroups[?starts_with(AutoScalingGroupName, 'bobpick-app-asg')].Instances[?LifecycleState=='InService'][].InstanceId" \
             --output text)
-
           IPS=$(aws ec2 describe-instances --instance-ids $INSTANCE_IDS \
             --query 'Reservations[*].Instances[*].PrivateIpAddress' --output text)
-
           FORMATTED_IPS=$(echo $IPS | tr ' ' '\n' | grep -v "${{ secrets.BASTION_HOST }}" | grep -v "10.0.2.120" | tr '\n' ' ')
-          
+
           echo "Found IPs: $FORMATTED_IPS"
           echo "ips=$FORMATTED_IPS" >> $GITHUB_OUTPUT
 
@@ -56,7 +54,6 @@ jobs:
         run: |
           eval $(ssh-agent -s)
           echo "${{ secrets.BASTION_KEY }}" | tr -d '\r' | ssh-add -
-
           for ip in ${{ steps.instance_ips.outputs.ips }}; do
             echo "===== Deploying to $ip ====="
             ssh -o StrictHostKeyChecking=no \
@@ -71,7 +68,13 @@ jobs:
                  sudo systemctl daemon-reload && \
                  sudo systemctl restart gunicorn"
           done
-          
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
+
       - name: Remove GitHub IP from Bastion Security Group
         if: always()
         run: |
@@ -79,4 +82,4 @@ jobs:
             --group-id ${{ secrets.BASTION_SG_ID }} \
             --protocol tcp \
             --port 22 \
-            --cidr ${{ steps.ip.outputs.ipv4 }}/32  
+            --cidr ${{ steps.ip.outputs.ipv4 }}/32
