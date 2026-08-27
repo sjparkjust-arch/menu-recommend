@@ -45,6 +45,11 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # 예: CSRF_TRUSTED_ORIGINS=https://192.168.32.74
 CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[])
 
+# HTTPS 강제 후, 브라우저가 다음부터 http:// 요청 자체를 자동으로 https://로 바꾸게 강제
+# (ALB의 301 리다이렉트만으로는 첫 요청이 평문으로 나가는 SSL 스트리핑 취약점이 남기 때문)
+SECURE_HSTS_SECONDS = 31536000
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
 
 # Application definition
 
