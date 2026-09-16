@@ -15,6 +15,7 @@ urlpatterns = [
     path('accounts/', include('accounts.acurls')),
     path('records/', include('records.reurls')),
     path('reviews/', include('reviews.urls')),
+    path('', include('django_prometheus.urls')),
 ]
 
 # 개발용 미디어 파일 서빙. 운영에서는 웹서버/스토리지가 담당한다(CLAUDE.md 절대원칙 2, 4).

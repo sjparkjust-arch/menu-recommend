@@ -5,6 +5,7 @@ from . import views
 app_name = 'menus'
 
 urlpatterns = [
+    path('healthz/', views.healthz, name='healthz'),
     # 루트('')로 마운트된다. 메인 대시보드.
     path('', views.dashboard, name='dashboard'),
     path('reroll/', views.reroll_slot, name='reroll'),  # 추천 카드 1개 재추첨(AJAX)

@@ -392,3 +392,15 @@ def _as_int_or_none(value):
         return int(value)
     except (TypeError, ValueError):
         return None
+
+from django.db import connections
+from django.db.utils import OperationalError
+from django.http import JsonResponse
+
+
+def healthz(request):
+    try:
+        connections['default'].cursor()
+    except OperationalError:
+        return JsonResponse({"status": "unhealthy"}, status=503)
+    return JsonResponse({"status": "ok"})
