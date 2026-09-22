@@ -39,13 +39,11 @@ jobs:
       - name: Get all running instance IPs from ASG
         id: instance_ips
         run: |
-          INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups \
-            --query "AutoScalingGroups[?starts_with(AutoScalingGroupName, 'bobpick-app-asg')].Instances[?LifecycleState=='InService'][].InstanceId" \
-            --output text)
-          IPS=$(aws ec2 describe-instances --instance-ids $INSTANCE_IDS \
+          IPS=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=bobpick-app-server" \
+                      "Name=instance-state-name,Values=running" \
             --query 'Reservations[*].Instances[*].PrivateIpAddress' --output text)
-          FORMATTED_IPS=$(echo $IPS | tr ' ' '\n' | tr '\n' ' ')
-
+          FORMATTED_IPS=$(echo $IPS | tr '\t' ' ' | tr '\n' ' ')
           echo "Found IPs: $FORMATTED_IPS"
           echo "ips=$FORMATTED_IPS" >> $GITHUB_OUTPUT
 
