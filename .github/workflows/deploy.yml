@@ -1,83 +1,63 @@
-name: Deploy to Private ASG
+name: Build and Push to ECR
 
 on:
   push:
     branches:
       - main
     paths-ignore:
-      - 'infra/**'
       - '.github/workflows/terraform.yml'
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
-  deploy:
+  build-and-push:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Configure AWS Credentials
+      - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: arn:aws:iam::370201257485:role/bobpick-github-actions-role
           aws-region: ap-northeast-2
 
-      - name: Get GitHub Runner IP
-        id: ip
-        run: echo "ipv4=$(curl -s https://checkip.amazonaws.com)" >> $GITHUB_OUTPUT
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Add GitHub IP to Bastion Security Group
+      - name: Build, tag, and push image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: bobpick/app
+          IMAGE_TAG: ${{ github.sha }}
         run: |
-          aws ec2 authorize-security-group-ingress \
-            --group-id ${{ secrets.BASTION_SG_ID }} \
-            --protocol tcp \
-            --port 22 \
-            --cidr ${{ steps.ip.outputs.ipv4 }}/32
+          SHORT_SHA=$(echo $IMAGE_TAG | cut -c1-7)
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$SHORT_SHA .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$SHORT_SHA
+          echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV
 
-      # [수정완료] ASG 이름이 무엇으로 끝나든 정확하게 찾아와서 사설 IP 리스트 추출
-      - name: Get all running instance IPs from ASG
-        id: instance_ips
-        run: |
-          IPS=$(aws ec2 describe-instances \
-            --filters "Name=tag:Name,Values=bobpick-app-server" \
-                      "Name=instance-state-name,Values=running" \
-            --query 'Reservations[*].Instances[*].PrivateIpAddress' --output text)
-          FORMATTED_IPS=$(echo $IPS | tr '\t' ' ' | tr '\n' ' ')
-          echo "Found IPs: $FORMATTED_IPS"
-          echo "ips=$FORMATTED_IPS" >> $GITHUB_OUTPUT
+      - name: Checkout manifests repo
+        uses: actions/checkout@v4
+        with:
+          repository: sjparkjust-arch/bobpick-manifests
+          token: ${{ secrets.MANIFESTS_REPO_TOKEN }}
+          path: bobpick-manifests
 
-      # SSH agent는 한 번만 띄우고, IP 개수만큼 반복해서 순차 배포
-      - name: Deploy to all instances via Bastion
+      - name: Update image tag with Kustomize
+        working-directory: bobpick-manifests/base
         run: |
-          eval $(ssh-agent -s)
-          echo "${{ secrets.BASTION_KEY }}" | tr -d '\r' | ssh-add -
-          for ip in ${{ steps.instance_ips.outputs.ips }}; do
-            echo "===== Deploying to $ip ====="
-            ssh -o StrictHostKeyChecking=no \
-                -o ProxyCommand="ssh -o StrictHostKeyChecking=no -W %h:%p ${{ secrets.EC2_USER }}@${{ secrets.BASTION_HOST }}" \
-                ${{ secrets.EC2_USER }}@$ip \
-                "cd /home/ubuntu/menu-recommend && \
-                 git pull origin main && \
-                 source venv/bin/activate && \
-                 pip install -r requirements.txt && \
-                 python manage.py migrate && \
-                 python manage.py collectstatic --noinput && \
-                 sudo systemctl daemon-reload && \
-                 sudo systemctl restart gunicorn"
-          done
+          curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+          ./kustomize edit set image 370201257485.dkr.ecr.ap-northeast-2.amazonaws.com/bobpick/app:${SHORT_SHA}
 
-      - name: Invalidate CloudFront cache
+      - name: Commit and push manifest changes
+        working-directory: bobpick-manifests
         run: |
-          aws cloudfront create-invalidation \
-            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
-            --paths "/*"
-
-      - name: Remove GitHub IP from Bastion Security Group
-        if: always()
-        run: |
-          aws ec2 revoke-security-group-ingress \
-            --group-id ${{ secrets.BASTION_SG_ID }} \
-            --protocol tcp \
-            --port 22 \
-            --cidr ${{ steps.ip.outputs.ipv4 }}/32
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add base/kustomization.yaml
+          git commit -m "ci: update image tag to ${SHORT_SHA}" || echo "No changes to commit"
+          git push
