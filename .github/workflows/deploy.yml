@@ -39,6 +39,8 @@ jobs:
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$SHORT_SHA .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$SHORT_SHA
           echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV
+          echo "ECR_REGISTRY=$ECR_REGISTRY" >> $GITHUB_ENV
+          echo "ECR_REPOSITORY=$ECR_REPOSITORY" >> $GITHUB_ENV
 
       - name: Checkout manifests repo
         uses: actions/checkout@v4
@@ -51,7 +53,7 @@ jobs:
         working-directory: bobpick-manifests/base
         run: |
           curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
-          ./kustomize edit set image 369904859006.dkr.ecr.ap-northeast-2.amazonaws.com/bobpick/app:${SHORT_SHA}
+          ./kustomize edit set image bobpick-app-image=$ECR_REGISTRY/$ECR_REPOSITORY:${SHORT_SHA}
 
       - name: Commit and push manifest changes
         working-directory: bobpick-manifests
