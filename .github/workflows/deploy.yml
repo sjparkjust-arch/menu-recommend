@@ -22,7 +22,7 @@ jobs:
       - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::370201257485:role/bobpick-github-actions-role
+          role-to-assume: arn:aws:iam::369904859006:role/bobpick-github-actions-role
           aws-region: ap-northeast-2
 
       - name: Login to Amazon ECR
@@ -51,7 +51,7 @@ jobs:
         working-directory: bobpick-manifests/base
         run: |
           curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
-          ./kustomize edit set image 370201257485.dkr.ecr.ap-northeast-2.amazonaws.com/bobpick/app:${SHORT_SHA}
+          ./kustomize edit set image 369904859006.dkr.ecr.ap-northeast-2.amazonaws.com/bobpick/app:${SHORT_SHA}
 
       - name: Commit and push manifest changes
         working-directory: bobpick-manifests
