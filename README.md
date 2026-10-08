@@ -19,6 +19,8 @@
 | 2차 | 2026.08.20 ~ 09.15 | AWS EC2 + Auto Scaling | Terraform IaC, 2개 AZ, ALB·WAF·HTTPS, RDS Multi-AZ, 부하테스트 |
 | 3차 | 2026.09.14 ~ 10.07 | Amazon EKS | 컨테이너화, GitOps(Argo CD), HPA + Cluster Autoscaler, 단계별 부하테스트 |
 
+> 2차와 3차 기간이 이틀(9/14~15) 겹치는 것은, 이 기간에 2차 마무리 작업(새 AWS 계정으로 이관, 부하테스트)을 하면서 3차를 함께 시작했기 때문입니다.
+>
 > 프로젝트 종료 후 AWS 리소스를 모두 삭제해, 서비스 도메인(bobpick.cloud)은 현재 접속되지 않습니다.
 
 ### 단계별로 바뀐 것
